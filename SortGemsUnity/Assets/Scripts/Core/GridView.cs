@@ -16,13 +16,14 @@ namespace SortGems.Core
 
         [Header("Main Grid")]
         [SerializeField] private GridLayoutGroup _mainLayout;
-        [SerializeField] private float _mainCellSize  = 36f;
-        [SerializeField] private float _mainCellSpacing = 2f;
+        [SerializeField] private float _mainCellSpacing = 0f;
 
         [Header("Palette")]
         [SerializeField] private GridLayoutGroup _paletteLayout;
-        [SerializeField] private float _paletteCellSize  = 44f;
-        [SerializeField] private float _paletteCellSpacing = 4f;
+        [SerializeField] private float _paletteCellSpacing = 0f;
+
+        [Header("Layout Settings")]
+        [SerializeField] private float _maxCellSize = 45f; // マスサイズの最大値 (iPad対策)
 
         [Header("Prefab")]
         [SerializeField] private GemCellView _cellPrefab;
@@ -51,19 +52,57 @@ namespace SortGems.Core
 
         // ---- 構築 ----
 
+        private float _currentCellSize = 41.5f;
+
         public void BuildGrid(StageData stage)
         {
             if (_gridManager == null) return;
 
+            // 1. 動的セルサイズ計算 (横のマス数 + 2 で画面幅を割る)
+            float canvasWidth = 1080f;
+            var parentCanvas = GetComponentInParent<Canvas>();
+            if (parentCanvas != null)
+            {
+                var canvasRt = parentCanvas.GetComponent<RectTransform>();
+                if (canvasRt != null)
+                {
+                    canvasWidth = canvasRt.rect.width;
+                }
+            }
+
+            float calculatedSize = canvasWidth / (stage.mainCols + 2);
+            _currentCellSize = Mathf.Min(calculatedSize, _maxCellSize);
+
+            // 2. メイングリッドとパレットのコンテナをセンタリング＋幅調整
+            AdjustContainerLayout(_mainLayout.GetComponent<RectTransform>(), stage.mainCols, stage.mainRows, _currentCellSize, _mainCellSpacing);
+            AdjustContainerLayout(_paletteLayout.GetComponent<RectTransform>(), stage.paletteCols, stage.paletteRows, _currentCellSize, _paletteCellSpacing);
+
+            // 3. 各エリアのセルを構築 (同一セルサイズに統一)
             BuildArea(_mainLayout,    stage.mainRows,    stage.mainCols,
-                      _mainCellSize, _mainCellSpacing,
+                      _currentCellSize, _mainCellSpacing,
                       isPalette: false, out _mainViews);
 
             BuildArea(_paletteLayout, stage.paletteRows, stage.paletteCols,
-                      _paletteCellSize, _paletteCellSpacing,
+                      _currentCellSize, _paletteCellSpacing,
                       isPalette: true,  out _paletteViews);
 
             RefreshAll();
+        }
+
+        private void AdjustContainerLayout(RectTransform containerRt, int cols, int rows, float cellSize, float spacing)
+        {
+            if (containerRt == null) return;
+
+            // 上中央アンカー/ピボットに設定し、X=0 にして完全にセンタリング
+            containerRt.anchorMin = new Vector2(0.5f, 1f);
+            containerRt.anchorMax = new Vector2(0.5f, 1f);
+            containerRt.pivot = new Vector2(0.5f, 1f);
+            containerRt.anchoredPosition = new Vector2(0f, containerRt.anchoredPosition.y);
+
+            // 正確な幅・高さを適用
+            float w = cols * cellSize + (cols - 1) * spacing;
+            float h = rows * cellSize + (rows - 1) * spacing;
+            containerRt.sizeDelta = new Vector2(w, h);
         }
 
         private void BuildArea(GridLayoutGroup layout, int rows, int cols,
@@ -260,26 +299,34 @@ namespace SortGems.Core
 
         private IEnumerator AnimateSingleGem(Vector3 startWorldPos, Vector3 endWorldPos, GemColor color)
         {
-            var dummyGo = new GameObject("DummyGem");
-            dummyGo.SetActive(false); // 生成直後に非アクティブ化して描画をブロック
-            
-            var rectTrans = dummyGo.AddComponent<RectTransform>();
-            rectTrans.sizeDelta = new Vector2(_mainCellSize, _mainCellSize);
+            // プレハブをベースに複製することで、移動中のビジュアル不一致や比率の崩れを完全に防ぐ
+            var dummyCell = Instantiate(_cellPrefab, transform);
+            dummyCell.gameObject.name = "DummyGem";
+            dummyCell.gameObject.SetActive(false); // 設定が完了するまで非表示
+
+            // 不要な入力を防ぐためコンポーネントを無効化・削除
+            var button = dummyCell.GetComponent<Button>();
+            if (button != null) Destroy(button);
+            var trigger = dummyCell.GetComponent<UnityEngine.EventSystems.EventTrigger>();
+            if (trigger != null) Destroy(trigger);
 
             // GridLayoutGroupの自動整列対象から除外する
-            var layoutElement = dummyGo.AddComponent<LayoutElement>();
+            var layoutElement = dummyCell.gameObject.AddComponent<LayoutElement>();
             layoutElement.ignoreLayout = true;
 
-            var img = dummyGo.AddComponent<Image>();
-            img.color = GemColorPalette.GetColor(color);
+            // 移動中は背景マスを非表示にする（ジェムのみが飛ぶ表現）
+            var bgTrans = dummyCell.transform.Find("BackgroundImage");
+            if (bgTrans != null) bgTrans.gameObject.SetActive(false);
 
-            dummyGo.transform.SetParent(transform, false);
+            // サイズを現在の動的セルサイズに設定
+            var rectTrans = dummyCell.GetComponent<RectTransform>();
+            rectTrans.sizeDelta = new Vector2(_currentCellSize, _currentCellSize);
 
-            dummyGo.transform.localRotation = Quaternion.Euler(0f, 0f, 45f);
-            dummyGo.transform.localScale = new Vector3(0.62f, 0.62f, 1f);
+            // ジェムの描画を設定
+            dummyCell.SetGem(color, GemColor.None);
 
-            dummyGo.transform.position = startWorldPos;
-            dummyGo.SetActive(true); // 全設定完了後に表示開始
+            dummyCell.transform.position = startWorldPos;
+            dummyCell.gameObject.SetActive(true); // 表示開始
 
             float elapsed = 0f;
             while (elapsed < _moveDuration)
@@ -287,11 +334,11 @@ namespace SortGems.Core
                 elapsed += Time.deltaTime;
                 float t = Mathf.Clamp01(elapsed / _moveDuration);
                 t = t * (2f - t); // EaseOutQuad
-                dummyGo.transform.position = Vector3.Lerp(startWorldPos, endWorldPos, t);
+                dummyCell.transform.position = Vector3.Lerp(startWorldPos, endWorldPos, t);
                 yield return null;
             }
 
-            dummyGo.transform.position = endWorldPos;
+            dummyCell.transform.position = endWorldPos;
 
             // 目的地にハマった瞬間にSEとバイブレーション（実機のみ）をトリガー
             if (SoundManager.Instance != null) SoundManager.Instance.PlayPlace();
@@ -299,7 +346,7 @@ namespace SortGems.Core
             Handheld.Vibrate();
 #endif
 
-            Destroy(dummyGo);
+            Destroy(dummyCell.gameObject);
         }
 
         /// <summary>

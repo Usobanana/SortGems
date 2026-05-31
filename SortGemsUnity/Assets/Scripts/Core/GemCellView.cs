@@ -10,6 +10,7 @@ namespace SortGems.Core
         [Header("References")]
         [SerializeField] private Image _gemImage;
         [SerializeField] private Image _backgroundImage;
+        [SerializeField] private Image _socketImage;
         [SerializeField] private GameObject _completedMark;
 
         [Header("Colors")]
@@ -31,8 +32,8 @@ namespace SortGems.Core
 
         // goalColor 表示用（薄い下地色）
         private GemColor _goalColor;
-
         private Outline _outline;
+        private Shadow _gemShadow;
         private Coroutine _blinkCoroutine;
 
         private void Awake()
@@ -40,17 +41,39 @@ namespace SortGems.Core
             _baseScale = transform.localScale;
             GetComponent<UnityEngine.UI.Button>()?.onClick.AddListener(OnPointerClick);
 
-            // GemImage を 45° 回転してひし形◆に、スケール調整で正方形セル内に収める
+            // 角丸四角形のスプライトを適用し、ジェムを一回り小さく設定
             if (_gemImage != null)
             {
-                _gemImage.transform.localRotation = Quaternion.Euler(0f, 0f, 45f);
-                // 45°回転した正方形が親の正方形に内接するには √2/2 ≈ 0.707 倍でぴったり
-                // 少し余白を持たせて 0.62 倍にする
-                _gemImage.transform.localScale = new Vector3(0.62f, 0.62f, 1f);
+                _gemImage.sprite = GemColorPalette.RoundedRectSprite;
+                _gemImage.transform.localRotation = Quaternion.identity;
+                _gemImage.transform.localScale = new Vector3(0.72f, 0.72f, 1f);
+
+                // アセット参照の欠落を防ぐため、実行時にベベルシャドウスプライトを割り当てる
+                var bevelTrans = _gemImage.transform.Find("BevelShadow");
+                if (bevelTrans != null)
+                {
+                    var bevelImg = bevelTrans.GetComponent<Image>();
+                    if (bevelImg != null)
+                    {
+                        bevelImg.sprite = GemColorPalette.BevelShadowSprite;
+                        bevelImg.color = Color.white;
+                    }
+                }
+
+                _gemShadow = _gemImage.GetComponent<Shadow>();
+            }
+
+            if (_socketImage != null)
+            {
+                // アセット参照の欠落を防ぐため、実行時に角丸スプライトを割り当てる
+                _socketImage.sprite = GemColorPalette.RoundedRectSprite;
+                _socketImage.transform.localRotation = Quaternion.identity;
+                _socketImage.transform.localScale = new Vector3(0.72f, 0.72f, 1f);
             }
 
             if (_backgroundImage != null)
             {
+                // _backgroundImage.sprite は元の正方形（None）のままとする
                 _outline = _backgroundImage.gameObject.AddComponent<Outline>();
                 _outline.effectColor = new Color(1f, 1f, 1f, 0f);
                 _outline.effectDistance = new Vector2(2f, 2f);
@@ -93,22 +116,43 @@ namespace SortGems.Core
             bool isEmpty = color == GemColor.None;
             bool isCorrect = (color != GemColor.None && color == goalColor);
 
-            // ジェム（◆ひし形）の表示: 正解位置にあるマスはひし形を非表示にして背景と一体化させる
-            _gemImage.gameObject.SetActive(!isEmpty && !isCorrect);
-            if (!isEmpty && !isCorrect)
+            // くぼみ（ソケット）の表示制御: ジェムがない場合はくぼみを表示、ある場合は非表示
+            if (_socketImage != null)
+            {
+                _socketImage.gameObject.SetActive(isEmpty && !isVoid);
+            }
+
+            // ジェムの表示: 空きマスでなければ、正解マスであってもジェム自体は表示する
+            _gemImage.gameObject.SetActive(!isEmpty);
+            if (!isEmpty)
+            {
                 _gemImage.color = GemColorPalette.GetColor(color);
 
-            // 背景（□正方形）: ハイライト中であっても背景色は上書きしない（Outlineだけ光らせる）
+                // 影の枠線制御: 正解マスの場合は影を無効化し、不正解マスの場合は有効化する
+                if (_gemShadow != null)
+                {
+                    _gemShadow.enabled = !isCorrect;
+                }
+            }
+
+            // 背景: ハイライト中であっても背景色は上書きしない（Outlineだけ光らせる）
             if (!_isSelected)
             {
-                if (isCorrect)
-                    _backgroundImage.color = GemColorPalette.GetColor(color); // 正解したら鮮やかな同色で塗りつぶす
-                else if (goalColor != GemColor.None)
-                    _backgroundImage.color = GemColorPalette.GetGoalColor(goalColor);
+                if (goalColor != GemColor.None)
+                {
+                    // 目標マスはジェムの有無や正解・不正解に関わらず、常に鮮やかな原色ベタ塗りで表示
+                    _backgroundImage.color = GemColorPalette.GetColor(goalColor);
+                }
                 else if (isEmpty)
+                {
+                    // 目標色のない通常の空きマス (パレットなど)
                     _backgroundImage.color = _emptyColor;
+                }
                 else
-                    _backgroundImage.color = new Color(0.10f, 0.10f, 0.14f, 1f);
+                {
+                    // 目標色のないマスにジェムが配置されている場合 (パレットなど)
+                    _backgroundImage.color = new Color(0.18f, 0.18f, 0.22f, 1f);
+                }
             }
 
             if (_completedMark != null)
@@ -190,14 +234,17 @@ namespace SortGems.Core
             {
                 // _isHighlighted の時は背景色は変更せず、通常の背景色を維持
                 bool isCorrect = (_gemColor != GemColor.None && _gemColor == _goalColor);
-                if (isCorrect)
-                    _backgroundImage.color = GemColorPalette.GetColor(_gemColor); // 正解状態の背景色を維持
-                else if (_goalColor != GemColor.None)
-                    _backgroundImage.color = GemColorPalette.GetGoalColor(_goalColor);
+                if (_goalColor != GemColor.None)
+                {
+                    // 目標マスは常に鮮やかな原色の背景色を維持
+                    _backgroundImage.color = GemColorPalette.GetColor(_goalColor);
+                }
                 else
+                {
                     _backgroundImage.color = _gemColor == GemColor.None
                         ? _emptyColor
-                        : new Color(0.1f, 0.1f, 0.15f, 1f);
+                        : new Color(0.18f, 0.18f, 0.22f, 1f);
+                }
             }
         }
 

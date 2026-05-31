@@ -25,9 +25,9 @@ public class CreateGameScene : EditorWindow
     const int REF_W         = 1080;
     const int REF_H         = 1920;
     const int HEADER_H      = 120;
-    const int CELL_SIZE     = 44;
-    const int CELL_SPACING  = 0;
-    const int PALETTE_GAP   = 24;   // グリッドとパレットの隙間
+    const float CELL_SIZE   = 41.5f;
+    const float CELL_SPACING = 0f;
+    const float PALETTE_GAP  = 24f;   // グリッドとパレットの隙間
     const int BUTTON_H      = 80;
 
     // ---- ステージ定数 ----
@@ -139,13 +139,24 @@ MonoBehaviour:
             pos: Vector2.zero, size: Vector2.zero);
 
         // ---- 6. Main Grid ----
-        int gridPx  = MAIN_COLS * (CELL_SIZE + CELL_SPACING);  // 24×44 = 1056
-        int gridH   = MAIN_ROWS * (CELL_SIZE + CELL_SPACING);  // 1056
+        float gridPx  = MAIN_COLS * (CELL_SIZE + CELL_SPACING);  // 24×41.5 = 996
+        float gridH   = MAIN_ROWS * (CELL_SIZE + CELL_SPACING);  // 996
+
+        // 画面中央寄せの計算
+        // 作業領域（HeaderとButtonBarの間） = 1920 - 120 - 80 = 1720
+        // コンテンツ全体の高さ = gridH + PALETTE_GAP + palH = 996 + 24 + 166 = 1186
+        // 上下の余白 = (1720 - 1186) / 2 = 267
+        // メイングリッドの上端Y = -HEADER_H - 267 = -387f
+        float palH = PAL_ROWS * (CELL_SIZE + CELL_SPACING);      // 4×41.5 = 166
+        float contentH = gridH + PALETTE_GAP + palH;
+        float remainingH = (REF_H - HEADER_H - BUTTON_H) - contentH;
+        float topMargin = remainingH / 2f;
+        float gridTop = HEADER_H + topMargin;
 
         var gridContainerObj = MakeRect("GridContainer", canvasObj.transform,
             ancMin: new Vector2(0.5f,1), ancMax: new Vector2(0.5f,1),
             pivot: new Vector2(0.5f,1),
-            pos: new Vector2(0, -HEADER_H),
+            pos: new Vector2(0, -gridTop),
             size: new Vector2(gridPx, gridH));
 
         var gridView   = gridContainerObj.gameObject.AddComponent<GridView>();
@@ -153,9 +164,8 @@ MonoBehaviour:
         ConfigureLayout(mainLayout, MAIN_COLS, CELL_SIZE, CELL_SPACING);
 
         // ---- 7. Palette（グリッドの直下）----
-        int palW = PAL_COLS * (CELL_SIZE + CELL_SPACING);  // 16×44 = 704
-        int palH = PAL_ROWS * (CELL_SIZE + CELL_SPACING);  // 4×44  = 176
-        int palTop = HEADER_H + gridH + PALETTE_GAP;       // 120+1056+24 = 1200
+        float palW = PAL_COLS * (CELL_SIZE + CELL_SPACING);      // 16×41.5 = 664
+        float palTop = gridTop + gridH + PALETTE_GAP;
 
         var paletteObj = MakeRect("PaletteContainer", canvasObj.transform,
             ancMin: new Vector2(0.5f,1), ancMax: new Vector2(0.5f,1),
@@ -225,14 +235,28 @@ MonoBehaviour:
 
         var bgImg  = MakeImageChild("BackgroundImage", cellRoot.transform,
                         new Color(0.18f, 0.18f, 0.22f, 1f), Vector2.zero, Vector2.one);
+        var socketImg = MakeImageChild("SocketImage", cellRoot.transform,
+                        new Color(0f, 0f, 0f, 0.32f), Vector2.zero, Vector2.one);
         var gemImg = MakeImageChild("GemImage", cellRoot.transform,
-                        Color.white, new Vector2(0.1f,0.1f), new Vector2(0.9f,0.9f));
+                        Color.white, Vector2.zero, Vector2.one);
+        
+        // 3D宝石風の斜めカットベベルシャドウ（角丸切り抜き済みスプライト）を重ねる
+        var bevelShadow = MakeImageChild("BevelShadow", gemImg.transform,
+                            Color.white, Vector2.zero, Vector2.one);
+        bevelShadow.sprite = GemColorPalette.BevelShadowSprite;
+
+        // ジェムの立体感を際立たせるドロップシャドウを追加（影を少し濃いめに設定）
+        var shadowEff = gemImg.gameObject.AddComponent<Shadow>();
+        shadowEff.effectColor = new Color(0f, 0f, 0f, 0.48f);
+        shadowEff.effectDistance = new Vector2(2f, -2f);
+
         var mark   = MakeImageChild("CompletedMark", cellRoot.transform,
                         new Color(0.5f,1f,0.5f,0.8f), new Vector2(0.65f,0.65f), Vector2.one);
         mark.gameObject.SetActive(false);
 
         SetRef(cellView, "_gemImage",       gemImg);
         SetRef(cellView, "_backgroundImage",bgImg);
+        SetRef(cellView, "_socketImage",    socketImg);
         SetRef(cellView, "_completedMark",  mark.gameObject);
 
         var trigger = cellRoot.AddComponent<EventTrigger>();
@@ -312,7 +336,7 @@ MonoBehaviour:
                 list.Add(new StageData.CellColorDef { row = r, col = c, color = color });
     }
 
-    static void ConfigureLayout(GridLayoutGroup layout, int cols, int cellSize, int spacing)
+    static void ConfigureLayout(GridLayoutGroup layout, int cols, float cellSize, float spacing)
     {
         layout.constraint       = GridLayoutGroup.Constraint.FixedColumnCount;
         layout.constraintCount  = cols;

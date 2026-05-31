@@ -42,7 +42,7 @@ namespace SortGems.Core
         private GemCell[,] _initPalette;
 
         private GemGroup _selectedGroup;
-        private Stack<(GemCell[,] main, GemCell[,] palette)> _undoStack = new();
+        private Stack<(GemCell[,] main, GemCell[,] palette, GemGroup selectedGroup)> _undoStack = new();
 
         // 8方向オフセット（上下左右＋斜め）
         private static readonly Vector2Int[] Dirs8 = {
@@ -241,8 +241,8 @@ namespace SortGems.Core
 
             int moveCount = targets.Count;
 
-            // Undo に積む
-            _undoStack.Push((CloneGrid(_main), CloneGrid(_palette)));
+            // Undo に積む（移動前のメイン、パレット状態、および移動前の選択グループ全体）
+            _undoStack.Push((CloneGrid(_main), CloneGrid(_palette), group));
 
             // 移動ステップ情報の構築（アニメーション用）
             var steps = new List<MoveStep>();
@@ -277,7 +277,24 @@ namespace SortGems.Core
             // パレットの自動整列（左詰め）
             PackPalette();
 
-            _selectedGroup = null;
+            // 部分配置後の選択継続チェック
+            if (moveCount < group.cells.Count)
+            {
+                // 残りのジェムがある場合は選択状態を維持（新たなグループを再構成）
+                var remainingGroup = new GemGroup(group.groupId, group.color);
+                for (int i = moveCount; i < group.cells.Count; i++)
+                {
+                    remainingGroup.AddCell(group.cells[i].pos, group.cells[i].isPalette);
+                }
+                _selectedGroup = remainingGroup;
+                OnGroupSelected?.Invoke(_selectedGroup);
+            }
+            else
+            {
+                _selectedGroup = null;
+                OnGroupSelected?.Invoke(null);
+            }
+
             OnGroupMoved?.Invoke(steps, group.color);
 
             // クリア判定
@@ -299,6 +316,9 @@ namespace SortGems.Core
                     }
                 }
             }
+
+            // パレット内のジェムを GemColor (enumの定義順) で自動ソート
+            gems = gems.OrderBy(g => (int)g.color).ToList();
 
             for (int r = 0; r < PaletteRows; r++)
             {
@@ -322,7 +342,6 @@ namespace SortGems.Core
             }
         }
 
-        /// <summary>対象グリッドでタップ位置を含む連続空きマスを探す（8方向BFS）</summary>
         private List<Vector2Int> FindContiguousEmpty(
             Vector2Int pivot, int size, bool targetIsPalette, GemGroup group)
         {
@@ -337,6 +356,7 @@ namespace SortGems.Core
 
             // タップしたセルの目標色
             GemColor pivotGoalColor = grid[pivot.x, pivot.y].goalColor;
+            bool isFromPalette = group.cells.Count > 0 && group.cells[0].isPalette;
 
             bool IsAvailable(Vector2Int p)
             {
@@ -344,6 +364,15 @@ namespace SortGems.Core
 
                 bool isFree = grid[p.x, p.y].IsEmpty || srcSet.Contains(p);
                 if (!isFree) return false;
+
+                // パレットからメインに戻す際のみ、同色の目標マスにのみ配置できるように制限
+                if (!targetIsPalette && isFromPalette)
+                {
+                    if (grid[p.x, p.y].goalColor != group.color)
+                    {
+                        return false;
+                    }
+                }
 
                 // メイングリッドでタップ位置に目標色がある場合、同じ目標色のマスのみに連結を制限する
                 if (!targetIsPalette && pivotGoalColor != GemColor.None)
@@ -430,8 +459,13 @@ namespace SortGems.Core
         public void Undo()
         {
             if (_undoStack.Count == 0) return;
-            (_main, _palette) = _undoStack.Pop();
-            _selectedGroup = null;
+            GemGroup prevGroup;
+            (_main, _palette, prevGroup) = _undoStack.Pop();
+            
+            // 選択状態を移動前のグループに戻す
+            _selectedGroup = prevGroup;
+            OnGroupSelected?.Invoke(_selectedGroup);
+            
             OnGroupMoved?.Invoke(null, GemColor.None);
         }
 
