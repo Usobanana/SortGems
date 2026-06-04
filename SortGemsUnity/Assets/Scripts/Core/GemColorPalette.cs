@@ -37,14 +37,14 @@ namespace SortGems.Core
         private static readonly Color[] _darkGoalColors = new Color[]
         {
             Color.clear,
-            new Color(0.35f, 0.10f, 0.10f, 1.00f), // Red (暗め)
-            new Color(0.10f, 0.20f, 0.35f, 1.00f), // Blue (暗め)
-            new Color(0.08f, 0.30f, 0.12f, 1.00f), // Green (暗め)
-            new Color(0.35f, 0.30f, 0.00f, 1.00f), // Yellow (暗め)
-            new Color(0.25f, 0.10f, 0.35f, 1.00f), // Purple (暗め)
-            new Color(0.35f, 0.20f, 0.00f, 1.00f), // Orange (暗め)
-            new Color(0.00f, 0.30f, 0.30f, 1.00f), // Cyan (暗め)
-            new Color(0.35f, 0.12f, 0.28f, 1.00f), // Pink (暗め)
+            new Color(0.25f, 0.05f, 0.05f, 1.00f), // Red (暗め)
+            new Color(0.05f, 0.10f, 0.25f, 1.00f), // Blue (暗め)
+            new Color(0.04f, 0.18f, 0.06f, 1.00f), // Green (暗め)
+            new Color(0.22f, 0.20f, 0.02f, 1.00f), // Yellow (暗め)
+            new Color(0.15f, 0.05f, 0.22f, 1.00f), // Purple (暗め)
+            new Color(0.25f, 0.12f, 0.02f, 1.00f), // Orange (暗め)
+            new Color(0.02f, 0.18f, 0.20f, 1.00f), // Cyan (暗め)
+            new Color(0.25f, 0.06f, 0.18f, 1.00f), // Pink (暗め)
         };
 
         public static Color GetColor(GemColor gemColor)
@@ -218,6 +218,44 @@ namespace SortGems.Core
             tex.SetPixels(colors);
             tex.Apply(true);
             return tex;
+        }
+
+        /// <summary>
+        /// 指定したピクセルカラーに最も近い GemColor を返す。
+        /// アルファ値が低いか、一致する色が遠い場合は GemColor.None を返す。
+        /// </summary>
+        public static GemColor FindClosestGemColor(Color pixelColor)
+        {
+            if (pixelColor.a < 0.2f) return GemColor.None;
+
+            GemColor closest = GemColor.None;
+            float minDist = float.MaxValue;
+
+            for (int i = 1; i <= 8; i++) // Red (1) から Pink (8)
+            {
+                GemColor colorEnum = (GemColor)i;
+                Color gemColor = GetColor(colorEnum);
+                float dist = ColorDistance(pixelColor, gemColor);
+                if (dist < minDist)
+                {
+                    minDist = dist;
+                    closest = colorEnum;
+                }
+            }
+
+            // 色があまりに遠い（例えば黒や白に近い）場合は None とみなす
+            if (minDist > 0.5f) return GemColor.None;
+
+            return closest;
+        }
+
+        private static float ColorDistance(Color c1, Color c2)
+        {
+            return Mathf.Sqrt(
+                Mathf.Pow(c1.r - c2.r, 2) +
+                Mathf.Pow(c1.g - c2.g, 2) +
+                Mathf.Pow(c1.b - c2.b, 2)
+            );
         }
     }
 }

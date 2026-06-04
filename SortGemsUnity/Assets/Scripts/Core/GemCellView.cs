@@ -69,6 +69,7 @@ namespace SortGems.Core
                 _socketImage.sprite = GemColorPalette.RoundedRectSprite;
                 _socketImage.transform.localRotation = Quaternion.identity;
                 _socketImage.transform.localScale = new Vector3(0.72f, 0.72f, 1f);
+                _socketImage.color = new Color(0.0f, 0.0f, 0.0f, 0.55f);
             }
 
             if (_backgroundImage != null)
@@ -105,6 +106,7 @@ namespace SortGems.Core
             {
                 _gemImage.gameObject.SetActive(false);
                 _backgroundImage.color = Color.clear;
+                if (_socketImage != null) _socketImage.gameObject.SetActive(false);
                 if (_completedMark != null) _completedMark.SetActive(false);
                 if (_outline != null) _outline.enabled = false;
                 if (button != null) button.enabled = false;
@@ -116,7 +118,7 @@ namespace SortGems.Core
             bool isEmpty = color == GemColor.None;
             bool isCorrect = (color != GemColor.None && color == goalColor);
 
-            // くぼみ（ソケット）の表示制御: ジェムがない場合はくぼみを表示、ある場合は非表示
+            // くぼみ（ソケット）の表示制御: ジェムがないかつVoidでない場合はくぼみを表示、ある場合は非表示
             if (_socketImage != null)
             {
                 _socketImage.gameObject.SetActive(isEmpty && !isVoid);
@@ -138,19 +140,20 @@ namespace SortGems.Core
             // 背景: ハイライト中であっても背景色は上書きしない（Outlineだけ光らせる）
             if (!_isSelected)
             {
-                if (goalColor != GemColor.None)
+                if (isCorrect)
                 {
-                    // 目標マスはジェムの有無や正解・不正解に関わらず、常に鮮やかな原色ベタ塗りで表示
+                    _backgroundImage.color = GemColorPalette.GetColor(color);
+                }
+                else if (goalColor != GemColor.None)
+                {
                     _backgroundImage.color = GemColorPalette.GetColor(goalColor);
                 }
                 else if (isEmpty)
                 {
-                    // 目標色のない通常の空きマス (パレットなど)
                     _backgroundImage.color = _emptyColor;
                 }
                 else
                 {
-                    // 目標色のないマスにジェムが配置されている場合 (パレットなど)
                     _backgroundImage.color = new Color(0.18f, 0.18f, 0.22f, 1f);
                 }
             }
@@ -232,16 +235,20 @@ namespace SortGems.Core
                 _backgroundImage.color = _selectedColor;
             else
             {
-                // _isHighlighted の時は背景色は変更せず、通常の背景色を維持
+                bool isEmpty = _gemColor == GemColor.None;
                 bool isCorrect = (_gemColor != GemColor.None && _gemColor == _goalColor);
-                if (_goalColor != GemColor.None)
+
+                if (isCorrect)
                 {
-                    // 目標マスは常に鮮やかな原色の背景色を維持
+                    _backgroundImage.color = GemColorPalette.GetColor(_gemColor);
+                }
+                else if (_goalColor != GemColor.None)
+                {
                     _backgroundImage.color = GemColorPalette.GetColor(_goalColor);
                 }
                 else
                 {
-                    _backgroundImage.color = _gemColor == GemColor.None
+                    _backgroundImage.color = isEmpty
                         ? _emptyColor
                         : new Color(0.18f, 0.18f, 0.22f, 1f);
                 }

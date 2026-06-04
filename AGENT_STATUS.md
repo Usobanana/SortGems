@@ -57,6 +57,7 @@ C:/GitHub/SortGems/
 | 2026-05-31 | Antigravity | デバッグ用一時停止機能の実装（ESCキーによるタイマー・操作・アニメーションの一時停止トグル） |
 | 2026-05-31 | Antigravity | AnimateSingleGem に LayoutElement(ignoreLayout=true) を追加し、GridLayoutGroup による自動整列に起因するジェム移動アニメーションのチラつき（カクつき）を完全解消 |
 | 2026-05-31 | Antigravity | WebGLビルド時の AdMob 設定例外エラー対策（GoogleMobileAdsSettings.asset の自動ファイル生成処理を追加し、AppID空白エラーおよびパッケージフォルダ保存エラーを解消） |
+| 2026-06-04 | Antigravity | 画面遷移の構築（タイトル・ステージ選択・ゲームプレイ）および16x16ピクセルアート4ステージ（星・ハート・木・花）の自動生成実装、空マスのくぼみアルファ値調整(0.55f)とVoidマス穴非表示バグの修正 |
 | 2026-05-31 | Antigravity | 表示・操作調整およびビジュアル刷新タスク完了（セルサイズの動的計算・完全センタリング、ジェムの3D斜めカット陰影、配置マスの暗転廃止と原色固定、はめ込み用くぼみ（SocketImage）の実装、パレット自動ソート、Undoロジックと部分配置の選択継続の修正） |
 
 ---

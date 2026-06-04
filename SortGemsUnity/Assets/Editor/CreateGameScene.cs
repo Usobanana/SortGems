@@ -11,13 +11,10 @@ using SortGems.Ads;
 /// <summary>
 /// モバイル縦画面（1080×1920）レイアウトでゲームシーンを自動生成する。
 ///
-/// レイアウト構成（上から）:
-///   Header     120px  — ステージ名 / タイマー
-///   MainGrid  1056px  — 24×24グリッド (44px/cell, spacing 0)
-///   Palette    176px  — 16×4パレット (44px/cell, spacing 0)
-///   ButtonBar   80px  — Undo / Hint / Reset
-///   ─────────────────
-///   合計       1432px  (1920px 内に収まる)
+/// レイアウト構成:
+///   TitlePanel        — タイトル画面
+///   StageSelectPanel  — ステージ選択（動的スクロールリスト）
+///   GamePlayPanel     — パズル画面
 /// </summary>
 public class CreateGameScene : EditorWindow
 {
@@ -31,10 +28,233 @@ public class CreateGameScene : EditorWindow
     const int BUTTON_H      = 80;
 
     // ---- ステージ定数 ----
-    const int MAIN_ROWS    = 24;
-    const int MAIN_COLS    = 24;
+    const int MAIN_ROWS    = 16;
+    const int MAIN_COLS    = 16;
     const int PAL_ROWS     = 4;
-    const int PAL_COLS     = 16;
+    const int PAL_COLS     = 8;
+
+    // ---- 16x16 ピクセルアート定義 ----
+    private static readonly string[] StarArt = new string[]
+    {
+        "................",
+        ".......Y........",
+        "......YOY.......",
+        ".....YOOOY......",
+        "..YYYOOOOOYYY...",
+        "...YOOOOOOOY....",
+        "....YOOCOOY.....",
+        "...YOOOOOOOY....",
+        "..YYYOOOOOYYY...",
+        ".....YOOOY......",
+        "......YOY.......",
+        ".......Y........",
+        "................",
+        "................",
+        "................",
+        "................"
+    };
+
+    private static readonly string[] HeartArt = new string[]
+    {
+        "................",
+        "....KK....KK....",
+        "...KKKK..KKKK...",
+        "..KKRRRRRRRRKK..",
+        "..KRRRRRRRRRRK..",
+        "...RRRBBBBRRR...",
+        "....RRBBBRR.....",
+        ".....RBRR.......",
+        "......RR........",
+        ".......R........",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................"
+    };
+
+    private static readonly string[] TreeArt = new string[]
+    {
+        "................",
+        "......YYYY......",
+        "....GGGGGGGG....",
+        "...GGGGGGGGGG...",
+        "..GGGGGGGGGGGG..",
+        "...GGGGGGGGGG...",
+        "....GGGGGGGG....",
+        "......GGGG......",
+        ".......OO.......",
+        ".......OO.......",
+        ".......OO.......",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................"
+    };
+
+    private static readonly string[] FlowerArt = new string[]
+    {
+        "................",
+        "......KKKK......",
+        "....KKKKKKKK....",
+        "...KKKYYYYKKK...",
+        "..KKCYYYYYYCKK..",
+        "..KKCYYYYYYCKK..",
+        "...KKKYYYYKKK...",
+        "....KKKKKKKK....",
+        "......KKKK......",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................"
+    };
+
+    static Texture2D CreateArtTexture(string[] art, string path)
+    {
+        int width = 16;
+        int height = 16;
+        Texture2D tex = new Texture2D(width, height, TextureFormat.RGBA32, false);
+        tex.filterMode = FilterMode.Point;
+
+        Color[] colors = new Color[width * height];
+        for (int y = 0; y < height; y++)
+        {
+            string line = art[15 - y];
+            for (int x = 0; x < width; x++)
+            {
+                char c = (x < line.Length) ? line[x] : '.';
+                GemColor gc = c switch
+                {
+                    'R' => GemColor.Red,
+                    'B' => GemColor.Blue,
+                    'G' => GemColor.Green,
+                    'Y' => GemColor.Yellow,
+                    'P' => GemColor.Purple,
+                    'O' => GemColor.Orange,
+                    'C' => GemColor.Cyan,
+                    'K' => GemColor.Pink,
+                    _ => GemColor.None
+                };
+
+                colors[y * width + x] = gc != GemColor.None 
+                    ? GemColorPalette.GetColor(gc) 
+                    : Color.clear;
+            }
+        }
+
+        tex.SetPixels(colors);
+        tex.Apply();
+
+        byte[] bytes = tex.EncodeToPNG();
+        File.WriteAllBytes(path, bytes);
+        AssetDatabase.ImportAsset(path);
+
+        var importer = AssetImporter.GetAtPath(path) as TextureImporter;
+        if (importer != null)
+        {
+            importer.textureType = TextureImporterType.Sprite;
+            importer.filterMode = FilterMode.Point;
+            importer.textureCompression = TextureImporterCompression.Uncompressed;
+            importer.SaveAndReimport();
+        }
+
+        return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+    }
+
+    static StageData CreateStageFromArt(int number, string name, string[] art, float timeLimit)
+    {
+        string dir = "Assets/Textures/Stages";
+        Directory.CreateDirectory(dir);
+        string texPath = $"{dir}/Stage_{number:000}_Art.png";
+        Texture2D tex = CreateArtTexture(art, texPath);
+
+        string stagePath = $"Assets/ScriptableObjects/Stages/Stage_{number:000}.asset";
+        Directory.CreateDirectory(Path.GetDirectoryName(stagePath)!);
+
+        if (AssetDatabase.LoadAssetAtPath<StageData>(stagePath) != null)
+            AssetDatabase.DeleteAsset(stagePath);
+
+        var stageData = ScriptableObject.CreateInstance<StageData>();
+        stageData.stageNumber = number;
+        stageData.stageName = name;
+        stageData.mainRows = 16;
+        stageData.mainCols = 16;
+        stageData.paletteRows = 4;
+        stageData.paletteCols = 8;
+        stageData.timeLimitSeconds = timeLimit;
+        stageData.pixelArtTexture = tex;
+
+        stageData.goalLayout = new List<StageData.CellColorDef>();
+        stageData.initialMainCells = new List<StageData.CellColorDef>();
+
+        List<StageData.CellColorDef> nonVoidCells = new List<StageData.CellColorDef>();
+
+        for (int y = 0; y < 16; y++)
+        {
+            string line = art[15 - y];
+            for (int x = 0; x < 16; x++)
+            {
+                char c = (x < line.Length) ? line[x] : '.';
+                GemColor gc = c switch
+                {
+                    'R' => GemColor.Red,
+                    'B' => GemColor.Blue,
+                    'G' => GemColor.Green,
+                    'Y' => GemColor.Yellow,
+                    'P' => GemColor.Purple,
+                    'O' => GemColor.Orange,
+                    'C' => GemColor.Cyan,
+                    'K' => GemColor.Pink,
+                    _ => GemColor.None
+                };
+
+                if (gc != GemColor.None)
+                {
+                    int row = y;
+                    int col = x;
+                    stageData.goalLayout.Add(new StageData.CellColorDef { row = row, col = col, color = gc });
+                    nonVoidCells.Add(new StageData.CellColorDef { row = row, col = col, color = gc });
+                }
+            }
+        }
+
+        List<GemColor> colors = new List<GemColor>();
+        foreach (var cell in nonVoidCells)
+        {
+            colors.Add(cell.color);
+        }
+
+        var rng = new System.Random(number * 100);
+        int n = colors.Count;
+        while (n > 1)
+        {
+            n--;
+            int k = rng.Next(n + 1);
+            GemColor val = colors[k];
+            colors[k] = colors[n];
+            colors[n] = val;
+        }
+
+        for (int i = 0; i < nonVoidCells.Count; i++)
+        {
+            stageData.initialMainCells.Add(new StageData.CellColorDef
+            {
+                row = nonVoidCells[i].row,
+                col = nonVoidCells[i].col,
+                color = colors[i]
+            });
+        }
+
+        stageData.initialPaletteCells = new List<StageData.CellColorDef>();
+
+        AssetDatabase.CreateAsset(stageData, stagePath);
+        return stageData;
+    }
 
     [MenuItem("Tools/SortGems/Create Game Scene")]
     public static void CreateScene()
@@ -84,7 +304,7 @@ MonoBehaviour:
             UnityEditor.SceneManagement.NewSceneSetup.DefaultGameObjects,
             UnityEditor.SceneManagement.NewSceneMode.Single);
 
-        // カメラ（念のため Orthographic に）
+        // カメラ
         var cam = GameObject.Find("Main Camera")?.GetComponent<Camera>();
         if (cam) { cam.orthographic = true; cam.orthographicSize = 5f; }
 
@@ -111,24 +331,84 @@ MonoBehaviour:
         scaler.uiScaleMode         = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = new Vector2(REF_W, REF_H);
         scaler.screenMatchMode     = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
-        scaler.matchWidthOrHeight  = 0f;   // 幅基準でスケール
+        scaler.matchWidthOrHeight  = 0f;
 
         canvasObj.AddComponent<GraphicRaycaster>();
         var gameUI = canvasObj.AddComponent<GameUI>();
 
-        // ---- 5. Header（上部 120px）----
-        //  ┌─ StageNameText (左半分)  ─┬─ TimerArea (右半分) ─┐
-        var headerObj  = MakeRect("Header", canvasObj.transform,
+        // ---- 5. Title Panel ----
+        var titlePanel = MakeFullPanel("TitlePanel", canvasObj.transform, new Color(0.1f, 0.1f, 0.12f, 1f));
+        titlePanel.SetActive(true);
+
+        MakeText("TitleText", titlePanel.transform, "SORT GEMS", 64,
+            new Vector2(0, 0.7f), new Vector2(1, 0.9f), Vector2.zero, Vector2.zero)
+            .color = Color.white;
+
+        var playBtn = CreateButton("PlayButton", "PLAY", titlePanel.transform, new Vector2(0, -100), new Vector2(300, 100));
+
+        // ---- 6. Stage Select Panel ----
+        var stageSelectPanel = MakeFullPanel("StageSelectPanel", canvasObj.transform, new Color(0.1f, 0.1f, 0.12f, 1f));
+        stageSelectPanel.SetActive(false);
+
+        MakeText("SelectTitle", stageSelectPanel.transform, "SELECT STAGE", 48,
+            new Vector2(0, 0.85f), new Vector2(1, 0.95f), Vector2.zero, Vector2.zero)
+            .color = Color.white;
+
+        var selectBackBtn = CreateButton("BackButton", "Back", stageSelectPanel.transform, Vector2.zero, new Vector2(120, 60));
+        var selectBackRt = selectBackBtn.GetComponent<RectTransform>();
+        selectBackRt.anchorMin = new Vector2(0f, 1f);
+        selectBackRt.anchorMax = new Vector2(0f, 1f);
+        selectBackRt.pivot = new Vector2(0f, 1f);
+        selectBackRt.anchoredPosition = new Vector2(40f, -40f);
+
+        // スクロールコンテナ
+        var scrollRectObj = MakeRect("StageListScroll", stageSelectPanel.transform,
+            new Vector2(0.1f, 0.15f), new Vector2(0.9f, 0.8f), new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
+        var scrollRect = scrollRectObj.gameObject.AddComponent<ScrollRect>();
+        
+        var viewport = MakeRect("Viewport", scrollRectObj, Vector2.zero, Vector2.one, new Vector2(0, 1), Vector2.zero, Vector2.zero);
+        viewport.gameObject.AddComponent<Image>().color = new Color(0, 0, 0, 0.2f);
+        viewport.gameObject.AddComponent<Mask>();
+        
+        var scrollContent = MakeRect("Content", viewport, Vector2.zero, new Vector2(1, 0), new Vector2(0.5f, 1), Vector2.zero, new Vector2(0, 800));
+        var contentLayout = scrollContent.gameObject.AddComponent<GridLayoutGroup>();
+        contentLayout.cellSize = new Vector2(180, 180);
+        contentLayout.spacing = new Vector2(24, 24);
+        contentLayout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+        contentLayout.constraintCount = 4;
+        contentLayout.padding = new RectOffset(20, 20, 20, 20);
+
+        scrollRect.viewport = viewport;
+        scrollRect.content = scrollContent;
+        scrollRect.horizontal = false;
+        scrollRect.vertical = true;
+
+        var stageBtnTemplate = CreateButton("StageButtonTemplate", "1\nStageName", scrollContent, Vector2.zero, new Vector2(180, 180));
+        stageBtnTemplate.gameObject.SetActive(false);
+
+        // ---- 7. Game Play Panel ----
+        var gamePlayPanel = MakeFullPanel("GamePlayPanel", canvasObj.transform, new Color(0.15f, 0.15f, 0.18f, 1f));
+        gamePlayPanel.SetActive(false);
+
+        // ---- 8. Header（パズル用）----
+        var headerObj  = MakeRect("Header", gamePlayPanel.transform,
             ancMin: new Vector2(0,1), ancMax: new Vector2(1,1),
             pivot: new Vector2(0.5f,1), pos: Vector2.zero, size: new Vector2(0, HEADER_H));
 
-        var stageNameText = MakeText("StageNameText", headerObj.transform,
+        var gamePlayBackBtn = CreateButton("BackButton", "Back", headerObj, Vector2.zero, new Vector2(120, 60));
+        var gamePlayBackRt = gamePlayBackBtn.GetComponent<RectTransform>();
+        gamePlayBackRt.anchorMin = new Vector2(0f, 0.5f);
+        gamePlayBackRt.anchorMax = new Vector2(0f, 0.5f);
+        gamePlayBackRt.pivot = new Vector2(0f, 0.5f);
+        gamePlayBackRt.anchoredPosition = new Vector2(20f, 0f);
+
+        var stageNameText = MakeText("StageNameText", headerObj,
             "Stage Name", 32,
-            ancMin: new Vector2(0,0), ancMax: new Vector2(0.5f,1),
+            ancMin: new Vector2(0.2f,0), ancMax: new Vector2(0.6f,1),
             pos: Vector2.zero, size: Vector2.zero);
 
-        var timerArea = MakeRect("TimerArea", headerObj.transform,
-            ancMin: new Vector2(0.5f,0), ancMax: Vector2.one,
+        var timerArea = MakeRect("TimerArea", headerObj,
+            ancMin: new Vector2(0.6f,0), ancMax: new Vector2(1,1),
             pivot: new Vector2(0.5f,0.5f), pos: Vector2.zero, size: Vector2.zero);
 
         var (slider, fillImage) = MakeSlider("TimerSlider", timerArea.transform);
@@ -138,22 +418,17 @@ MonoBehaviour:
             ancMin: new Vector2(0,0), ancMax: new Vector2(1,0.45f),
             pos: Vector2.zero, size: Vector2.zero);
 
-        // ---- 6. Main Grid ----
-        float gridPx  = MAIN_COLS * (CELL_SIZE + CELL_SPACING);  // 24×41.5 = 996
-        float gridH   = MAIN_ROWS * (CELL_SIZE + CELL_SPACING);  // 996
+        // ---- 9. Main Grid ----
+        float gridPx  = MAIN_COLS * (CELL_SIZE + CELL_SPACING);
+        float gridH   = MAIN_ROWS * (CELL_SIZE + CELL_SPACING);
 
-        // 画面中央寄せの計算
-        // 作業領域（HeaderとButtonBarの間） = 1920 - 120 - 80 = 1720
-        // コンテンツ全体の高さ = gridH + PALETTE_GAP + palH = 996 + 24 + 166 = 1186
-        // 上下の余白 = (1720 - 1186) / 2 = 267
-        // メイングリッドの上端Y = -HEADER_H - 267 = -387f
-        float palH = PAL_ROWS * (CELL_SIZE + CELL_SPACING);      // 4×41.5 = 166
+        float palH = PAL_ROWS * (CELL_SIZE + CELL_SPACING);
         float contentH = gridH + PALETTE_GAP + palH;
         float remainingH = (REF_H - HEADER_H - BUTTON_H) - contentH;
         float topMargin = remainingH / 2f;
         float gridTop = HEADER_H + topMargin;
 
-        var gridContainerObj = MakeRect("GridContainer", canvasObj.transform,
+        var gridContainerObj = MakeRect("GridContainer", gamePlayPanel.transform,
             ancMin: new Vector2(0.5f,1), ancMax: new Vector2(0.5f,1),
             pivot: new Vector2(0.5f,1),
             pos: new Vector2(0, -gridTop),
@@ -163,11 +438,11 @@ MonoBehaviour:
         var mainLayout = gridContainerObj.gameObject.AddComponent<GridLayoutGroup>();
         ConfigureLayout(mainLayout, MAIN_COLS, CELL_SIZE, CELL_SPACING);
 
-        // ---- 7. Palette（グリッドの直下）----
-        float palW = PAL_COLS * (CELL_SIZE + CELL_SPACING);      // 16×41.5 = 664
+        // ---- 10. Palette ----
+        float palW = PAL_COLS * (CELL_SIZE + CELL_SPACING);
         float palTop = gridTop + gridH + PALETTE_GAP;
 
-        var paletteObj = MakeRect("PaletteContainer", canvasObj.transform,
+        var paletteObj = MakeRect("PaletteContainer", gamePlayPanel.transform,
             ancMin: new Vector2(0.5f,1), ancMax: new Vector2(0.5f,1),
             pivot: new Vector2(0.5f,1),
             pos: new Vector2(0, -palTop),
@@ -181,8 +456,8 @@ MonoBehaviour:
         SetRef(gridView, "_mainLayout",    mainLayout);
         SetRef(gridView, "_paletteLayout", paletteLayout);
 
-        // ---- 8. ButtonBar（下部 80px）----
-        var buttonBarObj = MakeRect("ButtonBar", canvasObj.transform,
+        // ---- 11. ButtonBar ----
+        var buttonBarObj = MakeRect("ButtonBar", gamePlayPanel.transform,
             ancMin: new Vector2(0,0), ancMax: new Vector2(1,0),
             pivot: new Vector2(0.5f,0), pos: Vector2.zero, size: new Vector2(0, BUTTON_H));
 
@@ -190,15 +465,15 @@ MonoBehaviour:
         var hintBtn  = CreateButton("HintButton",  "Hint",  buttonBarObj.transform, new Vector2(0,0),    new Vector2(120,56));
         var resetBtn = CreateButton("ResetButton", "Reset", buttonBarObj.transform, new Vector2(160,0),  new Vector2(120,56));
 
-        // ---- 9. Cleared / Failed パネル ----
-        var clearedPanel    = MakeFullPanel("ClearedPanel", canvasObj.transform, new Color(0,0,0,0.82f));
+        // ---- 12. Cleared / Failed パネル ----
+        var clearedPanel    = MakeFullPanel("ClearedPanel", gamePlayPanel.transform, new Color(0,0,0,0.82f));
         MakeText("ClearedText", clearedPanel.transform, "STAGE CLEAR!", 52,
             new Vector2(0,0), Vector2.one, new Vector2(0,80), Vector2.zero)
             .color = Color.yellow;
         var nextBtn         = CreateButton("NextStageButton", "Next Stage", clearedPanel.transform, new Vector2(0,-40),  new Vector2(220,64));
         var replayBtnC      = CreateButton("ReplayButton",    "Replay",     clearedPanel.transform, new Vector2(0,-120), new Vector2(220,64));
 
-        var failedPanel     = MakeFullPanel("FailedPanel", canvasObj.transform, new Color(0,0,0,0.82f));
+        var failedPanel     = MakeFullPanel("FailedPanel", gamePlayPanel.transform, new Color(0,0,0,0.82f));
         MakeText("FailedText", failedPanel.transform, "TIME'S UP!", 52,
             new Vector2(0,0), Vector2.one, new Vector2(0,80), Vector2.zero)
             .color = Color.red;
@@ -223,9 +498,13 @@ MonoBehaviour:
         SetRef(gameUI, "_addTimeLabel",         addTimeLabel);
         SetRef(gameUI, "_gridView",             gridView);
         SetRef(gameUI, "_gridManager",          grd);
+        
+        SetRef(gameUI, "_playButton",           playBtn);
+        SetRef(gameUI, "_stageSelectBackButton",selectBackBtn);
+        SetRef(gameUI, "_gamePlayBackButton",   gamePlayBackBtn);
         new SerializedObject(gameUI).ApplyModifiedProperties();
 
-        // ---- 10. GemCell Prefab ----
+        // ---- 13. GemCell Prefab ----
         var prefabPath = "Assets/Prefabs/GemCell.prefab";
         Directory.CreateDirectory(Path.GetDirectoryName(prefabPath)!);
 
@@ -236,22 +515,21 @@ MonoBehaviour:
         var bgImg  = MakeImageChild("BackgroundImage", cellRoot.transform,
                         new Color(0.18f, 0.18f, 0.22f, 1f), Vector2.zero, Vector2.one);
         var socketImg = MakeImageChild("SocketImage", cellRoot.transform,
-                        new Color(0f, 0f, 0f, 0.32f), Vector2.zero, Vector2.one);
+                        new Color(0f, 0f, 0f, 0.55f), Vector2.zero, Vector2.one);
         var gemImg = MakeImageChild("GemImage", cellRoot.transform,
                         Color.white, Vector2.zero, Vector2.one);
         
-        // 3D宝石風の斜めカットベベルシャドウ（角丸切り抜き済みスプライト）を重ねる
         var bevelShadow = MakeImageChild("BevelShadow", gemImg.transform,
                             Color.white, Vector2.zero, Vector2.one);
         bevelShadow.sprite = GemColorPalette.BevelShadowSprite;
 
-        // ジェムの立体感を際立たせるドロップシャドウを追加（影を少し濃いめに設定）
         var shadowEff = gemImg.gameObject.AddComponent<Shadow>();
         shadowEff.effectColor = new Color(0f, 0f, 0f, 0.48f);
         shadowEff.effectDistance = new Vector2(2f, -2f);
 
         var mark   = MakeImageChild("CompletedMark", cellRoot.transform,
-                        new Color(0.5f,1f,0.5f,0.8f), new Vector2(0.65f,0.65f), Vector2.one);
+                        new Color(1f, 1f, 1f, 0.4f), new Vector2(0.15f, 0.55f), new Vector2(0.85f, 0.85f));
+        mark.sprite = GemColorPalette.RoundedRectSprite;
         mark.gameObject.SetActive(false);
 
         SetRef(cellView, "_gemImage",       gemImg);
@@ -270,71 +548,39 @@ MonoBehaviour:
         SetRef(gridView, "_cellPrefab", gemCellPrefab.GetComponent<GemCellView>());
         new SerializedObject(gridView).ApplyModifiedProperties();
 
-        // ---- 11. Stage_001（24×24, palette 16×4）----
-        var stagePath = "Assets/ScriptableObjects/Stages/Stage_001.asset";
-        Directory.CreateDirectory(Path.GetDirectoryName(stagePath)!);
-        if (AssetDatabase.LoadAssetAtPath<StageData>(stagePath) != null)
-            AssetDatabase.DeleteAsset(stagePath);
+        // ---- 14. ステージアセット生成 ----
+        var stage1 = CreateStageFromArt(1, "Star", StarArt, 300f);
+        var stage2 = CreateStageFromArt(2, "Heart", HeartArt, 300f);
+        var stage3 = CreateStageFromArt(3, "Tree", TreeArt, 300f);
+        var stage4 = CreateStageFromArt(4, "Flower", FlowerArt, 300f);
 
-        var stageData = ScriptableObject.CreateInstance<StageData>();
-        stageData.stageNumber     = 1;
-        stageData.stageName       = "Tutorial 1";
-        stageData.mainRows        = MAIN_ROWS;   // 24
-        stageData.mainCols        = MAIN_COLS;   // 24
-        stageData.paletteRows     = PAL_ROWS;    // 4
-        stageData.paletteCols     = PAL_COLS;    // 16
-        stageData.timeLimitSeconds = 480f;       // 8分
-
-        // ゴール配置: 4色を6×4のブロックで分割
-        //   Red:    row  0-11, col  0-11  (左上 12×12)
-        //   Blue:   row  0-11, col 12-23  (右上 12×12)
-        //   Green:  row 12-23, col  0-11  (左下 12×12)
-        //   Yellow: row 12-23, col 12-23  (右下 12×12)
-        stageData.goalLayout = new List<StageData.CellColorDef>();
-        FillBlock(stageData.goalLayout,  0, 12,  0, 12, GemColor.Red);
-        FillBlock(stageData.goalLayout,  0, 12, 12, 24, GemColor.Blue);
-        FillBlock(stageData.goalLayout, 12, 24,  0, 12, GemColor.Green);
-        FillBlock(stageData.goalLayout, 12, 24, 12, 24, GemColor.Yellow);
-
-        // 初期配置: 同じジェムを市松模様に混在（=毎行 R B G Y R B G Y...）
-        stageData.initialMainCells = new List<StageData.CellColorDef>();
-        var colorCycle = new[] { GemColor.Red, GemColor.Blue, GemColor.Green, GemColor.Yellow };
-        // メイングリッドの 24×24 すべてのマスにジェムをぎっしり配置
-        for (int r = 0; r < MAIN_ROWS; r++)
-            for (int c = 0; c < MAIN_COLS; c++)
-            {
-                int colorIdx = (r + c) % 4;
-                stageData.initialMainCells.Add(new StageData.CellColorDef
-                    { row = r, col = c, color = colorCycle[colorIdx] });
-            }
-
-        stageData.initialPaletteCells = new List<StageData.CellColorDef>();
-
-        AssetDatabase.CreateAsset(stageData, stagePath);
-        AssetDatabase.SaveAssets();
-        AssetDatabase.Refresh();
-
-        // ---- 12. GameBootstrap ----
+        // ---- 15. GameBootstrap ----
         var bootstrap = new GameObject("GameBootstrap").AddComponent<GameBootstrap>();
         SetRef(bootstrap, "_gameManager", gm);
         SetRef(bootstrap, "_gridView",    gridView);
         SetRef(bootstrap, "_gameUI",      gameUI);
-        SetRef(bootstrap, "_testStage",   stageData);
-        new SerializedObject(bootstrap).ApplyModifiedProperties();
+
+        SetRef(bootstrap, "_titlePanel",       titlePanel);
+        SetRef(bootstrap, "_stageSelectPanel", stageSelectPanel);
+        SetRef(bootstrap, "_gamePlayPanel",    gamePlayPanel);
+        SetRef(bootstrap, "_stageButtonContent",scrollContent.transform);
+        SetRef(bootstrap, "_stageButtonPrefab", stageBtnTemplate.gameObject);
+
+        // ステージリスト（_stages）のシリアライズ
+        var bootstrapSo = new SerializedObject(bootstrap);
+        var stagesProp = bootstrapSo.FindProperty("_stages");
+        stagesProp.ClearArray();
+        stagesProp.InsertArrayElementAtIndex(0); stagesProp.GetArrayElementAtIndex(0).objectReferenceValue = stage1;
+        stagesProp.InsertArrayElementAtIndex(1); stagesProp.GetArrayElementAtIndex(1).objectReferenceValue = stage2;
+        stagesProp.InsertArrayElementAtIndex(2); stagesProp.GetArrayElementAtIndex(2).objectReferenceValue = stage3;
+        stagesProp.InsertArrayElementAtIndex(3); stagesProp.GetArrayElementAtIndex(3).objectReferenceValue = stage4;
+        bootstrapSo.ApplyModifiedProperties();
 
         UnityEditor.SceneManagement.EditorSceneManager.SaveScene(scene, scenePath);
-        Debug.Log("[SortGems] GameScene 生成完了 — 24×24グリッド / 16×4パレット / モバイル縦レイアウト");
+        Debug.Log("[SortGems] GameScene 構築完了 — Title, StageSelect, GamePlay の3パネル構成 + 16x16ピクセルアート4ステージ");
     }
 
     // ===== ヘルパー =====
-
-    static void FillBlock(List<StageData.CellColorDef> list,
-                          int rMin, int rMax, int cMin, int cMax, GemColor color)
-    {
-        for (int r = rMin; r < rMax; r++)
-            for (int c = cMin; c < cMax; c++)
-                list.Add(new StageData.CellColorDef { row = r, col = c, color = color });
-    }
 
     static void ConfigureLayout(GridLayoutGroup layout, int cols, float cellSize, float spacing)
     {
@@ -437,7 +683,13 @@ MonoBehaviour:
     static void SetRef<T>(Object target, string propName, T value) where T : Object
     {
         var so = new SerializedObject(target);
-        so.FindProperty(propName).objectReferenceValue = value;
+        var prop = so.FindProperty(propName);
+        if (prop == null)
+        {
+            Debug.LogError($"[CreateGameScene] Property '{propName}' not found on {target.name}");
+            return;
+        }
+        prop.objectReferenceValue = value;
         so.ApplyModifiedProperties();
     }
 }

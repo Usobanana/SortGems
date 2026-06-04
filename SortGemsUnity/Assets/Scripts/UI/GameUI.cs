@@ -32,6 +32,11 @@ namespace SortGems.UI
         [SerializeField] private Button _replayButton_Failed;
         [SerializeField] private Text _addTimeLabel;
 
+        [Header("Screen Control Buttons")]
+        [SerializeField] private Button _playButton;
+        [SerializeField] private Button _stageSelectBackButton;
+        [SerializeField] private Button _gamePlayBackButton;
+
         [Header("Settings")]
         [SerializeField] private float _addTimeSeconds = 60f;
 
@@ -67,6 +72,10 @@ namespace SortGems.UI
 
             _clearedPanel.SetActive(false);
             _failedPanel.SetActive(false);
+
+            if (_playButton != null) _playButton.onClick.AddListener(() => GameBootstrap.Instance.ShowStageSelect());
+            if (_stageSelectBackButton != null) _stageSelectBackButton.onClick.AddListener(() => GameBootstrap.Instance.ShowTitle());
+            if (_gamePlayBackButton != null) _gamePlayBackButton.onClick.AddListener(() => GameBootstrap.Instance.ShowStageSelect());
         }
 
         // ---- タイマー表示 ----
@@ -156,9 +165,11 @@ namespace SortGems.UI
 
         private void OnNextStageClicked()
         {
-            // TODO: StageManager でステージ番号をインクリメントして次ステージをロード
-            Debug.Log("[GameUI] Next Stage — wire to StageManager");
             _clearedPanel.SetActive(false);
+            if (GameBootstrap.Instance != null)
+            {
+                GameBootstrap.Instance.LoadNextStage();
+            }
         }
 
         public void SetStageName(string name)
