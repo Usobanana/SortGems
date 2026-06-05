@@ -33,8 +33,12 @@ namespace SortGems.Core
         // goalColor 表示用（薄い下地色）
         private GemColor _goalColor;
         private Outline _outline;
+        private Outline _selectionOutline;
         private Shadow _gemShadow;
         private Coroutine _blinkCoroutine;
+        private Coroutine _selectionBlinkCoroutine;
+        private Coroutine _floatCoroutine;
+        private Vector3 _gemImageBasePos = Vector3.zero;
 
         private void Awake()
         {
@@ -44,6 +48,7 @@ namespace SortGems.Core
             // 角丸四角形のスプライトを適用し、ジェムを一回り小さく設定
             if (_gemImage != null)
             {
+                _gemImageBasePos = _gemImage.transform.localPosition;
                 _gemImage.sprite = GemColorPalette.RoundedRectSprite;
                 _gemImage.transform.localRotation = Quaternion.identity;
                 _gemImage.transform.localScale = new Vector3(0.72f, 0.72f, 1f);
@@ -61,6 +66,11 @@ namespace SortGems.Core
                 }
 
                 _gemShadow = _gemImage.GetComponent<Shadow>();
+
+                _selectionOutline = _gemImage.gameObject.AddComponent<Outline>();
+                _selectionOutline.effectColor = new Color(1f, 1f, 1f, 0f);
+                _selectionOutline.effectDistance = new Vector2(1.5f, 1.5f);
+                _selectionOutline.enabled = false;
             }
 
             if (_socketImage != null)
@@ -169,6 +179,34 @@ namespace SortGems.Core
 
             float targetScale = selected ? 1.15f : 1f;
             ScaleTo(_baseScale * targetScale, 0.12f);
+
+            // ジェムの Y 軸浮き上がり演出
+            if (_gemImage != null)
+            {
+                if (_floatCoroutine != null) StopCoroutine(_floatCoroutine);
+                float targetY = selected ? 12f : 0f;
+                _floatCoroutine = StartCoroutine(FloatGemRoutine(targetY, 0.12f));
+            }
+
+            // 選択枠の細線・高速明滅演出
+            if (selected)
+            {
+                if (_selectionBlinkCoroutine != null) StopCoroutine(_selectionBlinkCoroutine);
+                _selectionBlinkCoroutine = StartCoroutine(SelectionBlinkRoutine());
+            }
+            else
+            {
+                if (_selectionBlinkCoroutine != null)
+                {
+                    StopCoroutine(_selectionBlinkCoroutine);
+                    _selectionBlinkCoroutine = null;
+                }
+                if (_selectionOutline != null)
+                {
+                    _selectionOutline.enabled = false;
+                    _selectionOutline.effectColor = new Color(1f, 1f, 1f, 0f);
+                }
+            }
         }
 
         public void SetHighlighted(bool highlighted)
@@ -231,27 +269,23 @@ namespace SortGems.Core
 
         private void UpdateVisual()
         {
-            if (_isSelected)
-                _backgroundImage.color = _selectedColor;
+            // 選択時も背景色を白ベタ塗りにせず、元の目標色・背景色を維持する
+            bool isEmpty = _gemColor == GemColor.None;
+            bool isCorrect = (_gemColor != GemColor.None && _gemColor == _goalColor);
+
+            if (isCorrect)
+            {
+                _backgroundImage.color = GemColorPalette.GetColor(_gemColor);
+            }
+            else if (_goalColor != GemColor.None)
+            {
+                _backgroundImage.color = GemColorPalette.GetColor(_goalColor);
+            }
             else
             {
-                bool isEmpty = _gemColor == GemColor.None;
-                bool isCorrect = (_gemColor != GemColor.None && _gemColor == _goalColor);
-
-                if (isCorrect)
-                {
-                    _backgroundImage.color = GemColorPalette.GetColor(_gemColor);
-                }
-                else if (_goalColor != GemColor.None)
-                {
-                    _backgroundImage.color = GemColorPalette.GetColor(_goalColor);
-                }
-                else
-                {
-                    _backgroundImage.color = isEmpty
-                        ? _emptyColor
-                        : new Color(0.18f, 0.18f, 0.22f, 1f);
-                }
+                _backgroundImage.color = isEmpty
+                    ? _emptyColor
+                    : new Color(0.18f, 0.18f, 0.22f, 1f);
             }
         }
 
@@ -267,6 +301,39 @@ namespace SortGems.Core
                 {
                     _outline.effectColor = new Color(1f, 1f, 1f, alpha);
                 }
+                yield return null;
+            }
+        }
+
+        private IEnumerator FloatGemRoutine(float targetY, float duration)
+        {
+            Vector3 startPos = _gemImage.transform.localPosition;
+            Vector3 endPos = new Vector3(_gemImageBasePos.x, _gemImageBasePos.y + targetY, _gemImageBasePos.z);
+            float elapsed = 0f;
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                float t = Mathf.Clamp01(elapsed / duration);
+                t = t * (2f - t); // EaseOutQuad
+                _gemImage.transform.localPosition = Vector3.Lerp(startPos, endPos, t);
+                yield return null;
+            }
+            _gemImage.transform.localPosition = endPos;
+        }
+
+        private IEnumerator SelectionBlinkRoutine()
+        {
+            if (_selectionOutline == null) yield break;
+            _selectionOutline.enabled = true;
+            _selectionOutline.effectDistance = new Vector2(1.5f, 1.5f); // 細めの白枠
+
+            float elapsed = 0f;
+            while (_isSelected)
+            {
+                elapsed += Time.deltaTime;
+                // 白枠を高速めで明滅（アルファ0.35〜1.0の間）
+                float alpha = 0.65f + Mathf.Sin(elapsed * Mathf.PI * 4f) * 0.35f;
+                _selectionOutline.effectColor = new Color(1f, 1f, 1f, alpha);
                 yield return null;
             }
         }

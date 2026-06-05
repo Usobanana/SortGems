@@ -23,7 +23,8 @@ namespace SortGems.Core
         [SerializeField] private float _paletteCellSpacing = 0f;
 
         [Header("Layout Settings")]
-        [SerializeField] private float _maxCellSize = 45f; // マスサイズの最大値 (iPad対策)
+        [SerializeField] private float _maxMainCellSize = 45f;
+        [SerializeField] private float _maxPaletteCellSize = 75f;
 
         [Header("Prefab")]
         [SerializeField] private GemCellView _cellPrefab;
@@ -53,13 +54,15 @@ namespace SortGems.Core
         // ---- 構築 ----
 
         private float _currentCellSize = 41.5f;
+        private float _currentPaletteCellSize = 75f;
 
         public void BuildGrid(StageData stage)
         {
             if (_gridManager == null) return;
 
-            // 1. 動的セルサイズ計算 (横のマス数 + 2 で画面幅を割る)
+            // 1. 画面サイズ（幅・高さ）の動的取得
             float canvasWidth = 1080f;
+            float canvasHeight = 1920f;
             var parentCanvas = GetComponentInParent<Canvas>();
             if (parentCanvas != null)
             {
@@ -67,23 +70,84 @@ namespace SortGems.Core
                 if (canvasRt != null)
                 {
                     canvasWidth = canvasRt.rect.width;
+                    canvasHeight = canvasRt.rect.height;
                 }
             }
 
-            float calculatedSize = canvasWidth / (stage.mainCols + 2);
-            _currentCellSize = Mathf.Min(calculatedSize, _maxCellSize);
+            float paddingVal = 16f; // コンテナ内余白
 
-            // 2. メイングリッドとパレットのコンテナをセンタリング＋幅調整
-            AdjustContainerLayout(_mainLayout.GetComponent<RectTransform>(), stage.mainCols, stage.mainRows, _currentCellSize, _mainCellSpacing);
-            AdjustContainerLayout(_paletteLayout.GetComponent<RectTransform>(), stage.paletteCols, stage.paletteRows, _currentCellSize, _paletteCellSpacing);
+            // メイングリッドのセルサイズ計算 (左右マージン40fとパディングを考慮)
+            float availableWidth = canvasWidth - 40f - (paddingVal * 2f);
+            float calculatedSize = availableWidth / stage.mainCols;
+            float roundedSize = Mathf.Floor(calculatedSize);
+            _currentCellSize = Mathf.Min(roundedSize, _maxMainCellSize);
 
-            // 3. 各エリアのセルを構築 (同一セルサイズに統一)
+            // パレットのセルサイズ計算 (左右マージン40fとパディングを考慮)
+            float availablePalWidth = canvasWidth - 40f - (paddingVal * 2f);
+            float calculatedPaletteSize = availablePalWidth / stage.paletteCols;
+            float roundedPaletteSize = Mathf.Floor(calculatedPaletteSize);
+            _currentPaletteCellSize = Mathf.Min(roundedPaletteSize, _maxPaletteCellSize);
+
+            // 2. コンテナ全体の正確な幅・高さを計算
+            float mainW = stage.mainCols * _currentCellSize + (stage.mainCols - 1) * _mainCellSpacing + (paddingVal * 2f);
+            float mainH = stage.mainRows * _currentCellSize + (stage.mainRows - 1) * _mainCellSpacing + (paddingVal * 2f);
+
+            float palW = stage.paletteCols * _currentPaletteCellSize + (stage.paletteCols - 1) * _paletteCellSpacing + (paddingVal * 2f);
+            float palH = stage.paletteRows * _currentPaletteCellSize + (stage.paletteRows - 1) * _paletteCellSpacing + (paddingVal * 2f);
+
+            // 3. 有効な縦領域内での動的センタリング配置 (重なり防止)
+            float headerH = 160f; // ヘッダー領域の高さ
+            float buttonH = 140f; // 下部ボタン領域の高さ
+            float availableH = canvasHeight - headerH - buttonH;
+
+            float gap = 32f; // メインとパレットの隙間
+            float totalContentH = mainH + gap + palH;
+
+            float margin = (availableH - totalContentH) / 2f;
+            margin = Mathf.Max(margin, 20f); // 最低20pxの余白を確保
+
+            float mainTopY = -headerH - margin;
+            float palTopY = mainTopY - mainH - gap;
+
+            // メイングリッドコンテナのRectTransform調整
+            var mainRt = _mainLayout.GetComponent<RectTransform>();
+            mainRt.anchorMin = new Vector2(0.5f, 1f);
+            mainRt.anchorMax = new Vector2(0.5f, 1f);
+            mainRt.pivot = new Vector2(0.5f, 1f);
+            mainRt.anchoredPosition = new Vector2(0f, mainTopY);
+            mainRt.sizeDelta = new Vector2(mainW, mainH);
+
+            // パレットコンテナのRectTransform調整
+            var palRt = _paletteLayout.GetComponent<RectTransform>();
+            palRt.anchorMin = new Vector2(0.5f, 1f);
+            palRt.anchorMax = new Vector2(0.5f, 1f);
+            palRt.pivot = new Vector2(0.5f, 1f);
+            palRt.anchoredPosition = new Vector2(0f, palTopY);
+            palRt.sizeDelta = new Vector2(palW, palH);
+
+            // 4. コンテナ背景（区切り枠）の設定（シンプルな矩形に変更）
+            var mainImg = _mainLayout.GetComponent<Image>();
+            if (mainImg == null) mainImg = _mainLayout.gameObject.AddComponent<Image>();
+            mainImg.sprite = null; // スプライトなし（シンプルな矩形）
+            mainImg.color = new Color(0.08f, 0.08f, 0.1f, 0.35f); // 半透明ダークグレー
+
+            var palImg = _paletteLayout.GetComponent<Image>();
+            if (palImg == null) palImg = _paletteLayout.gameObject.AddComponent<Image>();
+            palImg.sprite = null; // スプライトなし（シンプルな矩形）
+            palImg.color = new Color(0.08f, 0.08f, 0.1f, 0.55f); // やや濃い半透明ダークグレー
+
+            // 5. レイアウトパディングの適用
+            int pad = Mathf.RoundToInt(paddingVal);
+            _mainLayout.padding = new RectOffset(pad, pad, pad, pad);
+            _paletteLayout.padding = new RectOffset(pad, pad, pad, pad);
+
+            // 6. 各エリアのセルを構築
             BuildArea(_mainLayout,    stage.mainRows,    stage.mainCols,
                       _currentCellSize, _mainCellSpacing,
                       isPalette: false, out _mainViews);
 
             BuildArea(_paletteLayout, stage.paletteRows, stage.paletteCols,
-                      _currentCellSize, _paletteCellSpacing,
+                      _currentPaletteCellSize, _paletteCellSpacing,
                       isPalette: true,  out _paletteViews);
 
             RefreshAll();
@@ -282,7 +346,10 @@ namespace SortGems.Core
                     : _gridManager.GetMainCell(step.fromPos.x, step.fromPos.y);
                 fromCell.SetGem(GemColor.None, origCell.goalColor);
 
-                var co = StartCoroutine(AnimateSingleGem(fromCell.transform.position, toCell.transform.position, color));
+                float startSize = step.fromIsPalette ? _currentPaletteCellSize : _currentCellSize;
+                float endSize   = step.toIsPalette   ? _currentPaletteCellSize : _currentCellSize;
+
+                var co = StartCoroutine(AnimateSingleGem(fromCell.transform.position, toCell.transform.position, color, startSize, endSize));
                 activeTweens.Add(co);
 
                 yield return new WaitForSeconds(_delayBetweenGems);
@@ -295,9 +362,15 @@ namespace SortGems.Core
 
             _isAnimating = false;
             RefreshAll();
+
+            // 部分移動によって残った選択中グループがあれば、選択状態の表示を復元する
+            if (_gridManager != null && _gridManager.SelectedGroup != null)
+            {
+                HandleGroupSelected(_gridManager.SelectedGroup);
+            }
         }
 
-        private IEnumerator AnimateSingleGem(Vector3 startWorldPos, Vector3 endWorldPos, GemColor color)
+        private IEnumerator AnimateSingleGem(Vector3 startWorldPos, Vector3 endWorldPos, GemColor color, float startSize, float endSize)
         {
             // プレハブをベースに複製することで、移動中のビジュアル不一致や比率の崩れを完全に防ぐ
             var dummyCell = Instantiate(_cellPrefab, transform);
@@ -318,9 +391,9 @@ namespace SortGems.Core
             var bgTrans = dummyCell.transform.Find("BackgroundImage");
             if (bgTrans != null) bgTrans.gameObject.SetActive(false);
 
-            // サイズを現在の動的セルサイズに設定
+            // サイズを初期サイズに設定
             var rectTrans = dummyCell.GetComponent<RectTransform>();
-            rectTrans.sizeDelta = new Vector2(_currentCellSize, _currentCellSize);
+            rectTrans.sizeDelta = new Vector2(startSize, startSize);
 
             // ジェムの描画を設定
             dummyCell.SetGem(color, GemColor.None);
@@ -334,7 +407,14 @@ namespace SortGems.Core
                 elapsed += Time.deltaTime;
                 float t = Mathf.Clamp01(elapsed / _moveDuration);
                 t = t * (2f - t); // EaseOutQuad
+                
+                // 位置の移動
                 dummyCell.transform.position = Vector3.Lerp(startWorldPos, endWorldPos, t);
+                
+                // サイズの補間
+                float currentSize = Mathf.Lerp(startSize, endSize, t);
+                rectTrans.sizeDelta = new Vector2(currentSize, currentSize);
+                
                 yield return null;
             }
 

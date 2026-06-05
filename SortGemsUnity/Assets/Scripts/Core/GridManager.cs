@@ -187,7 +187,25 @@ namespace SortGems.Core
             if (targetColor == GemColor.None) return null;
             if (!isPalette && grid[startRow, startCol].IsCorrect) return null;
 
-            var group   = new GemGroup((int)targetColor, targetColor);
+            var group = new GemGroup((int)targetColor, targetColor);
+
+            if (isPalette)
+            {
+                // パレットの場合は、同じ色のすべてのジェムを1次元的に連続しているものとしてすべて選択する
+                for (int r = 0; r < PaletteRows; r++)
+                {
+                    for (int c = 0; c < PaletteCols; c++)
+                    {
+                        if (_palette[r, c].color == targetColor)
+                        {
+                            group.AddCell(new Vector2Int(r, c), true);
+                        }
+                    }
+                }
+                return group;
+            }
+
+            // メイングリッドの場合は8方向 Flood Fill
             var visited = new HashSet<Vector2Int>();
             var queue   = new Queue<Vector2Int>();
 
@@ -205,14 +223,12 @@ namespace SortGems.Core
                     var next = pos + dir;
                     if (visited.Contains(next)) continue;
 
-                    bool inBounds = isPalette
-                        ? InPaletteBounds(next.x, next.y)
-                        : InMainBounds(next.x, next.y);
+                    bool inBounds = InMainBounds(next.x, next.y);
                     if (!inBounds) continue;
 
-                    var neighbor = grid[next.x, next.y];
+                    var neighbor = _main[next.x, next.y];
                     // 同色であり、かつ正解位置にまだ入っていないマスのみ連結対象とする
-                    if (neighbor.color == targetColor && (isPalette || !neighbor.IsCorrect))
+                    if (neighbor.color == targetColor && !neighbor.IsCorrect)
                     {
                         visited.Add(next);
                         queue.Enqueue(next);
@@ -282,10 +298,45 @@ namespace SortGems.Core
             {
                 // 残りのジェムがある場合は選択状態を維持（新たなグループを再構成）
                 var remainingGroup = new GemGroup(group.groupId, group.color);
+                
+                // メイングリッドに残っているジェム（ソケット移動しないもの）を追加
                 for (int i = moveCount; i < group.cells.Count; i++)
                 {
-                    remainingGroup.AddCell(group.cells[i].pos, group.cells[i].isPalette);
+                    var entry = group.cells[i];
+                    if (!entry.isPalette)
+                    {
+                        remainingGroup.AddCell(entry.pos, false);
+                    }
                 }
+
+                // パレットに残っているジェムは、PackPalette()によって座標が左詰めに動いているため、
+                // PackPalette()後のパレット内から同じgroupId/colorのセルを見つけ出して登録する
+                int remainingPaletteCount = 0;
+                for (int i = moveCount; i < group.cells.Count; i++)
+                {
+                    if (group.cells[i].isPalette) remainingPaletteCount++;
+                }
+
+                if (remainingPaletteCount > 0)
+                {
+                    int foundCount = 0;
+                    for (int r = 0; r < PaletteRows; r++)
+                    {
+                        for (int c = 0; c < PaletteCols; c++)
+                        {
+                            if (_palette[r, c].color == group.color)
+                            {
+                                remainingGroup.AddCell(new Vector2Int(r, c), true);
+                                foundCount++;
+                                if (foundCount >= remainingPaletteCount)
+                                    break;
+                            }
+                        }
+                        if (foundCount >= remainingPaletteCount)
+                            break;
+                    }
+                }
+
                 _selectedGroup = remainingGroup;
                 OnGroupSelected?.Invoke(_selectedGroup);
             }

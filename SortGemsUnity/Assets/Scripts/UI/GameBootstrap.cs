@@ -135,10 +135,22 @@ namespace SortGems.UI
                 btnObj.name = $"Stage_{stage.stageNumber}";
                 btnObj.SetActive(true);
 
-                var text = btnObj.GetComponentInChildren<UnityEngine.UI.Text>();
+                // クリア状況のチェック
+                bool isCleared = PlayerPrefs.GetInt($"StageCleared_{stage.stageNumber}", 0) == 1;
+
+                // テキスト（ステージ番号と名前）のセット
+                var text = btnObj.transform.Find("Text")?.GetComponent<UnityEngine.UI.Text>();
                 if (text != null)
                 {
-                    text.text = $"{stage.stageNumber}\n{stage.stageName}";
+                    text.text = $"{stage.stageNumber} {stage.stageName}";
+                }
+
+                // プレビュー画像のセット (PreviewImage)
+                var previewImg = btnObj.transform.Find("PreviewImage")?.GetComponent<UnityEngine.UI.Image>();
+                if (previewImg != null)
+                {
+                    previewImg.sprite = CreatePreviewSprite(stage, isCleared);
+                    previewImg.color = Color.white; // Color.clear から白（不透明）に変更
                 }
 
                 var button = btnObj.GetComponent<UnityEngine.UI.Button>();
@@ -147,6 +159,45 @@ namespace SortGems.UI
                     button.onClick.AddListener(() => LoadStage(index));
                 }
             }
+        }
+
+        // ゴール配置（goalLayout）からカラー or グレースケールのプレビュースプライトを生成する
+        private Sprite CreatePreviewSprite(StageData stage, bool isCleared)
+        {
+            int rCount = stage.mainRows;
+            int cCount = stage.mainCols;
+
+            Texture2D tex = new Texture2D(cCount, rCount, TextureFormat.RGBA32, false);
+            tex.filterMode = FilterMode.Point;
+
+            Color[] pixels = new Color[rCount * cCount];
+            // 透明で初期化
+            for (int i = 0; i < pixels.Length; i++) pixels[i] = Color.clear;
+
+            // goalLayout をピクセル座標に配置
+            foreach (var cell in stage.goalLayout)
+            {
+                // Texture2Dのピクセルは下から上に向かってインデックスされるので、行インデックスを反転
+                int y = rCount - 1 - cell.row;
+                int x = cell.col;
+                if (x >= 0 && x < cCount && y >= 0 && y < rCount)
+                {
+                    Color col = GemColorPalette.GetColor(cell.color);
+                    if (!isCleared)
+                    {
+                        // グレースケール変換 (Luminance法)
+                        float gray = 0.299f * col.r + 0.587f * col.g + 0.114f * col.b;
+                        // 未クリアは少し暗い白黒シルエットにする
+                        col = new Color(gray * 0.55f, gray * 0.55f, gray * 0.55f, 1f);
+                    }
+                    pixels[y * cCount + x] = col;
+                }
+            }
+
+            tex.SetPixels(pixels);
+            tex.Apply();
+
+            return Sprite.Create(tex, new Rect(0, 0, cCount, rCount), new Vector2(0.5f, 0.5f));
         }
     }
 }

@@ -31,6 +31,7 @@ namespace SortGems.Core
 
         // ---- 参照 ----
         [SerializeField] private GridManager _gridManager;
+        private StageData _currentStage;
 
         private void Awake()
         {
@@ -47,6 +48,7 @@ namespace SortGems.Core
 
         public void StartStage(StageData stage)
         {
+            _currentStage = stage;
             TotalTime = stage.timeLimitSeconds;
             TimeRemaining = TotalTime;
             State = GameState.Playing;
@@ -89,6 +91,11 @@ namespace SortGems.Core
         private void HandleCleared()
         {
             State = GameState.Cleared;
+            if (_currentStage != null)
+            {
+                PlayerPrefs.SetInt($"StageCleared_{_currentStage.stageNumber}", 1);
+                PlayerPrefs.Save();
+            }
             OnGameCleared?.Invoke();
         }
 

@@ -196,7 +196,7 @@ public class CreateGameScene : EditorWindow
 
         for (int y = 0; y < 16; y++)
         {
-            string line = art[15 - y];
+            string line = art[y];
             for (int x = 0; x < 16; x++)
             {
                 char c = (x < line.Length) ? line[x] : '.';
@@ -253,7 +253,185 @@ public class CreateGameScene : EditorWindow
         stageData.initialPaletteCells = new List<StageData.CellColorDef>();
 
         AssetDatabase.CreateAsset(stageData, stagePath);
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
         return stageData;
+    }
+
+    // 16x16の幾何学的ピクセルアートをステージ番号に応じて自動生成する
+    private static string[] GenerateProceduralArt(int stageNumber, out string name)
+    {
+        int pattern = stageNumber % 8;
+        string[] art = new string[16];
+        char[] colors = { 'Y', 'R', 'B', 'G', 'O', 'C', 'K', 'P' };
+        
+        char c1 = colors[(stageNumber) % colors.Length];
+        char c2 = colors[(stageNumber + 2) % colors.Length];
+        char c3 = colors[(stageNumber + 5) % colors.Length];
+
+        switch (pattern)
+        {
+            case 0:
+                name = "Circle";
+                for (int r = 0; r < 16; r++)
+                {
+                    System.Text.StringBuilder sb = new System.Text.StringBuilder();
+                    for (int c = 0; c < 16; c++)
+                    {
+                        float dist = Vector2.Distance(new Vector2(r, c), new Vector2(7.5f, 7.5f));
+                        if (dist < 7.5f)
+                        {
+                            if (dist < 3f) sb.Append(c1);
+                            else if (dist < 5.5f) sb.Append(c2);
+                            else sb.Append(c3);
+                        }
+                        else sb.Append('.');
+                    }
+                    art[r] = sb.ToString();
+                }
+                break;
+            case 1:
+                name = "Diamond";
+                for (int r = 0; r < 16; r++)
+                {
+                    System.Text.StringBuilder sb = new System.Text.StringBuilder();
+                    for (int c = 0; c < 16; c++)
+                    {
+                        int dist = Mathf.Abs(r - 8) + Mathf.Abs(c - 8);
+                        if (dist <= 7)
+                        {
+                            if (dist <= 2) sb.Append(c1);
+                            else if (dist <= 5) sb.Append(c2);
+                            else sb.Append(c3);
+                        }
+                        else sb.Append('.');
+                    }
+                    art[r] = sb.ToString();
+                }
+                break;
+            case 2:
+                name = "Square";
+                for (int r = 0; r < 16; r++)
+                {
+                    System.Text.StringBuilder sb = new System.Text.StringBuilder();
+                    for (int c = 0; c < 16; c++)
+                    {
+                        if (r >= 2 && r < 14 && c >= 2 && c < 14)
+                        {
+                            int dist = Mathf.Max(Mathf.Abs(r - 8), Mathf.Abs(c - 8));
+                            if (dist <= 2) sb.Append(c1);
+                            else if (dist <= 4) sb.Append(c2);
+                            else sb.Append(c3);
+                        }
+                        else sb.Append('.');
+                    }
+                    art[r] = sb.ToString();
+                }
+                break;
+            case 3:
+                name = "Cross";
+                for (int r = 0; r < 16; r++)
+                {
+                    System.Text.StringBuilder sb = new System.Text.StringBuilder();
+                    for (int c = 0; c < 16; c++)
+                    {
+                        bool isMainCross = Mathf.Abs(r - 8) <= 1 || Mathf.Abs(c - 8) <= 1;
+                        bool isDiagCross = Mathf.Abs(r - c) <= 1 || Mathf.Abs(r + c - 15) <= 1;
+                        
+                        if ((isMainCross || isDiagCross) && (r >= 1 && r < 15 && c >= 1 && c < 15))
+                        {
+                            if (isMainCross && isDiagCross) sb.Append(c1);
+                            else if (isMainCross) sb.Append(c2);
+                            else sb.Append(c3);
+                        }
+                        else sb.Append('.');
+                    }
+                    art[r] = sb.ToString();
+                }
+                break;
+            case 4:
+                name = "Spiral";
+                for (int r = 0; r < 16; r++)
+                {
+                    System.Text.StringBuilder sb = new System.Text.StringBuilder();
+                    for (int c = 0; c < 16; c++)
+                    {
+                        float dist = Vector2.Distance(new Vector2(r, c), new Vector2(7.5f, 7.5f));
+                        if (dist < 7.5f)
+                        {
+                            int angle = Mathf.FloorToInt(Mathf.Atan2(r - 7.5f, c - 7.5f) * Mathf.Rad2Deg + 180f);
+                            int zone = (angle / 60) % 3;
+                            if (zone == 0) sb.Append(c1);
+                            else if (zone == 1) sb.Append(c2);
+                            else sb.Append(c3);
+                        }
+                        else sb.Append('.');
+                    }
+                    art[r] = sb.ToString();
+                }
+                break;
+            case 5:
+                name = "Stripe";
+                for (int r = 0; r < 16; r++)
+                {
+                    System.Text.StringBuilder sb = new System.Text.StringBuilder();
+                    for (int c = 0; c < 16; c++)
+                    {
+                        float dist = Vector2.Distance(new Vector2(r, c), new Vector2(7.5f, 7.5f));
+                        if (dist < 7.5f)
+                        {
+                            int val = (r + c) % 4;
+                            if (val == 0) sb.Append(c1);
+                            else if (val == 2) sb.Append(c2);
+                            else sb.Append(c3);
+                        }
+                        else sb.Append('.');
+                    }
+                    art[r] = sb.ToString();
+                }
+                break;
+            case 6:
+                name = "StarShape";
+                for (int r = 0; r < 16; r++)
+                {
+                    System.Text.StringBuilder sb = new System.Text.StringBuilder();
+                    for (int c = 0; c < 16; c++)
+                    {
+                        float dx = Mathf.Abs(c - 7.5f);
+                        float dy = Mathf.Abs(r - 7.5f);
+                        if (dx + dy < 7.5f || (dx < 1.5f && dy < 7.5f) || (dy < 1.5f && dx < 7.5f))
+                        {
+                            if (dx + dy < 3.5f) sb.Append(c1);
+                            else if (dx + dy < 6f) sb.Append(c2);
+                            else sb.Append(c3);
+                        }
+                        else sb.Append('.');
+                    }
+                    art[r] = sb.ToString();
+                }
+                break;
+            default:
+                name = "GridPattern";
+                for (int r = 0; r < 16; r++)
+                {
+                    System.Text.StringBuilder sb = new System.Text.StringBuilder();
+                    for (int c = 0; c < 16; c++)
+                    {
+                        float dist = Vector2.Distance(new Vector2(r, c), new Vector2(7.5f, 7.5f));
+                        if (dist < 7.5f)
+                        {
+                            bool isEven = (r / 2 + c / 2) % 2 == 0;
+                            if (dist < 4f) sb.Append(isEven ? c1 : c2);
+                            else sb.Append(isEven ? c2 : c3);
+                        }
+                        else sb.Append('.');
+                    }
+                    art[r] = sb.ToString();
+                }
+                break;
+        }
+
+        return art;
     }
 
     [MenuItem("Tools/SortGems/Create Game Scene")]
@@ -383,8 +561,29 @@ MonoBehaviour:
         scrollRect.horizontal = false;
         scrollRect.vertical = true;
 
-        var stageBtnTemplate = CreateButton("StageButtonTemplate", "1\nStageName", scrollContent, Vector2.zero, new Vector2(180, 180));
+        var stageBtnTemplate = CreateButton("StageButtonTemplate", "", scrollContent, Vector2.zero, new Vector2(180, 180));
         stageBtnTemplate.gameObject.SetActive(false);
+
+        // 既存の Text の RectTransform を下部に縮小調整
+        var templateText = stageBtnTemplate.transform.Find("Text")?.GetComponent<Text>();
+        if (templateText != null)
+        {
+            templateText.fontSize = 16;
+            templateText.text = "1\nStageName";
+            var textRt = templateText.GetComponent<RectTransform>();
+            textRt.anchorMin = new Vector2(0f, 0f);
+            textRt.anchorMax = new Vector2(1f, 0.25f);
+            textRt.pivot = new Vector2(0.5f, 0.5f);
+            textRt.anchoredPosition = Vector2.zero;
+            textRt.sizeDelta = Vector2.zero;
+        }
+
+        // プレビューImage の追加 (中央より少し上に配置、120x120)
+        var previewImg = MakeImageChild("PreviewImage", stageBtnTemplate.transform, Color.clear, 
+            new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f));
+        var previewRt = previewImg.GetComponent<RectTransform>();
+        previewRt.anchoredPosition = new Vector2(0f, 15f); // 少し上にずらす
+        previewRt.sizeDelta = new Vector2(120f, 120f);
 
         // ---- 7. Game Play Panel ----
         var gamePlayPanel = MakeFullPanel("GamePlayPanel", canvasObj.transform, new Color(0.15f, 0.15f, 0.18f, 1f));
@@ -512,6 +711,10 @@ MonoBehaviour:
         var cellView = cellRoot.AddComponent<GemCellView>();
         cellRoot.AddComponent<RectTransform>().sizeDelta = new Vector2(CELL_SIZE, CELL_SIZE);
 
+        var aspect = cellRoot.AddComponent<AspectRatioFitter>();
+        aspect.aspectMode = AspectRatioFitter.AspectMode.WidthControlsHeight;
+        aspect.aspectRatio = 1.0f;
+
         var bgImg  = MakeImageChild("BackgroundImage", cellRoot.transform,
                         new Color(0.18f, 0.18f, 0.22f, 1f), Vector2.zero, Vector2.one);
         var socketImg = MakeImageChild("SocketImage", cellRoot.transform,
@@ -549,10 +752,18 @@ MonoBehaviour:
         new SerializedObject(gridView).ApplyModifiedProperties();
 
         // ---- 14. ステージアセット生成 ----
-        var stage1 = CreateStageFromArt(1, "Star", StarArt, 300f);
-        var stage2 = CreateStageFromArt(2, "Heart", HeartArt, 300f);
-        var stage3 = CreateStageFromArt(3, "Tree", TreeArt, 300f);
-        var stage4 = CreateStageFromArt(4, "Flower", FlowerArt, 300f);
+        List<StageData> stages = new List<StageData>();
+        stages.Add(CreateStageFromArt(1, "Star", StarArt, 300f));
+        stages.Add(CreateStageFromArt(2, "Heart", HeartArt, 300f));
+        stages.Add(CreateStageFromArt(3, "Tree", TreeArt, 300f));
+        stages.Add(CreateStageFromArt(4, "Flower", FlowerArt, 300f));
+
+        for (int i = 5; i <= 100; i++)
+        {
+            string stageName;
+            string[] art = GenerateProceduralArt(i, out stageName);
+            stages.Add(CreateStageFromArt(i, stageName, art, 300f));
+        }
 
         // ---- 15. GameBootstrap ----
         var bootstrap = new GameObject("GameBootstrap").AddComponent<GameBootstrap>();
@@ -570,13 +781,16 @@ MonoBehaviour:
         var bootstrapSo = new SerializedObject(bootstrap);
         var stagesProp = bootstrapSo.FindProperty("_stages");
         stagesProp.ClearArray();
-        stagesProp.InsertArrayElementAtIndex(0); stagesProp.GetArrayElementAtIndex(0).objectReferenceValue = stage1;
-        stagesProp.InsertArrayElementAtIndex(1); stagesProp.GetArrayElementAtIndex(1).objectReferenceValue = stage2;
-        stagesProp.InsertArrayElementAtIndex(2); stagesProp.GetArrayElementAtIndex(2).objectReferenceValue = stage3;
-        stagesProp.InsertArrayElementAtIndex(3); stagesProp.GetArrayElementAtIndex(3).objectReferenceValue = stage4;
+        for (int i = 0; i < stages.Count; i++)
+        {
+            stagesProp.InsertArrayElementAtIndex(i);
+            stagesProp.GetArrayElementAtIndex(i).objectReferenceValue = stages[i];
+        }
         bootstrapSo.ApplyModifiedProperties();
 
         UnityEditor.SceneManagement.EditorSceneManager.SaveScene(scene, scenePath);
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
         Debug.Log("[SortGems] GameScene 構築完了 — Title, StageSelect, GamePlay の3パネル構成 + 16x16ピクセルアート4ステージ");
     }
 
