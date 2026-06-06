@@ -491,7 +491,32 @@ MonoBehaviour:
         var gmObj      = Child(mgr, "GameManager");  var gm  = gmObj.AddComponent<GameManager>();
         var gridMgrObj = Child(mgr, "GridManager");  var grd = gridMgrObj.AddComponent<GridManager>();
         var adObj      = Child(mgr, "AdManager");    adObj.AddComponent<AdManager>();
-        var sndObj     = Child(mgr, "SoundManager"); sndObj.AddComponent<SoundManager>();
+        var sndObj     = Child(mgr, "SoundManager"); var snd = sndObj.AddComponent<SoundManager>();
+
+        // Assets/Sound/BGM 以下の mp3 ファイルを自動ロード
+        var bgmClipsList = new List<AudioClip>();
+        string bgmDir = Path.Combine(Application.dataPath, "Sound/BGM");
+        if (Directory.Exists(bgmDir))
+        {
+            string[] bgmFiles = Directory.GetFiles(bgmDir, "*.mp3", SearchOption.AllDirectories);
+            foreach (var bgmFile in bgmFiles)
+            {
+                string relativePath = "Assets" + bgmFile.Substring(Application.dataPath.Length).Replace('\\', '/');
+                var clip = AssetDatabase.LoadAssetAtPath<AudioClip>(relativePath);
+                if (clip != null) bgmClipsList.Add(clip);
+            }
+        }
+
+        // SoundManager の _bgmClips にシリアライズしてアサイン
+        var sndSo = new SerializedObject(snd);
+        var bgmClipsProp = sndSo.FindProperty("_bgmClips");
+        bgmClipsProp.ClearArray();
+        for (int i = 0; i < bgmClipsList.Count; i++)
+        {
+            bgmClipsProp.InsertArrayElementAtIndex(i);
+            bgmClipsProp.GetArrayElementAtIndex(i).objectReferenceValue = bgmClipsList[i];
+        }
+        sndSo.ApplyModifiedProperties();
 
         SetRef(gm, "_gridManager", grd);
 
@@ -665,19 +690,21 @@ MonoBehaviour:
         var resetBtn = CreateButton("ResetButton", "Reset", buttonBarObj.transform, new Vector2(160,0),  new Vector2(120,56));
 
         // ---- 12. Cleared / Failed パネル ----
-        var clearedPanel    = MakeFullPanel("ClearedPanel", gamePlayPanel.transform, new Color(0,0,0,0.82f));
+        var clearedPanel    = MakeFullPanel("ClearedPanel", gamePlayPanel.transform, new Color(0f, 0f, 0f, 0.65f));
         MakeText("ClearedText", clearedPanel.transform, "STAGE CLEAR!", 52,
-            new Vector2(0,0), Vector2.one, new Vector2(0,80), Vector2.zero)
+            new Vector2(0.5f,0.5f), new Vector2(0.5f,0.5f), new Vector2(0, 700f), new Vector2(800, 100))
             .color = Color.yellow;
-        var nextBtn         = CreateButton("NextStageButton", "Next Stage", clearedPanel.transform, new Vector2(0,-40),  new Vector2(220,64));
-        var replayBtnC      = CreateButton("ReplayButton",    "Replay",     clearedPanel.transform, new Vector2(0,-120), new Vector2(220,64));
+        var nextBtn         = CreateButton("NextStageButton", "Next Stage", clearedPanel.transform, new Vector2(0, -340f), new Vector2(280, 72));
+        var replayBtnC      = CreateButton("ReplayButton",    "Replay",     clearedPanel.transform, new Vector2(0, -460f), new Vector2(240, 64));
+        var backBtnC        = CreateButton("BackButton",      "Back",       clearedPanel.transform, new Vector2(0, -580f), new Vector2(240, 64));
 
-        var failedPanel     = MakeFullPanel("FailedPanel", gamePlayPanel.transform, new Color(0,0,0,0.82f));
+        var failedPanel     = MakeFullPanel("FailedPanel", gamePlayPanel.transform, new Color(0f, 0f, 0f, 0.65f));
         MakeText("FailedText", failedPanel.transform, "TIME'S UP!", 52,
-            new Vector2(0,0), Vector2.one, new Vector2(0,80), Vector2.zero)
+            new Vector2(0.5f,0.5f), new Vector2(0.5f,0.5f), new Vector2(0, 700f), new Vector2(800, 100))
             .color = Color.red;
-        var addTimeBtn      = CreateButton("AddTimeButton", "Watch Ad +1:00", failedPanel.transform, new Vector2(0,-40),  new Vector2(260,64));
-        var replayBtnF      = CreateButton("ReplayButton",  "Retry",          failedPanel.transform, new Vector2(0,-120), new Vector2(220,64));
+        var addTimeBtn      = CreateButton("AddTimeButton", "Watch Ad +1:00", failedPanel.transform, new Vector2(0, -340f), new Vector2(300, 72));
+        var replayBtnF      = CreateButton("ReplayButton",  "Retry",          failedPanel.transform, new Vector2(0, -460f), new Vector2(240, 64));
+        var backBtnF        = CreateButton("BackButton",    "Back",           failedPanel.transform, new Vector2(0, -580f), new Vector2(240, 64));
         var addTimeLabel    = addTimeBtn.transform.Find("Text").GetComponent<Text>();
 
         // GameUI 参照
@@ -691,9 +718,11 @@ MonoBehaviour:
         SetRef(gameUI, "_clearedPanel",         clearedPanel);
         SetRef(gameUI, "_nextStageButton",      nextBtn);
         SetRef(gameUI, "_replayButton_Cleared", replayBtnC);
+        SetRef(gameUI, "_clearedBackButton",    backBtnC);
         SetRef(gameUI, "_failedPanel",          failedPanel);
         SetRef(gameUI, "_addTimeButton",        addTimeBtn);
         SetRef(gameUI, "_replayButton_Failed",  replayBtnF);
+        SetRef(gameUI, "_failedBackButton",     backBtnF);
         SetRef(gameUI, "_addTimeLabel",         addTimeLabel);
         SetRef(gameUI, "_gridView",             gridView);
         SetRef(gameUI, "_gridManager",          grd);
@@ -702,6 +731,9 @@ MonoBehaviour:
         SetRef(gameUI, "_stageSelectBackButton",selectBackBtn);
         SetRef(gameUI, "_gamePlayBackButton",   gamePlayBackBtn);
         new SerializedObject(gameUI).ApplyModifiedProperties();
+
+        // ピクセルアート（GridContainer）がクリア/失敗時の黒マスクより手前に描画されるように最前面に移動
+        gridContainerObj.SetAsLastSibling();
 
         // ---- 13. GemCell Prefab ----
         var prefabPath = "Assets/Prefabs/GemCell.prefab";
@@ -788,10 +820,46 @@ MonoBehaviour:
         }
         bootstrapSo.ApplyModifiedProperties();
 
+        // ---- 16. Audio Visualizer シングルトンシステムの自動生成 ----
+        // 画面最下部に固定され、シーン切り替え時も常駐する Canvas
+        var visualizerCanvasObj = new GameObject("[DontDestroyVisualizer]");
+        var vizCanvas = visualizerCanvasObj.AddComponent<Canvas>();
+        vizCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        vizCanvas.sortingOrder = 999; // 他の全UIの最前面に描画
+
+        var vizScaler = visualizerCanvasObj.AddComponent<CanvasScaler>();
+        vizScaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        vizScaler.referenceResolution = new Vector2(REF_W, REF_H);
+        vizScaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
+        vizScaler.matchWidthOrHeight = 0f;
+
+        visualizerCanvasObj.AddComponent<GraphicRaycaster>(); // UIイベント遮断防止のため、子要素のRaycastTargetはOFFになります
+
+        // バーを配置する親コンテナ (RectTransform)
+        // 画面の最下部（Bottom）にアンカーを固定
+        var containerRt = MakeRect("VisualizerContainer", visualizerCanvasObj.transform,
+            new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(0.5f, 0f), 
+            new Vector2(0f, 0f), new Vector2(0f, 220f)); // 画面幅いっぱいにストレッチ、高さ220f
+
+        // マネージャーの追加
+        var vizManager = visualizerCanvasObj.AddComponent<VisualizerManager>();
+
+        // インスペクター値を SerializedObject からセット
+        var vizSo = new SerializedObject(vizManager);
+        vizSo.FindProperty("_container").objectReferenceValue = containerRt;
+        vizSo.FindProperty("_barCount").intValue = 32; // 32本のバー
+        vizSo.FindProperty("_spacing").floatValue = 2f; // 間隔2px
+        vizSo.FindProperty("_sensitivity").floatValue = 2500f; // 感度
+        vizSo.FindProperty("_lerpSpeed").floatValue = 12f; // スムーズさ
+        vizSo.FindProperty("_barColor").colorValue = new Color(1f, 1f, 1f, 0.45f); // 白色、透明度 0.45f
+        vizSo.FindProperty("_minHeight").floatValue = 10f;
+        vizSo.FindProperty("_maxHeight").floatValue = 200f;
+        vizSo.ApplyModifiedProperties();
+
         UnityEditor.SceneManagement.EditorSceneManager.SaveScene(scene, scenePath);
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
-        Debug.Log("[SortGems] GameScene 構築完了 — Title, StageSelect, GamePlay の3パネル構成 + 16x16ピクセルアート4ステージ");
+        Debug.Log("[SortGems] GameScene 構築完了 — Title, StageSelect, GamePlay の3パネル構成 + 16x16ピクセルアート4ステージ + BGM自動割当 + ビジュアライザー生成");
     }
 
     // ===== ヘルパー =====

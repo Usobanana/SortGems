@@ -190,11 +190,15 @@ namespace SortGems.Core
                     view.Setup(r, c, isPalette);
 
                     int row = r, col = c;
-                    view.OnTapped += _ =>
+                    view.OnTappedWithEvent += (v, eventData) =>
                     {
                         if (_isAnimating) return; // アニメーション中は操作をブロック
-                        if (isPalette) _gridManager.OnPaletteCellTapped(row, col);
-                        else           _gridManager.OnMainCellTapped(row, col);
+                        
+                        // タップ位置に基づいて最も適切な優先セルに補正（吸い寄せ）
+                        GemCellView correctedView = CorrectTapTarget(v, eventData);
+                        
+                        if (correctedView.IsPalette) _gridManager.OnPaletteCellTapped(correctedView.Row, correctedView.Col);
+                        else           _gridManager.OnMainCellTapped(correctedView.Row, correctedView.Col);
                     };
 
                     views[r, c] = view;
@@ -250,8 +254,16 @@ namespace SortGems.Core
         {
             int rows = _mainViews.GetLength(0), cols = _mainViews.GetLength(1);
             for (int r = 0; r < rows; r++)
+            {
                 for (int c = 0; c < cols; c++)
+                {
+                    var cell = _gridManager.GetMainCell(r, c);
+                    // Voidマス、または空きマスは演出から除外する
+                    if (cell.isVoid || cell.IsEmpty) continue;
+
                     StartCoroutine(DelayedEffect((r + c) * 0.03f, _mainViews[r, c]));
+                }
+            }
         }
 
         // ---- ヘルパー ----
@@ -427,6 +439,119 @@ namespace SortGems.Core
 #endif
 
             Destroy(dummyCell.gameObject);
+        }
+
+        /// <summary>
+        /// タップ位置（スクリーン座標）に基づいて、操作を優先したいマス（目標色が一致する空きマスなど）へ補正する。
+        /// </summary>
+        private GemCellView CorrectTapTarget(GemCellView originalView, UnityEngine.EventSystems.PointerEventData eventData)
+        {
+            if (_gridManager == null) return originalView;
+
+            // UGUIのイベントデータからタップ位置を取得、取得できない場合は補正しない
+            if (eventData == null) return originalView;
+            Vector2 tapPos = eventData.position;
+
+            GemGroup selected = _gridManager.SelectedGroup;
+            GemCellView bestCandidate = originalView;
+            float bestDistance = float.MaxValue;
+
+            // スクリーン上での基本セルサイズ（幅）を算出
+            float screenCellSize = _currentCellSize;
+            var rectTrans = originalView.GetComponent<RectTransform>();
+            if (rectTrans != null)
+            {
+                Vector3[] corners = new Vector3[4];
+                rectTrans.GetWorldCorners(corners);
+                screenCellSize = Vector2.Distance(corners[0], corners[1]); // 左下から左上への距離 ＝ 高さ（幅と同じ）
+            }
+
+            // 吸い寄せのしきい値：セルサイズの1.3倍の距離
+            float threshold = screenCellSize * 1.3f;
+
+            // 1. メイングリッドの全セルから候補を探す
+            if (_mainViews != null)
+            {
+                int rows = _mainViews.GetLength(0);
+                int cols = _mainViews.GetLength(1);
+                for (int r = 0; r < rows; r++)
+                {
+                    for (int c = 0; c < cols; c++)
+                    {
+                        var view = _mainViews[r, c];
+                        if (view == null) continue;
+                        var cell = _gridManager.GetMainCell(r, c);
+                        if (cell.isVoid) continue;
+
+                        bool isCandidate = false;
+                        if (selected != null)
+                        {
+                            // ジェム選択中：移動先候補（現在選択中と同色の目標空マス）
+                            isCandidate = (cell.IsEmpty && cell.goalColor == selected.color);
+                        }
+                        else
+                        {
+                            // ジェム未選択：選択可能ジェム（正解位置にないジェム）
+                            isCandidate = (!cell.IsEmpty && !cell.IsCorrect);
+                        }
+
+                        if (isCandidate)
+                        {
+                            Vector2 cellScreenPos = RectTransformUtility.WorldToScreenPoint(null, view.transform.position);
+                            float dist = Vector2.Distance(tapPos, cellScreenPos);
+                            if (dist < threshold && dist < bestDistance)
+                            {
+                                bestDistance = dist;
+                                bestCandidate = view;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 2. パレットグリッドから候補を探す（ジェム未選択時のみ、パレット上のジェムも選択候補にする）
+            if (selected == null && _paletteViews != null)
+            {
+                int rows = _paletteViews.GetLength(0);
+                int cols = _paletteViews.GetLength(1);
+                for (int r = 0; r < rows; r++)
+                {
+                    for (int c = 0; c < cols; c++)
+                    {
+                        var view = _paletteViews[r, c];
+                        if (view == null) continue;
+                        var cell = _gridManager.GetPaletteCell(r, c);
+
+                        // パレット上のジェム（空でない）
+                        bool isCandidate = !cell.IsEmpty;
+
+                        if (isCandidate)
+                        {
+                            Vector2 cellScreenPos = RectTransformUtility.WorldToScreenPoint(null, view.transform.position);
+                            float dist = Vector2.Distance(tapPos, cellScreenPos);
+
+                            // パレットはセルサイズが大きい場合があるので、パレットセルのサイズでしきい値を計算
+                            float palScreenCellSize = screenCellSize;
+                            var palRectTrans = view.GetComponent<RectTransform>();
+                            if (palRectTrans != null)
+                            {
+                                Vector3[] corners = new Vector3[4];
+                                palRectTrans.GetWorldCorners(corners);
+                                palScreenCellSize = Vector2.Distance(corners[0], corners[1]);
+                            }
+                            float palThreshold = palScreenCellSize * 1.3f;
+
+                            if (dist < palThreshold && dist < bestDistance)
+                            {
+                                bestDistance = dist;
+                                bestCandidate = view;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return bestCandidate;
         }
 
         /// <summary>

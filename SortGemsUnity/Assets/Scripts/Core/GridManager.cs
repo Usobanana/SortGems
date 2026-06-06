@@ -142,8 +142,18 @@ namespace SortGems.Core
             {
                 if (cell.IsEmpty)
                 {
-                    // 移動先タップ
-                    TryMoveGroup(_selectedGroup, row, col, isPalette);
+                    // 移動元がパレットかつ移動先もパレットの場合は選択をキャンセル（パレット内移動の禁止）
+                    bool isSourcePalette = _selectedGroup.cells.Count > 0 && _selectedGroup.cells[0].isPalette;
+                    if (isPalette && isSourcePalette)
+                    {
+                        _selectedGroup = null;
+                        OnGroupSelected?.Invoke(null);
+                    }
+                    else
+                    {
+                        // 移動先タップ
+                        TryMoveGroup(_selectedGroup, row, col, isPalette);
+                    }
                 }
                 else
                 {

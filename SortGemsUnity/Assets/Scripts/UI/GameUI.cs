@@ -25,11 +25,13 @@ namespace SortGems.UI
         [SerializeField] private GameObject _clearedPanel;
         [SerializeField] private Button _nextStageButton;
         [SerializeField] private Button _replayButton_Cleared;
+        [SerializeField] private Button _clearedBackButton;
 
         [Header("Failed Panel")]
         [SerializeField] private GameObject _failedPanel;
         [SerializeField] private Button _addTimeButton;
         [SerializeField] private Button _replayButton_Failed;
+        [SerializeField] private Button _failedBackButton;
         [SerializeField] private Text _addTimeLabel;
 
         [Header("Screen Control Buttons")]
@@ -65,6 +67,23 @@ namespace SortGems.UI
             _replayButton_Failed.onClick.AddListener(OnReplayClicked);
             _nextStageButton.onClick.AddListener(OnNextStageClicked);
             _replayButton_Cleared.onClick.AddListener(OnReplayClicked);
+
+            if (_clearedBackButton != null)
+            {
+                _clearedBackButton.onClick.AddListener(() =>
+                {
+                    _clearedPanel.SetActive(false);
+                    if (GameBootstrap.Instance != null) GameBootstrap.Instance.ShowStageSelect();
+                });
+            }
+            if (_failedBackButton != null)
+            {
+                _failedBackButton.onClick.AddListener(() =>
+                {
+                    _failedPanel.SetActive(false);
+                    if (GameBootstrap.Instance != null) GameBootstrap.Instance.ShowStageSelect();
+                });
+            }
 
             _gameManager.OnGameCleared.AddListener(ShowClearedPanel);
             _gameManager.OnGameFailed.AddListener(ShowFailedPanel);

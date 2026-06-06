@@ -25,6 +25,7 @@ namespace SortGems.Core
         private Coroutine _scaleCoroutine;
 
         public System.Action<GemCellView> OnTapped;
+        public System.Action<GemCellView, UnityEngine.EventSystems.PointerEventData> OnTappedWithEvent;
         public int Row { get; private set; }
         public int Col { get; private set; }
         public bool IsPalette { get; private set; }
@@ -90,6 +91,20 @@ namespace SortGems.Core
                 _outline.effectDistance = new Vector2(2f, 2f);
                 _outline.enabled = false;
             }
+
+            // 実行時に EventTrigger のコールバックを PointerEventData を渡せるようにラムダ式で再バインド
+            var trigger = GetComponent<UnityEngine.EventSystems.EventTrigger>();
+            if (trigger == null)
+            {
+                trigger = gameObject.AddComponent<UnityEngine.EventSystems.EventTrigger>();
+            }
+            trigger.triggers.Clear();
+            var entry = new UnityEngine.EventSystems.EventTrigger.Entry();
+            entry.eventID = UnityEngine.EventSystems.EventTriggerType.PointerClick;
+            entry.callback.AddListener((eventData) => {
+                OnPointerClick(eventData);
+            });
+            trigger.triggers.Add(entry);
         }
 
         public void Setup(int row, int col, bool isPalette = false)
@@ -239,6 +254,12 @@ namespace SortGems.Core
         {
             yield return ScaleRoutine(_baseScale * 1.3f, 0.1f);
             yield return ScaleRoutine(_baseScale, 0.1f);
+
+            // 演出終了後に完了マークを非表示に戻す
+            if (_completedMark != null)
+            {
+                _completedMark.SetActive(false);
+            }
         }
 
         // ---- アニメーション（Coroutine） ----
@@ -342,6 +363,16 @@ namespace SortGems.Core
 
         public void OnPointerClick()
         {
+            OnTapped?.Invoke(this);
+        }
+
+        public void OnPointerClick(UnityEngine.EventSystems.BaseEventData eventData)
+        {
+            var pointerData = eventData as UnityEngine.EventSystems.PointerEventData;
+            if (pointerData != null)
+            {
+                OnTappedWithEvent?.Invoke(this, pointerData);
+            }
             OnTapped?.Invoke(this);
         }
     }
