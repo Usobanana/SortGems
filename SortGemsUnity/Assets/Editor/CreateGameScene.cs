@@ -557,6 +557,11 @@ MonoBehaviour:
             new Vector2(0, 0.85f), new Vector2(1, 0.95f), Vector2.zero, Vector2.zero)
             .color = Color.white;
 
+        var activeStageText = MakeText("ActiveStageText", stageSelectPanel.transform, "ステージ 1：Star", 36,
+            new Vector2(0, 0.78f), new Vector2(1, 0.84f), Vector2.zero, Vector2.zero);
+        activeStageText.color = Color.yellow;
+        activeStageText.alignment = TextAnchor.MiddleCenter;
+
         var selectBackBtn = CreateButton("BackButton", "Back", stageSelectPanel.transform, Vector2.zero, new Vector2(120, 60));
         var selectBackRt = selectBackBtn.GetComponent<RectTransform>();
         selectBackRt.anchorMin = new Vector2(0f, 1f);
@@ -564,51 +569,106 @@ MonoBehaviour:
         selectBackRt.pivot = new Vector2(0f, 1f);
         selectBackRt.anchoredPosition = new Vector2(40f, -40f);
 
-        // スクロールコンテナ
-        var scrollRectObj = MakeRect("StageListScroll", stageSelectPanel.transform,
-            new Vector2(0.1f, 0.15f), new Vector2(0.9f, 0.8f), new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
+        // スクロールコンテナ (横スクロール)
+        // 画面幅全体をカバーさせるため、アンカーを Min=(0f, 0.16f), Max=(1f, 0.76f) に設定
+        var scrollRectObj = MakeRect("StageCarouselScroll", stageSelectPanel.transform,
+            new Vector2(0f, 0.16f), new Vector2(1f, 0.76f), new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
         var scrollRect = scrollRectObj.gameObject.AddComponent<ScrollRect>();
         
         var viewport = MakeRect("Viewport", scrollRectObj, Vector2.zero, Vector2.one, new Vector2(0, 1), Vector2.zero, Vector2.zero);
-        viewport.gameObject.AddComponent<Image>().color = new Color(0, 0, 0, 0.2f);
-        viewport.gameObject.AddComponent<Mask>();
+        viewport.gameObject.AddComponent<RectMask2D>(); // RectMask2D は Image 不要で確実・高速な矩形マスクを実現します
         
-        var scrollContent = MakeRect("Content", viewport, Vector2.zero, new Vector2(1, 0), new Vector2(0.5f, 1), Vector2.zero, new Vector2(0, 800));
-        var contentLayout = scrollContent.gameObject.AddComponent<GridLayoutGroup>();
-        contentLayout.cellSize = new Vector2(180, 180);
-        contentLayout.spacing = new Vector2(24, 24);
-        contentLayout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-        contentLayout.constraintCount = 4;
-        contentLayout.padding = new RectOffset(20, 20, 20, 20);
+        var scrollContent = MakeRect("Content", viewport, Vector2.zero, new Vector2(0, 1), new Vector2(0f, 0.5f), Vector2.zero, Vector2.zero);
+        
+        // ContentSizeFitter を追加して、子要素の Preferred Size に応じて横幅を自動拡張させる
+        var fitter = scrollContent.gameObject.AddComponent<ContentSizeFitter>();
+        fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+        fitter.verticalFit = ContentSizeFitter.FitMode.Unconstrained;
+
+        var contentLayout = scrollContent.gameObject.AddComponent<HorizontalLayoutGroup>();
+        // childControlWidth/Height を true にして、LayoutElement の preferredWidth/Height をカードに適用させる
+        contentLayout.childControlWidth = true;
+        contentLayout.childControlHeight = true;
+        contentLayout.childForceExpandWidth = false;
+        contentLayout.childForceExpandHeight = false;
+        contentLayout.spacing = 80f;
+        // Viewportの幅 1080 に対し、カード幅 720。
+        // センタリング用Padding: (1080 - 720) / 2 = 180
+        contentLayout.padding = new RectOffset(180, 180, 20, 20);
 
         scrollRect.viewport = viewport;
         scrollRect.content = scrollContent;
-        scrollRect.horizontal = false;
-        scrollRect.vertical = true;
+        scrollRect.horizontal = true;
+        scrollRect.vertical = false;
 
-        var stageBtnTemplate = CreateButton("StageButtonTemplate", "", scrollContent, Vector2.zero, new Vector2(180, 180));
-        stageBtnTemplate.gameObject.SetActive(false);
+        // カードテンプレート（角丸パネルなどのコンテナにする）
+        // サイズを 720x960 に設定
+        var stageCardTemplate = MakeRect("StageCardTemplate", scrollContent, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), Vector2.zero, new Vector2(720, 960));
+        var cardImage = stageCardTemplate.gameObject.AddComponent<Image>();
+        cardImage.color = new Color(0.18f, 0.18f, 0.22f, 1f); // 少し暗いグレーの背景
 
-        // 既存の Text の RectTransform を下部に縮小調整
-        var templateText = stageBtnTemplate.transform.Find("Text")?.GetComponent<Text>();
-        if (templateText != null)
+        // LayoutElement をアタッチして、Preferred Size を ContentSizeFitter に伝える
+        var layoutElement = stageCardTemplate.gameObject.AddComponent<LayoutElement>();
+        layoutElement.preferredWidth = 720f;
+        layoutElement.preferredHeight = 960f;
+
+        stageCardTemplate.gameObject.SetActive(false);
+
+        // プレビューグリッドの親コンテナ (中央に配置)
+        // 最大16x16セルの場合、41.5 * 16 = 664。
+        // パズル画面と同じサイズにするため、664x664のサイズでコンテナを作成する
+        var previewGrid = MakeRect("PreviewGrid", stageCardTemplate.transform,
+            new Vector2(0.5f, 0.56f), new Vector2(0.5f, 0.56f), new Vector2(0.5f, 0.56f),
+            new Vector2(0f, 20f), new Vector2(664f, 664f));
+        
+        var gridLayout = previewGrid.gameObject.AddComponent<GridLayoutGroup>();
+        gridLayout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+        gridLayout.constraintCount = 16;
+        gridLayout.cellSize = new Vector2(CELL_SIZE, CELL_SIZE);
+        gridLayout.spacing = new Vector2(CELL_SPACING, CELL_SPACING);
+        
+        // 背景に薄い半透明ダークグレーを敷く
+        var gridImg = previewGrid.gameObject.AddComponent<Image>();
+        gridImg.sprite = null;
+        gridImg.color = new Color(0.08f, 0.08f, 0.1f, 0.35f);
+
+        // STARTボタン（カード内部に個別配置）
+        var startBtn = CreateButton("StartButton", "START", stageCardTemplate.transform, Vector2.zero, new Vector2(280, 90));
+        var startRt = startBtn.GetComponent<RectTransform>();
+        startRt.anchorMin = new Vector2(0.5f, 0.15f);
+        startRt.anchorMax = new Vector2(0.5f, 0.15f);
+        startRt.pivot = new Vector2(0.5f, 0.5f);
+        startRt.anchoredPosition = Vector2.zero;
+        var startTxt = startBtn.transform.Find("Text")?.GetComponent<Text>();
+        if (startTxt != null)
         {
-            templateText.fontSize = 16;
-            templateText.text = "1\nStageName";
-            var textRt = templateText.GetComponent<RectTransform>();
-            textRt.anchorMin = new Vector2(0f, 0f);
-            textRt.anchorMax = new Vector2(1f, 0.25f);
-            textRt.pivot = new Vector2(0.5f, 0.5f);
-            textRt.anchoredPosition = Vector2.zero;
-            textRt.sizeDelta = Vector2.zero;
+            startTxt.fontSize = 36;
+            startTxt.color = Color.black;
         }
 
-        // プレビューImage の追加 (中央より少し上に配置、120x120)
-        var previewImg = MakeImageChild("PreviewImage", stageBtnTemplate.transform, Color.clear, 
-            new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f));
-        var previewRt = previewImg.GetComponent<RectTransform>();
-        previewRt.anchoredPosition = new Vector2(0f, 15f); // 少し上にずらす
-        previewRt.sizeDelta = new Vector2(120f, 120f);
+        // 左右切り替えボタン (カードの上に描画させるため、スクロールコンテナの後に生成する)
+        // サイズを少しコンパクトに 60x90 に調整
+        var leftBtn = CreateButton("LeftButton", "<", stageSelectPanel.transform, Vector2.zero, new Vector2(60, 90));
+        var leftRt = leftBtn.GetComponent<RectTransform>();
+        leftRt.anchorMin = new Vector2(0.02f, 0.45f);
+        leftRt.anchorMax = new Vector2(0.02f, 0.45f); // 画面左端基準に固定
+        leftRt.pivot = new Vector2(0f, 0.5f);
+        leftRt.anchoredPosition = new Vector2(20f, 0f);
+        var leftTxt = leftBtn.transform.Find("Text")?.GetComponent<Text>();
+        if (leftTxt != null) leftTxt.fontSize = 28;
+
+        var rightBtn = CreateButton("RightButton", ">", stageSelectPanel.transform, Vector2.zero, new Vector2(60, 90));
+        var rightRt = rightBtn.GetComponent<RectTransform>();
+        rightRt.anchorMin = new Vector2(0.98f, 0.45f);
+        rightRt.anchorMax = new Vector2(0.98f, 0.45f); // 画面右端基準に固定
+        rightRt.pivot = new Vector2(1f, 0.5f);
+        rightRt.anchoredPosition = new Vector2(-20f, 0f);
+        var rightTxt = rightBtn.transform.Find("Text")?.GetComponent<Text>();
+        if (rightTxt != null) rightTxt.fontSize = 28;
+
+        // 手前に描画されるように Sibling Index を一番下にする
+        leftBtn.transform.SetAsLastSibling();
+        rightBtn.transform.SetAsLastSibling();
 
         // ---- 7. Game Play Panel ----
         var gamePlayPanel = MakeFullPanel("GamePlayPanel", canvasObj.transform, new Color(0.15f, 0.15f, 0.18f, 1f));
@@ -803,11 +863,16 @@ MonoBehaviour:
         SetRef(bootstrap, "_gridView",    gridView);
         SetRef(bootstrap, "_gameUI",      gameUI);
 
+        SetRef(bootstrap, "_cellPrefab",       gemCellPrefab.GetComponent<GemCellView>());
         SetRef(bootstrap, "_titlePanel",       titlePanel);
         SetRef(bootstrap, "_stageSelectPanel", stageSelectPanel);
         SetRef(bootstrap, "_gamePlayPanel",    gamePlayPanel);
         SetRef(bootstrap, "_stageButtonContent",scrollContent.transform);
-        SetRef(bootstrap, "_stageButtonPrefab", stageBtnTemplate.gameObject);
+        SetRef(bootstrap, "_stageButtonPrefab", stageCardTemplate.gameObject);
+        SetRef(bootstrap, "_leftButton",       leftBtn);
+        SetRef(bootstrap, "_rightButton",      rightBtn);
+        SetRef(bootstrap, "_scrollRect",       scrollRect);
+        SetRef(bootstrap, "_activeStageText",  activeStageText);
 
         // ステージリスト（_stages）のシリアライズ
         var bootstrapSo = new SerializedObject(bootstrap);

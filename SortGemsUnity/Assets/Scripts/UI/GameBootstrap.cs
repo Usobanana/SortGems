@@ -29,6 +29,13 @@ namespace SortGems.UI
         [SerializeField] private List<StageData> _stages = new();
         [SerializeField] private Transform _stageButtonContent;
         [SerializeField] private GameObject _stageButtonPrefab;
+        [SerializeField] private GemCellView _cellPrefab;
+
+        [Header("Carousel Selection")]
+        [SerializeField] private UnityEngine.UI.Button _leftButton;
+        [SerializeField] private UnityEngine.UI.Button _rightButton;
+        [SerializeField] private UnityEngine.UI.ScrollRect _scrollRect;
+        [SerializeField] private UnityEngine.UI.Text _activeStageText;
 
         private int _currentStageIndex = 0;
 
@@ -144,7 +151,7 @@ namespace SortGems.UI
         {
             if (_stageButtonContent == null || _stageButtonPrefab == null) return;
 
-            // 既存のボタンをクリア（テンプレート以外）
+            // 既存のオブジェクトをクリア（テンプレート以外）
             foreach (Transform child in _stageButtonContent)
             {
                 if (child.gameObject != _stageButtonPrefab)
@@ -155,13 +162,43 @@ namespace SortGems.UI
 
             _stageButtonPrefab.SetActive(false); // テンプレート自体は非表示
 
+            // 次に挑戦すべきステージ（未クリアの最初のステージ）を特定
+            int nextStageIndex = 0;
             for (int i = 0; i < _stages.Count; i++)
+            {
+                bool isCleared = PlayerPrefs.GetInt($"StageCleared_{_stages[i].stageNumber}", 0) == 1;
+                if (!isCleared)
+                {
+                    nextStageIndex = i;
+                    break;
+                }
+                nextStageIndex = i; // すべてクリア済みの場合は最後のステージ
+            }
+
+            // 5つ先までスライド可能にする
+            int maxVisibleIndex = Mathf.Min(nextStageIndex + 5, _stages.Count - 1);
+            int visibleCount = _stages.Count > 0 ? maxVisibleIndex + 1 : 0;
+
+            Debug.Log($"[SortGems] BuildStageSelectUI: TotalStages={_stages.Count}, NextStageIndex={nextStageIndex}, VisibleCount={visibleCount}");
+
+            for (int i = 0; i < visibleCount; i++)
             {
                 int index = i;
                 var stage = _stages[i];
-                var btnObj = Instantiate(_stageButtonPrefab, _stageButtonContent);
-                btnObj.name = $"Stage_{stage.stageNumber}";
-                btnObj.SetActive(true);
+                var cardObj = Instantiate(_stageButtonPrefab, _stageButtonContent);
+                var cardRt = cardObj.GetComponent<RectTransform>();
+                if (cardRt != null)
+                {
+                    cardRt.anchoredPosition3D = Vector3.zero;
+                    cardRt.localScale = Vector3.one;
+                }
+                else
+                {
+                    cardObj.transform.localPosition = Vector3.zero;
+                    cardObj.transform.localScale = Vector3.one;
+                }
+                cardObj.name = $"Stage_{stage.stageNumber}";
+                cardObj.SetActive(true);
 
                 // クリア状況のチェック
                 bool isCleared = PlayerPrefs.GetInt($"StageCleared_{stage.stageNumber}", 0) == 1;
@@ -169,75 +206,120 @@ namespace SortGems.UI
                 // ロック状況の判定：最初のステージは常にアンロック、それ以外は直前ステージがクリア済みならアンロック
                 bool isUnlocked = (i == 0) || (PlayerPrefs.GetInt($"StageCleared_{_stages[i - 1].stageNumber}", 0) == 1);
 
-                // テキスト（ステージ番号と名前）のセット
-                var text = btnObj.transform.Find("Text")?.GetComponent<UnityEngine.UI.Text>();
-                if (text != null)
+                // プレビューグリッドのセット (PreviewGrid)
+                var previewGridTrans = cardObj.transform.Find("PreviewGrid");
+                if (previewGridTrans != null)
                 {
-                    if (isUnlocked)
+                    var gridLayout = previewGridTrans.GetComponent<UnityEngine.UI.GridLayoutGroup>();
+                    var gridRt = previewGridTrans.GetComponent<RectTransform>();
+                    
+                    if (gridLayout != null && gridRt != null && _cellPrefab != null)
                     {
-                        text.text = $"{stage.stageNumber} {stage.stageName}";
-                    }
-                    else
-                    {
-                        text.text = $"🔒 Stage {stage.stageNumber}";
+                        // 既存のセルをクリア
+                        foreach (Transform child in previewGridTrans)
+                        {
+                            Destroy(child.gameObject);
+                        }
+                        
+                        int rCount = stage.mainRows;
+                        int cCount = stage.mainCols;
+                        
+                        // パズル画面と同じセルサイズと間隔
+                        float cellSize = 41.5f; 
+                        float cellSpacing = 0f;
+                        
+                        gridLayout.constraint = UnityEngine.UI.GridLayoutGroup.Constraint.FixedColumnCount;
+                        gridLayout.constraintCount = cCount;
+                        gridLayout.cellSize = new Vector2(cellSize, cellSize);
+                        gridLayout.spacing = new Vector2(cellSpacing, cellSpacing);
+                        
+                        // グリッドサイズを動的に設定
+                        gridRt.sizeDelta = new Vector2(cCount * cellSize, rCount * cellSize);
+                        
+                        // ロックされている場合は半透明にする。また、スワイプ操作をカード背後に通すため blocksRaycasts を false にする
+                        var cg = previewGridTrans.GetComponent<CanvasGroup>();
+                        if (cg == null) cg = previewGridTrans.gameObject.AddComponent<CanvasGroup>();
+                        cg.alpha = isUnlocked ? 1f : 0.4f;
+                        cg.blocksRaycasts = false;
+                        
+                        // 二次元配列を作成して goalLayout を展開
+                        GemColor[,] gridColors = new GemColor[rCount, cCount];
+                        for (int r = 0; r < rCount; r++)
+                        {
+                            for (int c = 0; c < cCount; c++)
+                            {
+                                gridColors[r, c] = GemColor.None;
+                            }
+                        }
+                        
+                        foreach (var cell in stage.goalLayout)
+                        {
+                            if (cell.row >= 0 && cell.row < rCount && cell.col >= 0 && cell.col < cCount)
+                            {
+                                gridColors[cell.row, cell.col] = cell.color;
+                            }
+                        }
+                        
+                        // セルを生成して配置
+                        for (int r = 0; r < rCount; r++)
+                        {
+                            for (int c = 0; c < cCount; c++)
+                            {
+                                var cellView = Instantiate(_cellPrefab, previewGridTrans);
+                                cellView.Setup(r, c, isPalette: false);
+                                
+                                GemColor color = gridColors[r, c];
+                                cellView.SetGem(color, color, isVoid: (color == GemColor.None), grayscale: !isCleared);
+                            }
+                        }
                     }
                 }
 
-                // プレビュー画像のセット (PreviewImage)
-                var previewImg = btnObj.transform.Find("PreviewImage")?.GetComponent<UnityEngine.UI.Image>();
-                if (previewImg != null)
+                // STARTボタンの制御 (次に挑戦すべきステージのみ表示)
+                var startBtnObj = cardObj.transform.Find("StartButton")?.gameObject;
+                var startButton = startBtnObj?.GetComponent<UnityEngine.UI.Button>();
+                if (startButton != null)
                 {
-                    previewImg.sprite = CreatePreviewSprite(stage, isCleared);
-                    // ロックされている場合は半透明の暗い色にする
-                    previewImg.color = isUnlocked ? Color.white : new Color(0.5f, 0.5f, 0.5f, 0.5f);
-                }
-
-                var button = btnObj.GetComponent<UnityEngine.UI.Button>();
-                if (button != null)
-                {
-                    button.interactable = isUnlocked;
-                    button.onClick.AddListener(() => LoadStage(index));
+                    bool isNextStage = (i == nextStageIndex);
+                    startBtnObj.SetActive(isNextStage);
+                    if (isNextStage)
+                    {
+                        startButton.onClick.RemoveAllListeners();
+                        startButton.onClick.AddListener(() => LoadStage(index));
+                    }
                 }
             }
-        }
 
-        // ゴール配置（goalLayout）からカラー or グレースケールのプレビュースプライトを生成する
-        private Sprite CreatePreviewSprite(StageData stage, bool isCleared)
-        {
-            int rCount = stage.mainRows;
-            int cCount = stage.mainCols;
-
-            Texture2D tex = new Texture2D(cCount, rCount, TextureFormat.RGBA32, false);
-            tex.filterMode = FilterMode.Point;
-
-            Color[] pixels = new Color[rCount * cCount];
-            // 透明で初期化
-            for (int i = 0; i < pixels.Length; i++) pixels[i] = Color.clear;
-
-            // goalLayout をピクセル座標に配置
-            foreach (var cell in stage.goalLayout)
+            // カルーセルの初期化
+            if (_scrollRect != null)
             {
-                // Texture2Dのピクセルは下から上に向かってインデックスされるので、行インデックスを反転
-                int y = rCount - 1 - cell.row;
-                int x = cell.col;
-                if (x >= 0 && x < cCount && y >= 0 && y < rCount)
+                var carousel = _scrollRect.GetComponent<StageCarousel>();
+                if (carousel == null)
                 {
-                    Color col = GemColorPalette.GetColor(cell.color);
-                    if (!isCleared)
+                    carousel = _scrollRect.gameObject.AddComponent<StageCarousel>();
+                }
+                carousel.Initialize(visibleCount, nextStageIndex, _leftButton, _rightButton);
+
+                if (_activeStageText != null)
+                {
+                    // 初期選択状態のテキスト設定
+                    if (nextStageIndex >= 0 && nextStageIndex < _stages.Count)
                     {
-                        // グレースケール変換 (Luminance法)
-                        float gray = 0.299f * col.r + 0.587f * col.g + 0.114f * col.b;
-                        // 未クリアは少し暗い白黒シルエットにする
-                        col = new Color(gray * 0.55f, gray * 0.55f, gray * 0.55f, 1f);
+                        var initStage = _stages[nextStageIndex];
+                        _activeStageText.text = $"ステージ {initStage.stageNumber}：{initStage.stageName}";
                     }
-                    pixels[y * cCount + x] = col;
+
+                    // ページ切り替えイベントで更新
+                    carousel.OnPageChanged = (pageIndex) =>
+                    {
+                        if (pageIndex >= 0 && pageIndex < _stages.Count)
+                        {
+                            var currentStage = _stages[pageIndex];
+                            _activeStageText.text = $"ステージ {currentStage.stageNumber}：{currentStage.stageName}";
+                        }
+                    };
                 }
             }
-
-            tex.SetPixels(pixels);
-            tex.Apply();
-
-            return Sprite.Create(tex, new Rect(0, 0, cCount, rCount), new Vector2(0.5f, 0.5f));
         }
     }
 }

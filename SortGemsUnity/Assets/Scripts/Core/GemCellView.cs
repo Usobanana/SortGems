@@ -120,7 +120,7 @@ namespace SortGems.Core
         /// ジェムの表示を更新する。
         /// goalColor があれば背景に薄く目標色を表示（ピクセルアートのヒント）。
         /// </summary>
-        public void SetGem(GemColor color, GemColor goalColor = GemColor.None, bool isVoid = false)
+        public void SetGem(GemColor color, GemColor goalColor = GemColor.None, bool isVoid = false, bool grayscale = false)
         {
             _gemColor  = color;
             _goalColor = goalColor;
@@ -183,8 +183,31 @@ namespace SortGems.Core
                 }
             }
 
+            if (grayscale)
+            {
+                if (_gemImage != null && _gemImage.gameObject.activeSelf)
+                {
+                    _gemImage.color = ApplyGrayscale(_gemImage.color);
+                }
+                if (_backgroundImage != null)
+                {
+                    _backgroundImage.color = ApplyGrayscale(_backgroundImage.color);
+                }
+                if (_socketImage != null && _socketImage.gameObject.activeSelf)
+                {
+                    _socketImage.color = ApplyGrayscale(_socketImage.color);
+                }
+            }
+
             if (_completedMark != null)
                 _completedMark.SetActive(false);
+        }
+
+        private Color ApplyGrayscale(Color col)
+        {
+            float gray = 0.299f * col.r + 0.587f * col.g + 0.114f * col.b;
+            float factor = 0.55f;
+            return new Color(gray * factor, gray * factor, gray * factor, col.a);
         }
 
         public void SetSelected(bool selected)
