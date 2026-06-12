@@ -3,6 +3,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using SortGems.Core;
 using SortGems.UI;
+using SortGems.Ads;
 
 namespace SortGems.UI
 {
@@ -40,10 +41,10 @@ namespace SortGems.UI
         private void Start()
         {
             ShowTitle();
-            BuildStageSelectUI();
+            gameObject.AddComponent<DebugMenu>();
         }
 
-        public void ShowTitle()
+             public void ShowTitle()
         {
             if (_titlePanel != null) _titlePanel.SetActive(true);
             if (_stageSelectPanel != null) _stageSelectPanel.SetActive(false);
@@ -52,6 +53,11 @@ namespace SortGems.UI
             if (_gameManager != null && _gameManager.State == GameManager.GameState.Playing)
             {
                 _gameManager.PauseGame();
+            }
+
+            if (AdManager.Instance != null)
+            {
+                AdManager.Instance.HideBanner();
             }
         }
 
@@ -65,6 +71,13 @@ namespace SortGems.UI
             {
                 _gameManager.PauseGame();
             }
+
+            BuildStageSelectUI();
+
+            if (AdManager.Instance != null)
+            {
+                AdManager.Instance.ShowBanner();
+            }
         }
 
         public void ShowGamePlay()
@@ -72,6 +85,11 @@ namespace SortGems.UI
             if (_titlePanel != null) _titlePanel.SetActive(false);
             if (_stageSelectPanel != null) _stageSelectPanel.SetActive(false);
             if (_gamePlayPanel != null) _gamePlayPanel.SetActive(true);
+
+            if (AdManager.Instance != null)
+            {
+                AdManager.Instance.ShowBanner();
+            }
         }
 
         public void LoadStage(int index)
@@ -103,7 +121,17 @@ namespace SortGems.UI
             int nextIndex = _currentStageIndex + 1;
             if (nextIndex < _stages.Count)
             {
-                LoadStage(nextIndex);
+                if (AdManager.Instance != null)
+                {
+                    AdManager.Instance.ShowInterstitialWithProbability(() =>
+                    {
+                        LoadStage(nextIndex);
+                    });
+                }
+                else
+                {
+                    LoadStage(nextIndex);
+                }
             }
             else
             {
@@ -138,11 +166,21 @@ namespace SortGems.UI
                 // クリア状況のチェック
                 bool isCleared = PlayerPrefs.GetInt($"StageCleared_{stage.stageNumber}", 0) == 1;
 
+                // ロック状況の判定：最初のステージは常にアンロック、それ以外は直前ステージがクリア済みならアンロック
+                bool isUnlocked = (i == 0) || (PlayerPrefs.GetInt($"StageCleared_{_stages[i - 1].stageNumber}", 0) == 1);
+
                 // テキスト（ステージ番号と名前）のセット
                 var text = btnObj.transform.Find("Text")?.GetComponent<UnityEngine.UI.Text>();
                 if (text != null)
                 {
-                    text.text = $"{stage.stageNumber} {stage.stageName}";
+                    if (isUnlocked)
+                    {
+                        text.text = $"{stage.stageNumber} {stage.stageName}";
+                    }
+                    else
+                    {
+                        text.text = $"🔒 Stage {stage.stageNumber}";
+                    }
                 }
 
                 // プレビュー画像のセット (PreviewImage)
@@ -150,12 +188,14 @@ namespace SortGems.UI
                 if (previewImg != null)
                 {
                     previewImg.sprite = CreatePreviewSprite(stage, isCleared);
-                    previewImg.color = Color.white; // Color.clear から白（不透明）に変更
+                    // ロックされている場合は半透明の暗い色にする
+                    previewImg.color = isUnlocked ? Color.white : new Color(0.5f, 0.5f, 0.5f, 0.5f);
                 }
 
                 var button = btnObj.GetComponent<UnityEngine.UI.Button>();
                 if (button != null)
                 {
+                    button.interactable = isUnlocked;
                     button.onClick.AddListener(() => LoadStage(index));
                 }
             }

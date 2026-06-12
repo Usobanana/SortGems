@@ -540,6 +540,46 @@ namespace SortGems.Core
             OnGroupMoved?.Invoke(null, GemColor.None);
         }
 
+        /// <summary>デバッグ用：盤面を強制的にクリア状態にする</summary>
+        public void ForceClearStage()
+        {
+            // メイン: goalColor のあるマスにその色をセット、それ以外のマスは空にする
+            for (int r = 0; r < MainRows; r++)
+            {
+                for (int c = 0; c < MainCols; c++)
+                {
+                    if (_main[r, c].isVoid) continue;
+                    
+                    if (_main[r, c].HasGoal)
+                    {
+                        _main[r, c].color = _main[r, c].goalColor;
+                    }
+                    else
+                    {
+                        _main[r, c].color = GemColor.None;
+                    }
+                }
+            }
+
+            // パレット: 全て空にする
+            for (int r = 0; r < PaletteRows; r++)
+            {
+                for (int c = 0; c < PaletteCols; c++)
+                {
+                    _palette[r, c].color = GemColor.None;
+                }
+            }
+
+            _selectedGroup = null;
+            OnGroupSelected?.Invoke(null);
+            
+            // ビューを更新するためにイベントを発火
+            OnGroupMoved?.Invoke(null, GemColor.None);
+            
+            // クリア判定を実行
+            CheckStageCleared();
+        }
+
         // ---- データアクセス ----
 
         public GemCell GetMainCell(int row, int col)    => _main[row, col];
