@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "mcp-unity": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "C:/GitHub/SortGems/SortGemsUnity/Library/PackageCache/com.gamelovers.mcp-unity@aade29c7dd84/Server~/build/index.js"
+      ],
+      "env": {
+        "LOGGING": "true",
+        "LOGGING_FILE": "true"
+      }
+    }
+  }
+}

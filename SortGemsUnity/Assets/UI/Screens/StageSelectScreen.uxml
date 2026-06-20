@@ -1,0 +1,25 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <Style src="project://database/Assets/UI/Styles/Common.uss" />
+    <Style src="project://database/Assets/UI/Styles/StageSelectScreen.uss" />
+
+    <ui:VisualElement name="stage-select-screen" class="screen">
+        <ui:VisualElement class="stage-header">
+            <ui:Button name="btn-back" text="&#x25C0; Back" class="btn btn-secondary btn-small" />
+            <ui:Label name="stage-title" text="Stage Select" class="stage-heading" />
+        </ui:VisualElement>
+
+        <ui:VisualElement class="carousel-area">
+            <ui:Button name="btn-prev" text="&#x25C0;" class="btn btn-nav" />
+            <ui:VisualElement name="carousel-viewport" class="carousel-viewport">
+                <ui:VisualElement name="carousel-content" class="carousel-content" />
+            </ui:VisualElement>
+            <ui:Button name="btn-next" text="&#x25B6;" class="btn btn-nav" />
+        </ui:VisualElement>
+
+        <ui:Label name="active-stage-text" text="" class="active-stage-label" />
+
+        <ui:Button name="btn-start" text="START" class="btn btn-start" />
+
+        <ui:VisualElement style="flex-grow: 1;" />
+    </ui:VisualElement>
+</ui:UXML>

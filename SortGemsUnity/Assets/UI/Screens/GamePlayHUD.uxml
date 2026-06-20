@@ -1,0 +1,52 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <Style src="project://database/Assets/UI/Styles/Common.uss" />
+    <Style src="project://database/Assets/UI/Styles/GamePlayHUD.uss" />
+
+    <ui:VisualElement name="gameplay-hud" class="screen" picking-mode="Ignore" style="background-color: rgba(0,0,0,0);">
+        <!-- Top bar: back + stage name + timer -->
+        <ui:VisualElement class="hud-top">
+            <ui:Button name="btn-back" text="&#x25C0;" class="btn btn-secondary btn-icon" />
+            <ui:Label name="stage-name" text="Stage 1" class="hud-stage-name" />
+            <ui:VisualElement class="timer-group">
+                <ui:VisualElement name="timer-bar-bg" class="timer-bar-bg">
+                    <ui:VisualElement name="timer-bar-fill" class="timer-bar-fill" />
+                </ui:VisualElement>
+                <ui:Label name="timer-text" text="03:00" class="timer-text" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- Spacer to push action buttons to bottom -->
+        <ui:VisualElement picking-mode="Ignore" style="flex-grow: 1;" />
+
+        <!-- Bottom action buttons -->
+        <ui:VisualElement class="hud-bottom">
+            <ui:Button name="btn-undo" text="Undo" class="btn btn-secondary" />
+            <ui:Button name="btn-hint" text="Hint" class="btn btn-secondary" />
+            <ui:Button name="btn-reset" text="Reset" class="btn btn-secondary" />
+        </ui:VisualElement>
+
+        <!-- Cleared overlay -->
+        <ui:VisualElement name="cleared-panel" class="overlay-panel" style="display: none;">
+            <ui:VisualElement class="panel result-panel">
+                <ui:Label text="CLEARED!" class="result-title result-title-cleared" />
+                <ui:VisualElement class="result-buttons">
+                    <ui:Button name="btn-next" text="Next Stage" class="btn" />
+                    <ui:Button name="btn-replay-cleared" text="Replay" class="btn btn-secondary" />
+                    <ui:Button name="btn-back-cleared" text="Back" class="btn btn-secondary" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- Failed overlay -->
+        <ui:VisualElement name="failed-panel" class="overlay-panel" style="display: none;">
+            <ui:VisualElement class="panel result-panel">
+                <ui:Label text="TIME UP" class="result-title result-title-failed" />
+                <ui:VisualElement class="result-buttons">
+                    <ui:Button name="btn-addtime" text="+1:00 Watch Ad" class="btn" />
+                    <ui:Button name="btn-replay-failed" text="Replay" class="btn btn-secondary" />
+                    <ui:Button name="btn-back-failed" text="Back" class="btn btn-secondary" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

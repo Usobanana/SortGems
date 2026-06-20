@@ -1,0 +1,28 @@
+.title-content {
+    align-items: center;
+    margin-bottom: 60px;
+}
+
+.title-logo {
+    font-size: var(--font-size-title);
+    color: var(--color-accent);
+    -unity-font-style: bold;
+    letter-spacing: 4px;
+    margin-bottom: 8px;
+}
+
+.title-subtitle {
+    font-size: var(--font-size-body);
+    color: var(--color-text-dim);
+    letter-spacing: 2px;
+}
+
+.title-buttons {
+    align-items: center;
+}
+
+.btn-play {
+    font-size: var(--font-size-heading);
+    padding: 16px 64px;
+    min-width: 200px;
+}

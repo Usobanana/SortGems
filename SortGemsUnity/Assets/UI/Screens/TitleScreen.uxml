@@ -1,0 +1,15 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <Style src="project://database/Assets/UI/Styles/Common.uss" />
+    <Style src="project://database/Assets/UI/Styles/TitleScreen.uss" />
+
+    <ui:VisualElement name="title-screen" class="screen">
+        <ui:VisualElement class="title-content">
+            <ui:Label text="Sort Gems" class="title-logo" />
+            <ui:Label text="Puzzle Game" class="title-subtitle" />
+        </ui:VisualElement>
+
+        <ui:VisualElement class="title-buttons">
+            <ui:Button name="btn-play" text="PLAY" class="btn btn-play" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

@@ -1,0 +1,57 @@
+:root {
+    --color-bg: rgb(24, 24, 32);
+    --color-panel: rgba(40, 40, 56, 0.92);
+    --color-primary: rgb(80, 200, 120);
+    --color-primary-hover: rgb(100, 220, 140);
+    --color-accent: rgb(255, 200, 60);
+    --color-text: rgb(240, 240, 240);
+    --color-text-dim: rgb(160, 160, 180);
+    --color-danger: rgb(240, 80, 80);
+    --font-size-title: 48px;
+    --font-size-heading: 28px;
+    --font-size-body: 18px;
+    --font-size-small: 14px;
+    --border-radius: 12px;
+}
+
+.screen {
+    flex-grow: 1;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--color-bg);
+}
+
+.btn {
+    font-size: var(--font-size-body);
+    color: var(--color-text);
+    background-color: var(--color-primary);
+    border-radius: 8px;
+    border-width: 0;
+    padding: 12px 32px;
+    -unity-font-style: bold;
+    transition-duration: 0.15s;
+}
+
+.btn:hover {
+    background-color: var(--color-primary-hover);
+    scale: 1.05;
+}
+
+.btn:active {
+    scale: 0.97;
+}
+
+.btn-secondary {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.btn-secondary:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.panel {
+    background-color: var(--color-panel);
+    border-radius: var(--border-radius);
+    padding: 24px;
+    align-items: center;
+}
