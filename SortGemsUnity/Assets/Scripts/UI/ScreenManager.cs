@@ -157,35 +157,23 @@ namespace SortGems.UI
         // --- Carousel ---
 
         private int _visibleCount;
+        private int _firstVisibleIndex;
+        private float _cardWidth = 832f; // card(800) + margin(32)
 
         private void BuildCarousel()
         {
             int nextStageIndex = FindNextStageIndex();
-            int maxVisible = Mathf.Min(nextStageIndex + 5, _stages.Count - 1);
-            _visibleCount = _stages.Count > 0 ? maxVisible + 1 : 0;
 
-            _carouselPage = nextStageIndex;
+            // 表示範囲: クリア済み5つ前 ～ 未クリア5つ先
+            int startIdx = Mathf.Max(0, nextStageIndex - 5);
+            int endIdx = Mathf.Min(_stages.Count - 1, nextStageIndex + 5);
+            _firstVisibleIndex = startIdx;
+            _visibleCount = endIdx - startIdx + 1;
+            _carouselPage = nextStageIndex - startIdx;
+            Debug.Log($"[Carousel] next={nextStageIndex} start={startIdx} end={endIdx} count={_visibleCount} page={_carouselPage}");
 
-            Debug.Log($"[ScreenManager] BuildCarousel: nextStageIndex={nextStageIndex}, visibleCount={_visibleCount}, carouselPage={_carouselPage}");
-
-            UpdateCarouselDisplay();
-
-            var btnPrev = _root.Q<Button>("btn-prev");
-            var btnNext = _root.Q<Button>("btn-next");
-            var btnStart = _root.Q<Button>("btn-start");
-
-            btnPrev.clicked += () => { if (_carouselPage > 0) { _carouselPage--; UpdateCarouselDisplay(); } };
-            btnNext.clicked += () => { if (_carouselPage < _visibleCount - 1) { _carouselPage++; UpdateCarouselDisplay(); } };
-            btnStart.clicked += () => LoadStage(_carouselPage);
-        }
-
-        private void UpdateCarouselDisplay()
-        {
             var content = _root.Q("carousel-content");
             content.Clear();
-
-            int startIdx = Mathf.Max(0, _carouselPage - 1);
-            int endIdx = Mathf.Min(_visibleCount - 1, _carouselPage + 1);
 
             for (int i = startIdx; i <= endIdx; i++)
             {
@@ -196,7 +184,6 @@ namespace SortGems.UI
                 var card = new VisualElement();
                 card.AddToClassList("stage-card");
                 if (!isUnlocked) card.AddToClassList("stage-card-locked");
-                if (i == _carouselPage) card.AddToClassList("stage-card-active");
 
                 var label = new Label($"Stage {stage.stageNumber}");
                 label.AddToClassList("stage-card-label");
@@ -209,11 +196,103 @@ namespace SortGems.UI
                 content.Add(card);
             }
 
-            var textLabel = _root.Q<Label>("active-stage-text");
-            if (textLabel != null && _carouselPage >= 0 && _carouselPage < _stages.Count)
+            // viewportサイズ確定後にスナップ
+            var vp = _root.Q("carousel-viewport");
+            vp.RegisterCallback<GeometryChangedEvent>(evt =>
             {
-                var stage = _stages[_carouselPage];
+                float vpW = evt.newRect.width;
+                float pad = Mathf.Max(0, (vpW - 800f) / 2f);
+                content.style.paddingLeft = pad;
+                content.style.paddingRight = pad;
+                SnapToPage(content, false);
+            });
+
+            var btnPrev = _root.Q<Button>("btn-prev");
+            var btnNext = _root.Q<Button>("btn-next");
+            var btnStart = _root.Q<Button>("btn-start");
+
+            // スワイプ
+            var viewport = _root.Q("carousel-viewport");
+            float dragStartTranslateX = 0f;
+            float swipeStartX = 0f;
+            float lastPointerX = 0f;
+            float velocity = 0f;
+            bool isDragging = false;
+            long lastMoveTime = 0;
+
+            viewport.RegisterCallback<PointerDownEvent>(evt =>
+            {
+                swipeStartX = evt.position.x;
+                lastPointerX = evt.position.x;
+                velocity = 0f;
+                isDragging = true;
+                lastMoveTime = System.DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                dragStartTranslateX = GetCurrentTranslateX(content);
+                content.style.transitionDuration = new List<TimeValue> { new TimeValue(0) };
+                viewport.CapturePointer(evt.pointerId);
+            });
+            viewport.RegisterCallback<PointerMoveEvent>(evt =>
+            {
+                if (!isDragging) return;
+                float delta = evt.position.x - swipeStartX;
+                long now = System.DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                long dt = Mathf.Max(1, (int)(now - lastMoveTime));
+                velocity = (evt.position.x - lastPointerX) / (dt / 1000f);
+                lastPointerX = evt.position.x;
+                lastMoveTime = now;
+                content.style.translate = new Translate(dragStartTranslateX + delta, 0);
+            });
+            viewport.RegisterCallback<PointerUpEvent>(evt =>
+            {
+                if (!isDragging) return;
+                isDragging = false;
+                viewport.ReleasePointer(evt.pointerId);
+
+                float currentX = GetCurrentTranslateX(content);
+                int nearestPage = Mathf.RoundToInt(-currentX / _cardWidth);
+                if (Mathf.Abs(velocity) > 400f)
+                    nearestPage = velocity < 0 ? _carouselPage + 1 : _carouselPage - 1;
+                _carouselPage = Mathf.Clamp(nearestPage, 0, _visibleCount - 1);
+                SnapToPage(content, true);
+                UpdateCarouselInfo();
+            });
+
+            btnPrev.clicked += () => { if (_carouselPage > 0) { _carouselPage--; SnapToPage(content, true); UpdateCarouselInfo(); } };
+            btnNext.clicked += () => { if (_carouselPage < _visibleCount - 1) { _carouselPage++; SnapToPage(content, true); UpdateCarouselInfo(); } };
+            btnStart.clicked += () => LoadStage(_firstVisibleIndex + _carouselPage);
+
+            UpdateCarouselInfo();
+        }
+
+        private void SnapToPage(VisualElement content, bool animate)
+        {
+            float targetX = -_carouselPage * _cardWidth;
+            int ms = animate ? 300 : 0;
+            content.style.transitionDuration = new List<TimeValue> { new TimeValue(ms, TimeUnit.Millisecond) };
+            content.style.translate = new Translate(targetX, 0);
+        }
+
+        private float GetCurrentTranslateX(VisualElement el)
+        {
+            var t = el.resolvedStyle.translate;
+            return t.x;
+        }
+
+        private void UpdateCarouselInfo()
+        {
+            int stageIdx = _firstVisibleIndex + _carouselPage;
+            var textLabel = _root.Q<Label>("active-stage-text");
+            if (textLabel != null && stageIdx >= 0 && stageIdx < _stages.Count)
+            {
+                var stage = _stages[stageIdx];
                 textLabel.text = $"Stage {stage.stageNumber}: {stage.stageName}";
+            }
+
+            var content = _root.Q("carousel-content");
+            for (int i = 0; i < content.childCount; i++)
+            {
+                if (i == _carouselPage) content[i].AddToClassList("stage-card-active");
+                else content[i].RemoveFromClassList("stage-card-active");
             }
 
             var btnPrev = _root.Q<Button>("btn-prev");
@@ -221,9 +300,9 @@ namespace SortGems.UI
             if (btnPrev != null) btnPrev.style.display = _carouselPage > 0 ? DisplayStyle.Flex : DisplayStyle.None;
             if (btnNext != null) btnNext.style.display = _carouselPage < _visibleCount - 1 ? DisplayStyle.Flex : DisplayStyle.None;
 
-            bool isCurrentUnlocked = (_carouselPage == 0) || PlayerPrefs.GetInt($"StageCleared_{_stages[_carouselPage - 1].stageNumber}", 0) == 1;
+            bool isUnlocked = (stageIdx == 0) || PlayerPrefs.GetInt($"StageCleared_{_stages[stageIdx - 1].stageNumber}", 0) == 1;
             var btnStart = _root.Q<Button>("btn-start");
-            if (btnStart != null) btnStart.style.display = isCurrentUnlocked ? DisplayStyle.Flex : DisplayStyle.None;
+            if (btnStart != null) btnStart.style.display = isUnlocked ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
         private int FindNextStageIndex()

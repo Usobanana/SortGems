@@ -3,16 +3,18 @@
     <Style src="project://database/Assets/UI/Styles/GamePlayHUD.uss" />
 
     <ui:VisualElement name="gameplay-hud" class="screen" picking-mode="Ignore" style="background-color: rgba(0,0,0,0);">
-        <!-- Top bar: back + stage name + timer -->
+        <!-- Top bar: back + stage name -->
         <ui:VisualElement class="hud-top">
             <ui:Button name="btn-back" text="&#x25C0;" class="btn btn-secondary btn-icon" />
             <ui:Label name="stage-name" text="Stage 1" class="hud-stage-name" />
-            <ui:VisualElement class="timer-group">
-                <ui:VisualElement name="timer-bar-bg" class="timer-bar-bg">
-                    <ui:VisualElement name="timer-bar-fill" class="timer-bar-fill" />
-                </ui:VisualElement>
-                <ui:Label name="timer-text" text="03:00" class="timer-text" />
+        </ui:VisualElement>
+
+        <!-- Timer: centered above grid -->
+        <ui:VisualElement class="timer-group" picking-mode="Ignore">
+            <ui:VisualElement name="timer-bar-bg" class="timer-bar-bg">
+                <ui:VisualElement name="timer-bar-fill" class="timer-bar-fill" />
             </ui:VisualElement>
+            <ui:Label name="timer-text" text="03:00" class="timer-text" />
         </ui:VisualElement>
 
         <!-- Spacer to push action buttons to bottom -->

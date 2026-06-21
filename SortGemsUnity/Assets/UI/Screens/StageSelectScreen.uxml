@@ -8,12 +8,12 @@
             <ui:Label name="stage-title" text="Stage Select" class="stage-heading" />
         </ui:VisualElement>
 
-        <ui:VisualElement class="carousel-area">
-            <ui:Button name="btn-prev" text="&#x25C0;" class="btn btn-nav" />
+        <ui:VisualElement class="carousel-wrapper">
             <ui:VisualElement name="carousel-viewport" class="carousel-viewport">
                 <ui:VisualElement name="carousel-content" class="carousel-content" />
             </ui:VisualElement>
-            <ui:Button name="btn-next" text="&#x25B6;" class="btn btn-nav" />
+            <ui:Button name="btn-prev" text="&#x25C0;" class="btn btn-nav btn-nav-left" />
+            <ui:Button name="btn-next" text="&#x25B6;" class="btn btn-nav btn-nav-right" />
         </ui:VisualElement>
 
         <ui:Label name="active-stage-text" text="" class="active-stage-label" />

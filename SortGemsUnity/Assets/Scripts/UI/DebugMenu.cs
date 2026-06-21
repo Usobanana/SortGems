@@ -36,7 +36,7 @@ namespace SortGems.UI
             btnRect.anchorMin = new Vector2(1, 1);
             btnRect.anchorMax = new Vector2(1, 1);
             btnRect.pivot = new Vector2(1, 1);
-            btnRect.anchoredPosition = new Vector2(-20, -20); // 右上から少し内側
+            btnRect.anchoredPosition = new Vector2(-20, -80); // UI Toolkit HUDヘッダーの下
             btnRect.sizeDelta = new Vector2(120, 60);
 
             var btnImg = _debugButtonObj.GetComponent<Image>();

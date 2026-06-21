@@ -7,43 +7,46 @@
 }
 
 .btn-icon {
-    font-size: 20px;
-    padding: 8px 12px;
-    min-width: 40px;
+    font-size: 24px;
+    padding: 10px 14px;
+    min-width: 48px;
 }
 
 .hud-stage-name {
-    font-size: var(--font-size-body);
+    font-size: 24px;
     color: var(--color-text);
     -unity-font-style: bold;
     margin: 0 12px;
 }
 
 .timer-group {
-    flex-grow: 1;
-    align-items: flex-end;
+    align-items: center;
+    align-self: stretch;
+    padding: 8px 0;
 }
 
 .timer-bar-bg {
-    width: 140px;
-    height: 10px;
+    width: 600px;
+    height: 20px;
     background-color: rgba(255, 255, 255, 0.15);
-    border-radius: 5px;
+    border-radius: 10px;
     overflow: hidden;
-    margin-bottom: 2px;
+    margin-bottom: 4px;
 }
 
 .timer-bar-fill {
     height: 100%;
     width: 100%;
     background-color: rgb(50, 215, 75);
-    border-radius: 5px;
+    border-radius: 10px;
     transition-duration: 0.3s;
 }
 
 .timer-text {
-    font-size: var(--font-size-small);
-    color: var(--color-text-dim);
+    font-size: 28px;
+    color: var(--color-text);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
 }
 
 .hud-bottom {
@@ -55,7 +58,9 @@
 }
 
 .hud-bottom > .btn {
-    margin: 0 8px;
+    margin: 0 12px;
+    font-size: 22px;
+    padding: 12px 24px;
 }
 
 /* Result overlay panels */
@@ -71,14 +76,14 @@
 }
 
 .result-panel {
-    min-width: 280px;
-    padding: 32px;
+    min-width: 500px;
+    padding: 48px 56px;
 }
 
 .result-title {
-    font-size: 36px;
+    font-size: 72px;
     -unity-font-style: bold;
-    margin-bottom: 24px;
+    margin-bottom: 32px;
     -unity-text-align: middle-center;
 }
 
@@ -96,5 +101,7 @@
 }
 
 .result-buttons > .btn {
-    margin: 4px 0;
+    margin: 8px 0;
+    font-size: 32px;
+    padding: 16px 32px;
 }
