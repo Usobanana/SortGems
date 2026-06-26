@@ -182,9 +182,9 @@ namespace SortGems.UI
             }
             PlayerPrefs.Save();
 
-            if (GameBootstrap.Instance != null)
+            if (ScreenManager.Instance != null)
             {
-                GameBootstrap.Instance.ShowStageSelect();
+                ScreenManager.Instance.ShowStageSelect();
             }
             
             ToggleDebugPanel();
@@ -200,9 +200,9 @@ namespace SortGems.UI
             }
             PlayerPrefs.Save();
 
-            if (GameBootstrap.Instance != null)
+            if (ScreenManager.Instance != null)
             {
-                GameBootstrap.Instance.ShowStageSelect();
+                ScreenManager.Instance.ShowStageSelect();
             }
 
             ToggleDebugPanel();

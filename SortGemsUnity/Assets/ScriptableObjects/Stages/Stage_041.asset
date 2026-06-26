@@ -17,8 +17,8 @@ MonoBehaviour:
   timeLimitSeconds: 300
   mainRows: 16
   mainCols: 16
-  paletteRows: 4
-  paletteCols: 8
+  paletteRows: 2
+  paletteCols: 14
   goalLayout:
   - row: 1
     col: 8

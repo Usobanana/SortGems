@@ -39,6 +39,19 @@
             </ui:VisualElement>
         </ui:VisualElement>
 
+        <!-- Palette unlock dialog -->
+        <ui:VisualElement name="unlock-dialog" class="overlay-panel" style="display: none;">
+            <ui:VisualElement class="panel unlock-panel">
+                <ui:Label text="Unlock Row 2" class="unlock-title" />
+                <ui:Label text="Use an item or watch an ad to unlock the second palette row." class="unlock-desc" />
+                <ui:VisualElement class="unlock-buttons">
+                    <ui:Button name="btn-unlock-item" text="Use Item" class="btn" />
+                    <ui:Button name="btn-unlock-ad" text="Watch Ad" class="btn btn-secondary" />
+                    <ui:Button name="btn-unlock-cancel" text="Back" class="btn btn-secondary" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
         <!-- Failed overlay -->
         <ui:VisualElement name="failed-panel" class="overlay-panel" style="display: none;">
             <ui:VisualElement class="panel result-panel">

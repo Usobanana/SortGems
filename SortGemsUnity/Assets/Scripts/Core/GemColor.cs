@@ -11,6 +11,10 @@ namespace SortGems.Core
         Purple,
         Orange,
         Cyan,
-        Pink
+        Pink,
+        White,
+        Black,
+        Brown,
+        LightBlue
     }
 }

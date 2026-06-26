@@ -28,6 +28,9 @@ namespace SortGems.UI
         [Header("uGUI Grid (kept for puzzle rendering)")]
         [SerializeField] private GameObject _uguiGamePlayPanel;
 
+        [Header("Preview")]
+        [SerializeField] private GemCellView _cellPrefab;
+
         [Header("Settings")]
         [SerializeField] private float _addTimeSeconds = 60f;
 
@@ -117,7 +120,14 @@ namespace SortGems.UI
             _root.Q<Button>("btn-back-failed").clicked += () => { HidePanel("failed-panel"); ShowStageSelect(); };
             _root.Q<Button>("btn-addtime").clicked += OnAddTimeClicked;
 
+            _root.Q<Button>("btn-unlock-item").clicked += OnUnlockByItem;
+            _root.Q<Button>("btn-unlock-ad").clicked += OnUnlockByAd;
+            _root.Q<Button>("btn-unlock-cancel").clicked += OnUnlockCancel;
+
             if (_uguiGamePlayPanel != null) _uguiGamePlayPanel.SetActive(true);
+
+            if (_gridView != null)
+                _gridView.OnUnlockButtonClicked += ShowUnlockDialog;
 
             AdManager.Instance?.ShowBanner();
         }
@@ -154,49 +164,58 @@ namespace SortGems.UI
             }
         }
 
-        // --- Carousel ---
+        // --- Carousel (virtualized: 3 cards in DOM, swipe-then-recycle) ---
 
-        private int _visibleCount;
-        private int _firstVisibleIndex;
-        private float _cardWidth = 832f; // card(800) + margin(32)
+        private int _totalVisible;
+        private float _cardWidth = 832f;
+        private List<int> _visibleStageIndices = new();
+        private VisualElement[] _cardPool;
+        private const int PoolSize = 3;
+        private Dictionary<int, Texture2D> _previewCache = new();
+        private bool _isAnimating;
 
         private void BuildCarousel()
         {
-            int nextStageIndex = FindNextStageIndex();
+            _visibleStageIndices.Clear();
+            foreach (var tex in _previewCache.Values)
+                if (tex != null) Destroy(tex);
+            _previewCache.Clear();
 
-            // 表示範囲: クリア済み5つ前 ～ 未クリア5つ先
-            int startIdx = Mathf.Max(0, nextStageIndex - 5);
-            int endIdx = Mathf.Min(_stages.Count - 1, nextStageIndex + 5);
-            _firstVisibleIndex = startIdx;
-            _visibleCount = endIdx - startIdx + 1;
-            _carouselPage = nextStageIndex - startIdx;
-            Debug.Log($"[Carousel] next={nextStageIndex} start={startIdx} end={endIdx} count={_visibleCount} page={_carouselPage}");
+            int nextStageIndex = FindNextStageIndex();
+            int futureLimit = Mathf.Min(_stages.Count - 1, nextStageIndex + 5);
+
+            for (int i = 0; i <= futureLimit; i++)
+                _visibleStageIndices.Add(i);
+
+            _totalVisible = _visibleStageIndices.Count;
+            _carouselPage = _visibleStageIndices.IndexOf(nextStageIndex);
+            if (_carouselPage < 0) _carouselPage = _totalVisible - 1;
 
             var content = _root.Q("carousel-content");
             content.Clear();
 
-            for (int i = startIdx; i <= endIdx; i++)
+            _cardPool = new VisualElement[PoolSize];
+            for (int p = 0; p < PoolSize; p++)
             {
-                var stage = _stages[i];
-                bool isCleared = PlayerPrefs.GetInt($"StageCleared_{stage.stageNumber}", 0) == 1;
-                bool isUnlocked = (i == 0) || PlayerPrefs.GetInt($"StageCleared_{_stages[i - 1].stageNumber}", 0) == 1;
-
                 var card = new VisualElement();
                 card.AddToClassList("stage-card");
-                if (!isUnlocked) card.AddToClassList("stage-card-locked");
 
-                var label = new Label($"Stage {stage.stageNumber}");
+                var preview = new VisualElement();
+                preview.AddToClassList("stage-card-preview");
+                card.Add(preview);
+
+                var label = new Label();
                 label.AddToClassList("stage-card-label");
                 card.Add(label);
 
-                var statusLabel = new Label(isCleared ? "CLEARED" : isUnlocked ? "" : "LOCKED");
+                var statusLabel = new Label();
                 statusLabel.AddToClassList("stage-card-status");
                 card.Add(statusLabel);
 
                 content.Add(card);
+                _cardPool[p] = card;
             }
 
-            // viewportサイズ確定後にスナップ
             var vp = _root.Q("carousel-viewport");
             vp.RegisterCallback<GeometryChangedEvent>(evt =>
             {
@@ -204,14 +223,14 @@ namespace SortGems.UI
                 float pad = Mathf.Max(0, (vpW - 800f) / 2f);
                 content.style.paddingLeft = pad;
                 content.style.paddingRight = pad;
-                SnapToPage(content, false);
+                UpdatePooledCards();
+                SnapToPoolCenter(content, false);
             });
 
             var btnPrev = _root.Q<Button>("btn-prev");
-            var btnNext = _root.Q<Button>("btn-next");
+            var btnNextNav = _root.Q<Button>("btn-next");
             var btnStart = _root.Q<Button>("btn-start");
 
-            // スワイプ
             var viewport = _root.Q("carousel-viewport");
             float dragStartTranslateX = 0f;
             float swipeStartX = 0f;
@@ -222,6 +241,7 @@ namespace SortGems.UI
 
             viewport.RegisterCallback<PointerDownEvent>(evt =>
             {
+                if (_isAnimating) return;
                 swipeStartX = evt.position.x;
                 lastPointerX = evt.position.x;
                 velocity = 0f;
@@ -249,25 +269,192 @@ namespace SortGems.UI
                 viewport.ReleasePointer(evt.pointerId);
 
                 float currentX = GetCurrentTranslateX(content);
-                int nearestPage = Mathf.RoundToInt(-currentX / _cardWidth);
+                float centerX = -(PoolSize / 2) * _cardWidth;
+                float dragDist = currentX - centerX;
+                int pageDelta = 0;
                 if (Mathf.Abs(velocity) > 400f)
-                    nearestPage = velocity < 0 ? _carouselPage + 1 : _carouselPage - 1;
-                _carouselPage = Mathf.Clamp(nearestPage, 0, _visibleCount - 1);
-                SnapToPage(content, true);
-                UpdateCarouselInfo();
+                    pageDelta = velocity < 0 ? 1 : -1;
+                else if (Mathf.Abs(dragDist) > _cardWidth * 0.3f)
+                    pageDelta = dragDist < 0 ? 1 : -1;
+
+                int newPage = Mathf.Clamp(_carouselPage + pageDelta, 0, _totalVisible - 1);
+                NavigateToPage(newPage, content);
             });
 
-            btnPrev.clicked += () => { if (_carouselPage > 0) { _carouselPage--; SnapToPage(content, true); UpdateCarouselInfo(); } };
-            btnNext.clicked += () => { if (_carouselPage < _visibleCount - 1) { _carouselPage++; SnapToPage(content, true); UpdateCarouselInfo(); } };
-            btnStart.clicked += () => LoadStage(_firstVisibleIndex + _carouselPage);
+            btnPrev.clicked += () => { if (!_isAnimating && _carouselPage > 0) NavigateToPage(_carouselPage - 1, content); };
+            btnNextNav.clicked += () => { if (!_isAnimating && _carouselPage < _totalVisible - 1) NavigateToPage(_carouselPage + 1, content); };
+            btnStart.clicked += () =>
+            {
+                if (_isAnimating) return;
+                int stageIdx = _visibleStageIndices[_carouselPage];
+                LoadStage(stageIdx);
+            };
 
+            UpdatePooledCards();
             UpdateCarouselInfo();
         }
 
-        private void SnapToPage(VisualElement content, bool animate)
+        private void NavigateToPage(int newPage, VisualElement content)
         {
-            float targetX = -_carouselPage * _cardWidth;
-            int ms = animate ? 300 : 0;
+            int delta = newPage - _carouselPage;
+            if (delta == 0)
+            {
+                SnapToPoolCenter(content, true);
+                return;
+            }
+
+            _isAnimating = true;
+            int targetSlot = (PoolSize / 2) + delta;
+            float targetX = -targetSlot * _cardWidth;
+            content.style.transitionDuration = new List<TimeValue> { new TimeValue(250, TimeUnit.Millisecond) };
+            content.style.translate = new Translate(targetX, 0);
+
+            _carouselPage = newPage;
+
+            content.schedule.Execute(() =>
+            {
+                content.style.transitionDuration = new List<TimeValue> { new TimeValue(0) };
+                UpdatePooledCards();
+                SnapToPoolCenter(content, false);
+                UpdateCarouselInfo();
+                _isAnimating = false;
+            }).ExecuteLater(270);
+        }
+
+        private void UpdatePooledCards()
+        {
+            int center = PoolSize / 2;
+            for (int p = 0; p < PoolSize; p++)
+            {
+                int pageOffset = p - center;
+                int dataPage = _carouselPage + pageOffset;
+                var card = _cardPool[p];
+
+                if (dataPage < 0 || dataPage >= _totalVisible)
+                {
+                    card.style.visibility = Visibility.Hidden;
+                    continue;
+                }
+
+                card.style.visibility = Visibility.Visible;
+                int stageIdx = _visibleStageIndices[dataPage];
+                var stage = _stages[stageIdx];
+                bool isCleared = PlayerPrefs.GetInt($"StageCleared_{stage.stageNumber}", 0) == 1;
+                bool isUnlocked = (stageIdx == 0) || PlayerPrefs.GetInt($"StageCleared_{_stages[stageIdx - 1].stageNumber}", 0) == 1;
+
+                card.Q<Label>(className: "stage-card-label").text = $"Stage {stage.stageNumber}: {stage.stageName}";
+                card.Q<Label>(className: "stage-card-status").text = isCleared ? "CLEARED" : isUnlocked ? "" : "LOCKED";
+
+                card.EnableInClassList("stage-card-locked", !isUnlocked);
+                card.EnableInClassList("stage-card-active", p == center);
+
+                var preview = card.Q(className: "stage-card-preview");
+                if (preview != null)
+                {
+                    var tex = GetOrCreatePreview(stageIdx, stage, isCleared);
+                    if (tex != null)
+                        preview.style.backgroundImage = new StyleBackground(tex);
+                }
+            }
+        }
+
+        private Texture2D GetOrCreatePreview(int stageIdx, StageData stage, bool isCleared)
+        {
+            int cacheKey = stageIdx * 2 + (isCleared ? 1 : 0);
+            if (_previewCache.TryGetValue(cacheKey, out var cached))
+                return cached;
+
+            if (stage.goalLayout == null || stage.goalLayout.Count == 0)
+            {
+                _previewCache[cacheKey] = stage.pixelArtTexture;
+                return stage.pixelArtTexture;
+            }
+
+            int rows = stage.mainRows;
+            int cols = stage.mainCols;
+            int cellPx = 24;
+            int gemInset = 3;
+            int texW = cols * cellPx;
+            int texH = rows * cellPx;
+
+            var goalMap = new GemColor[rows, cols];
+            foreach (var def in stage.goalLayout)
+                if (def.row >= 0 && def.row < rows && def.col >= 0 && def.col < cols)
+                    goalMap[def.row, def.col] = def.color;
+
+            var tex = new Texture2D(texW, texH, TextureFormat.RGBA32, false);
+            tex.filterMode = FilterMode.Bilinear;
+            var pixels = new Color[texW * texH];
+            for (int i = 0; i < pixels.Length; i++)
+                pixels[i] = Color.clear;
+
+            for (int r = 0; r < rows; r++)
+            {
+                for (int c = 0; c < cols; c++)
+                {
+                    GemColor gc = goalMap[r, c];
+                    if (gc == GemColor.None) continue;
+
+                    Color baseCol = GemColorPalette.GetColor(gc);
+                    Color bgCol = GemColorPalette.GetDarkGoalColor(gc);
+                    if (!isCleared)
+                    {
+                        baseCol = ToGray(baseCol);
+                        bgCol = ToGray(bgCol);
+                    }
+
+                    int px = c * cellPx;
+                    int py = (rows - 1 - r) * cellPx;
+
+                    for (int y = 0; y < cellPx; y++)
+                    {
+                        for (int x = 0; x < cellPx; x++)
+                        {
+                            int idx = (py + y) * texW + (px + x);
+                            bool isGem = x >= gemInset && x < cellPx - gemInset
+                                      && y >= gemInset && y < cellPx - gemInset;
+                            if (isGem)
+                            {
+                                Color col = baseCol;
+                                int gx = x - gemInset;
+                                int gy = y - gemInset;
+                                int gemSize = cellPx - gemInset * 2;
+                                if (gy < 2)
+                                    col = Color.Lerp(baseCol, Color.white, 0.25f);
+                                else if (gy >= gemSize - 2)
+                                    col = Color.Lerp(baseCol, Color.black, 0.2f);
+                                if (gx < 2)
+                                    col = Color.Lerp(col, Color.white, 0.15f);
+                                else if (gx >= gemSize - 2)
+                                    col = Color.Lerp(col, Color.black, 0.1f);
+                                pixels[idx] = col;
+                            }
+                            else
+                            {
+                                pixels[idx] = bgCol;
+                            }
+                        }
+                    }
+                }
+            }
+
+            tex.SetPixels(pixels);
+            tex.Apply();
+            _previewCache[cacheKey] = tex;
+            return tex;
+        }
+
+        private static Color ToGray(Color c)
+        {
+            float g = c.r * 0.299f + c.g * 0.587f + c.b * 0.114f;
+            g *= 0.55f;
+            return new Color(g, g, g, c.a);
+        }
+
+        private void SnapToPoolCenter(VisualElement content, bool animate)
+        {
+            float targetX = -(PoolSize / 2) * _cardWidth;
+            int ms = animate ? 250 : 0;
             content.style.transitionDuration = new List<TimeValue> { new TimeValue(ms, TimeUnit.Millisecond) };
             content.style.translate = new Translate(targetX, 0);
         }
@@ -280,7 +467,7 @@ namespace SortGems.UI
 
         private void UpdateCarouselInfo()
         {
-            int stageIdx = _firstVisibleIndex + _carouselPage;
+            int stageIdx = _visibleStageIndices[_carouselPage];
             var textLabel = _root.Q<Label>("active-stage-text");
             if (textLabel != null && stageIdx >= 0 && stageIdx < _stages.Count)
             {
@@ -288,17 +475,10 @@ namespace SortGems.UI
                 textLabel.text = $"Stage {stage.stageNumber}: {stage.stageName}";
             }
 
-            var content = _root.Q("carousel-content");
-            for (int i = 0; i < content.childCount; i++)
-            {
-                if (i == _carouselPage) content[i].AddToClassList("stage-card-active");
-                else content[i].RemoveFromClassList("stage-card-active");
-            }
-
             var btnPrev = _root.Q<Button>("btn-prev");
-            var btnNext = _root.Q<Button>("btn-next");
+            var btnNextNav = _root.Q<Button>("btn-next");
             if (btnPrev != null) btnPrev.style.display = _carouselPage > 0 ? DisplayStyle.Flex : DisplayStyle.None;
-            if (btnNext != null) btnNext.style.display = _carouselPage < _visibleCount - 1 ? DisplayStyle.Flex : DisplayStyle.None;
+            if (btnNextNav != null) btnNextNav.style.display = _carouselPage < _totalVisible - 1 ? DisplayStyle.Flex : DisplayStyle.None;
 
             bool isUnlocked = (stageIdx == 0) || PlayerPrefs.GetInt($"StageCleared_{_stages[stageIdx - 1].stageNumber}", 0) == 1;
             var btnStart = _root.Q<Button>("btn-start");
@@ -307,14 +487,12 @@ namespace SortGems.UI
 
         private int FindNextStageIndex()
         {
-            int next = 0;
             for (int i = 0; i < _stages.Count; i++)
             {
                 if (PlayerPrefs.GetInt($"StageCleared_{_stages[i].stageNumber}", 0) == 0)
                     return i;
-                next = i;
             }
-            return next;
+            return _stages.Count - 1;
         }
 
         // --- Timer ---
@@ -394,6 +572,50 @@ namespace SortGems.UI
             _gameManager?.ResetStage();
             HidePanel("cleared-panel");
             HidePanel("failed-panel");
+        }
+
+        private void ShowUnlockDialog()
+        {
+            if (_gridManager != null && _gridManager.IsPaletteRow2Unlocked) return;
+
+            _gameManager?.PauseGame();
+            var panel = _root?.Q("unlock-dialog");
+            if (panel != null) panel.style.display = DisplayStyle.Flex;
+        }
+
+        private void HideUnlockDialog()
+        {
+            HidePanel("unlock-dialog");
+            _gameManager?.ResumeGame();
+        }
+
+        private void OnUnlockByItem()
+        {
+            // TODO: アイテム在庫チェック＆消費処理
+            _gridManager?.UnlockPaletteRow2();
+            HideUnlockDialog();
+        }
+
+        private void OnUnlockByAd()
+        {
+            if (AdManager.Instance != null)
+            {
+                AdManager.Instance.ShowInterstitialWithProbability(() =>
+                {
+                    _gridManager?.UnlockPaletteRow2();
+                    HideUnlockDialog();
+                });
+            }
+            else
+            {
+                _gridManager?.UnlockPaletteRow2();
+                HideUnlockDialog();
+            }
+        }
+
+        private void OnUnlockCancel()
+        {
+            HideUnlockDialog();
         }
 
         private void OnNextStageClicked()

@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEditor;
 using UnityEngine.UI;
+using UnityEngine.UIElements;
 using UnityEngine.EventSystems;
 using System.IO;
 using System.Collections.Generic;
@@ -12,9 +13,9 @@ using SortGems.Ads;
 /// モバイル縦画面（1080×1920）レイアウトでゲームシーンを自動生成する。
 ///
 /// レイアウト構成:
-///   TitlePanel        — タイトル画面
-///   StageSelectPanel  — ステージ選択（動的スクロールリスト）
-///   GamePlayPanel     — パズル画面
+///   [UIToolkit]       — UIDocument + ScreenManager（Title/StageSelect/GamePlayHUD画面遷移）
+///   [Canvas]          — uGUI Canvas（パズルグリッド描画専用）
+///     GamePlayPanel   — GridContainer + PaletteContainer（uGUIタッチ操作用）
 /// </summary>
 public class CreateGameScene : EditorWindow
 {
@@ -30,101 +31,814 @@ public class CreateGameScene : EditorWindow
     // ---- ステージ定数 ----
     const int MAIN_ROWS    = 16;
     const int MAIN_COLS    = 16;
-    const int PAL_ROWS     = 4;
-    const int PAL_COLS     = 8;
+    const int PAL_ROWS     = 2;
+    const int PAL_COLS     = 14;
 
     // ---- 16x16 ピクセルアート定義 ----
+    // R=Red B=Blue G=Green Y=Yellow P=Purple O=Orange C=Cyan K=Pink
+    // W=White D=Black N=Brown L=LightBlue .=空
+
+    // Stage 1: スター（五芒星）
     private static readonly string[] StarArt = new string[]
     {
-        "................",
-        ".......Y........",
-        "......YOY.......",
-        ".....YOOOY......",
-        "..YYYOOOOOYYY...",
-        "...YOOOOOOOY....",
-        "....YOOCOOY.....",
-        "...YOOOOOOOY....",
-        "..YYYOOOOOYYY...",
-        ".....YOOOY......",
-        "......YOY.......",
-        ".......Y........",
+        ".......DD.......",
+        "......DYYD......",
+        ".....DYYYYD.....",
+        ".....DYYYYD.....",
+        "DDDDDYYYYYYDDDD.",
+        ".DYOOYYYYYOOYD..",
+        "..DYOOYYYOOY....",
+        "...DYYYYYYY.....",
+        "..DYOOYYYOOY....",
+        "..DYYD...DYYD...",
+        ".DYD.......DYD..",
+        ".DD.........DD..",
         "................",
         "................",
         "................",
         "................"
     };
 
+    // Stage 2: ハート
     private static readonly string[] HeartArt = new string[]
     {
         "................",
-        "....KK....KK....",
-        "...KKKK..KKKK...",
-        "..KKRRRRRRRRKK..",
-        "..KRRRRRRRRRRK..",
-        "...RRRBBBBRRR...",
-        "....RRBBBRR.....",
-        ".....RBRR.......",
-        "......RR........",
-        ".......R........",
-        "................",
-        "................",
-        "................",
-        "................",
+        "..DKK.....KKD...",
+        ".DKWKK...KKWKD..",
+        "DKRRRRR.RRRRRKKD",
+        "DRRRRRRRRRRRRRRD",
+        "DRRRRRRRRRRRRRRD",
+        "DRRRRRRRRRRRRRRD",
+        ".DRRRRRRRRRRRRD.",
+        "..DRRRRRRRRRRD..",
+        "...DRRRRRRRRD...",
+        "....DRRRRRRD....",
+        ".....DRRRRD.....",
+        "......DRRD......",
+        ".......DD.......",
         "................",
         "................"
     };
 
+    // Stage 3: 木（リンゴ付き）
     private static readonly string[] TreeArt = new string[]
     {
+        ".......GG.......",
+        "......DGGGD.....",
+        ".....DGGGGGGD...",
+        "....DGGRGGGGGGD.",
+        "...DGGGGGGGGGGD.",
+        "...DGGGGGGRGGD..",
+        "..DGGGGGGGGGGD..",
+        "...DGGRGGGGGGD..",
+        "....DGGGGGGD....",
+        ".....DGGGGD.....",
+        ".......NN.......",
+        ".......NN.......",
+        "......NNNN......",
+        ".....NNNNNN.....",
+        "....NNNNNNNN....",
+        "................"
+    };
+
+    // Stage 4: ひまわり
+    private static readonly string[] FlowerArt = new string[]
+    {
+        ".....YYYYY......",
+        "...YY.YYYYY.YY..",
+        "..YYYYYYYYYYYYY.",
+        "..YYYYDNNNDYYYY.",
+        ".YYYYYNNNNNYYYYY",
+        ".YYYYYNNNNNYYYYY",
+        "..YYYYDNNNDYYYY.",
+        "..YYYYYYYYYYYYY.",
+        "...YY.YYYYY.YY..",
+        ".......GGG......",
+        "......GGGG......",
+        ".....GG.GGG.....",
+        "....GG...GG.....",
+        "....G.....G.....",
         "................",
-        "......YYYY......",
-        "....GGGGGGGG....",
-        "...GGGGGGGGGG...",
+        "................"
+    };
+
+    // Stage 5: ネコ
+    private static readonly string[] CatArt = new string[]
+    {
+        "..OD.........DO.",
+        ".OOKD.......DKOO",
+        ".OOOOO.....OOOOO",
+        ".OOOOOOOOOOOOOOO",
+        ".OOOOOOOOOOOOOOO",
+        ".ODWOOOOOOOODWOO",
+        ".OOOOOOOOOOOOOOO",
+        ".OOOOODNNDOOOOO.",
+        "..OOOOOOOOOOOOO.",
+        "...OOOOOOOOOOO..",
+        "....OOOOOOOOO...",
+        "................",
+        ".....OOOOOOO....",
+        "....OOOOOOOOO...",
+        "....OOOOOOOOO...",
+        ".....OOOOOOO...."
+    };
+
+    // Stage 6: イヌ
+    private static readonly string[] DogArt = new string[]
+    {
+        "..NNNN....NNNN..",
+        ".NNNNNN..NNNNNN.",
+        ".NNNNNN..NNNNNN.",
+        "..NNNNNNNNNNNN..",
+        "..NNNNNNNNNNNN..",
+        "..NDWNNNNNNDWN..",
+        "..NNNNNNNNNNNN..",
+        "..NNNNDDNNNNNN..",
+        "..NNNNNNNNNNNN..",
+        "...NNNNNNNNNN...",
+        "....NNNNNNNN....",
+        "....NN....NN....",
+        "....NN....NN....",
+        "....NN....NN....",
+        "...NNN....NNN...",
+        "................"
+    };
+
+    // Stage 7: リンゴ
+    private static readonly string[] AppleArt = new string[]
+    {
+        ".......NGG......",
+        "......GGG.......",
+        ".....DRRRRRD....",
+        "...DRRWRRRRRRD..",
+        "..DRRWRRRRRRRRD.",
+        ".DRRRRRRRRRRRRRD",
+        ".DRRRRRRRRRRRRRD",
+        ".DRRRRRRRRRRRRRD",
+        ".DRRRRRRRRRRRRRD",
+        ".DRRRRRRRRRRRRRD",
+        "..DRRRRRRRRRRRD.",
+        "..DRRRRRRRRRRRD.",
+        "...DRRRRRRRRD...",
+        "....DRRRRRD.....",
+        "................",
+        "................"
+    };
+
+    // Stage 8: サカナ
+    private static readonly string[] FishArt = new string[]
+    {
+        "................",
+        "......LLBB......",
+        "....LLBBBBBB....",
+        "...LBBBBBBBBBD..",
+        "..LBBBBBBBBBBBD.",
+        ".LBWBBBBBBBBBBD.",
+        "LBBBBYBBBBBBBLBD",
+        "LBBBBBBBBBBBLBD.",
+        "LBBBBBBBBBBLBD..",
+        ".LBBBBBBBBBLBD..",
+        "..LBBBBBBBBD....",
+        "...LBBBBBBBD....",
+        "....LLBBBBD.....",
+        "......LLBD......",
+        "................",
+        "................"
+    };
+
+    // Stage 9: チョウチョ
+    private static readonly string[] ButterflyArt = new string[]
+    {
+        "................",
+        ".PPP.........PPP",
+        "PPWPPP.....PPPWP",
+        "PPKPPPP...PPPPKP",
+        "PPWPPPPP.PPPPPWP",
+        "PPKPPPPP.PPPPPKP",
+        "PPPPPPPPDPPPPPP.",
+        ".PPPPPPPDDPPPPP.",
+        "..PPPPPPDDPPPP..",
+        "...PPPPPDDPPP...",
+        "....PPPPDDPP....",
+        ".....PPPDDP.....",
+        "......DDDD......",
+        ".......DD.......",
+        "................",
+        "................"
+    };
+
+    // Stage 10: ロケット
+    private static readonly string[] RocketArt = new string[]
+    {
+        ".......WW.......",
+        "......WCWW......",
+        ".....WCCCCW.....",
+        ".....CCCCCC.....",
+        "....DCCCCCCDD...",
+        "....DCCLCCCD....",
+        "....DCCLCCCD....",
+        "....DCCCCCCDD...",
+        "....DCCCCCCDD...",
+        "...RDCCCCCCDRD..",
+        "..RRDCCCCCCDRRR.",
+        "..RRDCCCCCCDRRR.",
+        ".RRR.CCCCCC.RRR.",
+        ".RR..OOOOOO..RR.",
+        ".R...OYOOYO...R.",
+        "......YOOY......"
+    };
+
+    // Stage 11: おうち
+    private static readonly string[] HouseArt = new string[]
+    {
+        "........R.......",
+        ".......RRR......",
+        "......RRRRR.....",
+        ".....RRRRRRR....",
+        "....RRRRRRRRR...",
+        "...RRRRRRRRRRR..",
+        "..DNNNNNNNNNNND.",
+        "..NNNNNNNNNNNNN.",
+        "..NNLLNNNLLNNN..",
+        "..NNLLNNNLLNNN..",
+        "..NNNNNNNLLNNN..",
+        "..NNNNNNNNNNNNN.",
+        "..NNNNNDNNNNNNN.",
+        "..NNNNNDDNNNNN..",
+        "..NNNNNDDNNNNN..",
+        "..NNNNNNNNNNNNN."
+    };
+
+    // Stage 12: ニコちゃん（スマイリー）
+    private static readonly string[] SmileyArt = new string[]
+    {
+        "....YYYYYYYY....",
+        "..YYYYYYYYYYYY..",
+        ".YYYYYYYYYYYYYY.",
+        ".YYYYYYYYYYYYYY.",
+        "YYYYDYYYYYYYYDYY",
+        "YYYYDYYYYYYYYDYY",
+        ".YYYYYYYYYYYYYY.",
+        ".YYYYYYYYYYYYYY.",
+        ".YYYYYYYYYYYYYY.",
+        ".YYYDYYYYYYYDY..",
+        "..YYYYDYYYYDYYY.",
+        "..YYYYYDDDDDYY..",
+        "...YYYYYYYYYY...",
+        "....YYYYYYYY....",
+        "................",
+        "................"
+    };
+
+    // Stage 13: きのこ
+    private static readonly string[] MushroomArt = new string[]
+    {
+        "......RRRR......",
+        "....DRRRRRRRD...",
+        "...DRRWRRRRWRD..",
+        "..DRRWRRRRRWRRD.",
+        ".DRRRRRRRRRRRRD.",
+        ".DRRRRRRRRRRRRD.",
+        "DRRRRRRRRRRRRRD.",
+        "DDDDDDDDDDDDDDDD",
+        "......NNNN......",
+        ".....WNNNWW.....",
+        ".....NNNNNN.....",
+        ".....NNNNNN.....",
+        ".....NNNNNN.....",
+        "....NNNNNNNN....",
+        "...NNNNNNNNNN...",
+        "................"
+    };
+
+    // Stage 14: くるま
+    private static readonly string[] CarArt = new string[]
+    {
+        "................",
+        "................",
+        "................",
+        ".....DRRRRRD....",
+        "....DRRRRRRRD...",
+        "...DRRLRRRLRD...",
+        "..DRRRRRRRRRRRD.",
+        ".DRRRRRRRRRRRRD.",
+        ".DDDDDDDDDDDDDDD",
+        ".DRRRRRRRRRRRRD.",
+        "..DDKDRRDDDKDD..",
+        ".DDDDD..DDDDDD..",
+        ".DDDDD..DDDDDD..",
+        "..DDD....DDD....",
+        "................",
+        "................"
+    };
+
+    // Stage 15: かさ
+    private static readonly string[] UmbrellaArt = new string[]
+    {
+        ".......NN.......",
+        "....PPPPPPPP....",
+        "..PPPPPPPPPPPP..",
+        ".PPPPPPPPPPPPPP.",
+        "DPPDPPDPPDPPDPPD",
+        "PPPPPPPPPPPPPPPP",
+        "PP.PPP.PPP.PPP.P",
+        ".......NN.......",
+        ".......NN.......",
+        ".......NN.......",
+        ".......NN.......",
+        ".......NN.......",
+        ".......NN.......",
+        ".......NNN......",
+        "........NN......",
+        "................"
+    };
+
+    // Stage 16: ケーキ
+    private static readonly string[] CakeArt = new string[]
+    {
+        ".......YY.......",
+        ".......OO.......",
+        "......KKKK......",
+        "....KWKWKWKK....",
+        "...KKKKKKKKKK...",
+        "..RRRRRRRRRRRR..",
+        "..KKKKKKKKKKKK..",
+        "..KWKWKWKWKWKK..",
+        "..RRRRRRRRRRRR..",
+        "..NNNNNNNNNNNN..",
+        "..NWNWNWNWNWNN..",
+        "..NNNNNNNNNNNN..",
+        "..RRRRRRRRRRRR..",
+        "..NNNNNNNNNNNN..",
+        "..NNNNNNNNNNNN..",
+        "..DDDDDDDDDDDD.."
+    };
+
+    // Stage 17: おばけ
+    private static readonly string[] GhostArt = new string[]
+    {
+        ".....WWWWWW.....",
+        "...WWWWWWWWWW...",
+        "..WWWWWWWWWWWW..",
+        ".WWWWWWWWWWWWWW.",
+        ".WWWDWWWWWWDWWW.",
+        ".WWWDWWWWWWDWWW.",
+        ".WWWWWWWWWWWWWW.",
+        ".WWWWWWDWWWWWWW.",
+        ".WWWWWWWWWWWWWW.",
+        ".WWWWWWWWWWWWWW.",
+        ".WWWWWWWWWWWWWW.",
+        ".WWWWWWWWWWWWWW.",
+        ".WWW.WWWWWW.WWW.",
+        ".WW...WWWW...WW.",
+        "................",
+        "................"
+    };
+
+    // Stage 18: かえる
+    private static readonly string[] FrogArt = new string[]
+    {
+        "..GGG......GGG..",
+        ".GGGGG....GGGGG.",
+        ".GDGGG....GGGDG.",
+        ".GGGGG....GGGGG.",
+        "..GGGGGGGGGGGG..",
+        "..GGGGGGGGGGGG..",
+        "..GGGGRRRGGG....",
+        "..GGGGGGGGGGGG..",
         "..GGGGGGGGGGGG..",
         "...GGGGGGGGGG...",
         "....GGGGGGGG....",
-        "......GGGG......",
-        ".......OO.......",
-        ".......OO.......",
-        ".......OO.......",
         "................",
-        "................",
-        "................",
+        ".GG..........GG.",
+        ".GGGG......GGGG.",
+        "..GGGG....GGGG..",
+        "...GG......GG..."
+    };
+
+    // Stage 19: ペンギン
+    private static readonly string[] PenguinArt = new string[]
+    {
+        ".....DDDDDD.....",
+        "....DDDDDDDD....",
+        "...DDDDDDDDDD...",
+        "...DDDWWWWDDD...",
+        "..DDDWWWWWWDDD..",
+        "..DDWWDWWDWWDD..",
+        "..DDDWWWWWWDDD..",
+        ".DDDDWWOOWWDDDD.",
+        ".DDDDWWWWWWDDDD.",
+        ".DDDDDWWWWDDDDD.",
+        "..DDDDDDDDDDDD..",
+        "...DDDDDDDDDD...",
+        "....DDDDDDDD....",
+        "....OOO..OOO....",
         "................",
         "................"
     };
 
-    private static readonly string[] FlowerArt = new string[]
+    // Stage 20: たいよう
+    private static readonly string[] SunArt = new string[]
+    {
+        ".......YY.......",
+        "..Y....YY....Y..",
+        "..YY..YYYY..YY..",
+        "...YYYYYYYYYY...",
+        "...YYYOOOYYY....",
+        "..YYYYOOOOYYYY..",
+        "YYYYYOOWOOOYYYYY",
+        "YYYYYOOWOOOYYYYY",
+        "YYYYYOOOOOOYYYY.",
+        "..YYYYOOOOYYYY..",
+        "...YYYOOOYYY....",
+        "...YYYYYYYYYY...",
+        "..YY..YYYY..YY..",
+        "..Y....YY....Y..",
+        ".......YY.......",
+        "................"
+    };
+
+    // Stage 21: かたつむり
+    private static readonly string[] SnailArt = new string[]
     {
         "................",
-        "......KKKK......",
-        "....KKKKKKKK....",
-        "...KKKYYYYKKK...",
-        "..KKCYYYYYYCKK..",
-        "..KKCYYYYYYCKK..",
-        "...KKKYYYYKKK...",
-        "....KKKKKKKK....",
-        "......KKKK......",
+        "....DD..........",
+        "...DWWD.........",
+        "....DD..........",
+        "....OOOOOO......",
+        "...OOOOOOOOO....",
+        "..OOONNNNOOOOO..",
+        ".OOOONWWNOOOOOO.",
+        ".OOOONNNNOOOOOO.",
+        ".OOOONNNNOOOOOO.",
+        ".OOOONNNNOOOOO..",
+        "..OOOOOOOOOOO...",
+        "...OOOOOOOOO....",
+        "GGGGGGGGGGGGGGGG",
+        "NNNNNNNNNNNNNNNN",
+        "................"
+    };
+
+    // Stage 22: にじ
+    private static readonly string[] RainbowArt = new string[]
+    {
         "................",
+        "....RRRRRRRR....",
+        "..RRRRRRRRRRRR..",
+        ".RROOOOOOOOORR..",
+        ".ROOYYYYYYYOOR..",
+        "ROOYGGGGGGYYOOR.",
+        "ROYGBBBBBBGYOOR.",
+        "ROYGBPPPPPBGYOR.",
+        "ROYGBP....PBGYOR",
+        "ROYG........GYOR",
+        "ROY..........YOR",
+        "RO............OR",
+        "R..............R",
         "................",
+        "..WW......WW....",
+        ".WWWW....WWWW..."
+    };
+
+    // Stage 23: ダイヤモンド
+    private static readonly string[] DiamondArt = new string[]
+    {
         "................",
+        "......LLLL......",
+        ".....LCLLCL.....",
+        "....LCCCCCCCL...",
+        "...LCCWCCWCCL...",
+        "..LCCCWCCCCWCL..",
+        ".LCCCCCCCCCCCCL.",
+        "LCCCCCCCCCCCCCCD",
+        ".LCCCCCCCCCCCCL.",
+        "..LCCCCCCCCCCL..",
+        "...LCCCCCCCCL...",
+        "....LCCCCCLL....",
+        ".....LCCCCL.....",
+        "......LCCL......",
+        ".......LL.......",
+        "................"
+    };
+
+    // Stage 24: おんぷ
+    private static readonly string[] MusicNoteArt = new string[]
+    {
         "................",
-        "................",
+        "....DDDDDDDDDDD.",
+        "....DDWWWWWWWDD.",
+        ".....DD......DD.",
+        ".....DD.......DD",
+        ".....DD.......DD",
+        ".....DD.......DD",
+        ".....DD.......DD",
+        ".....DD.......DD",
+        "...DDDDD...DDDDD",
+        "..DDDDDDD.DDDDDD",
+        ".DDDDDDDDDDDDDDD",
+        ".DDDDDDD.DDDDDDD",
+        "..DDDDD...DDDDD.",
         "................",
         "................"
+    };
+
+    // Stage 25: ヨット
+    private static readonly string[] SailboatArt = new string[]
+    {
+        "........W.......",
+        "........WW......",
+        "........WWW.....",
+        "........WWWW....",
+        "........WWWWW...",
+        "........WWWWWW..",
+        "...R....WWWWWWW.",
+        "...RR...WWWWWW..",
+        "...RRR..WWWWW...",
+        "...RRRR.WWWW....",
+        "...RRRRRWWWW....",
+        "..NNNNNNNNNNN...",
+        ".NNNNNNNNNNNNN..",
+        "BBBBBBBBBBBBBBB.",
+        ".BLLLLLLLLLLLL..",
+        "..BBBBBBBBBBB..."
+    };
+
+    // Stage 26: クラウン（王冠）
+    private static readonly string[] CrownArt = new string[]
+    {
+        "................",
+        "..Y...YY.Y...Y..",
+        "..YY.YYYY.YY.Y..",
+        "..YYYYYYYYYYYY..",
+        "..YYYYYYYYYYYY..",
+        "..YYYYYYYYYYYY..",
+        "..YRYYYYYYYYRY..",
+        "..YYYYYYYYYYYY..",
+        "..YYYYYYYYYYYY..",
+        "..YYYYYYYYYYYY..",
+        "..YYYYYYYYYYYY..",
+        "..DRRRRRRRRRYD..",
+        "..YYYYYYYYYYYY..",
+        "..DDDDDDDDDDDD..",
+        "................",
+        "................"
+    };
+
+    // Stage 27: カップケーキ
+    private static readonly string[] CupcakeArt = new string[]
+    {
+        ".......RR.......",
+        "......KKKK......",
+        ".....KWKWKK.....",
+        "....KKKKKKKK....",
+        "...KKYKKYKKK....",
+        "...KKKKKKKKKK...",
+        "..DKKKKKKKKKKD..",
+        "...NNNNNNNNNN...",
+        "...NWNWNWNWNN...",
+        "....NNNNNNNN....",
+        "....NNNNNNNN....",
+        "....NNNNNNNN....",
+        "....NNNNNNNN....",
+        ".....NNNNNN.....",
+        "......DDDD......",
+        "................"
+    };
+
+    // Stage 28: スイカ
+    private static readonly string[] WatermelonArt = new string[]
+    {
+        "......GGGG......",
+        "....GGGGGGGGG...",
+        "...GGGGGGGGGGG..",
+        "..GGDRRRRRRRDG..",
+        ".GGDRRRRRRRRRDG.",
+        ".GDRRDRRRDRRRDG.",
+        ".GDRRRRRRRRRRRDG",
+        "GDRRRRDRRRDRRRDG",
+        "GDRRRRRRRRRRRRRD",
+        "GDRRRRDRRRRRDRRG",
+        ".GDRRRRRRRRRRRDG",
+        ".GGDRRRRRRRRRDG.",
+        "..GGDRRRRRRRDG..",
+        "...GGGGGGGGGGG..",
+        "....GGGGGGGGG...",
+        "................"
+    };
+
+    // Stage 29: カメ
+    private static readonly string[] TurtleArt = new string[]
+    {
+        "................",
+        "................",
+        ".....DGGGGGGD...",
+        "...DGGGGGGGGGD..",
+        "..DGYGGYGGYGGD..",
+        ".DGGGGGGGGGGGDG.",
+        ".DGYGGYGGYGGD...",
+        "GGGDGGGGGGGDGGGG",
+        "GGGGGDDDDDGGGGGG",
+        ".GG.GGGGGGGGG.GG",
+        "....GGGGGGGGG...",
+        "..GG.GGGGGGG.GG.",
+        "..GG..GGGGG..GG.",
+        "......GGGGG.....",
+        "................",
+        "................"
+    };
+
+    // Stage 30: ほし月
+    private static readonly string[] MoonStarArt = new string[]
+    {
+        "..........YY....",
+        "..PPPPPP.YOOY...",
+        ".PPPPPPPP.YY....",
+        "PPWPPPPP........",
+        "PPPPPPP.........",
+        "PPPPPPP.........",
+        "PPPPPPP.........",
+        "PPPPPPPP........",
+        ".PPWPPPPP.......",
+        ".PPPPPPPPP......",
+        "..PPPPPPPPP.....",
+        "...PPPPPPPP.....",
+        "....PPPPPP......",
+        ".....PPPP.......",
+        "................",
+        "................"
+    };
+
+    // ---- 18x18 ピクセルアート ----
+
+    // Stage 31: パンダ (18x18)
+    private static readonly string[] PandaArt18 = new string[]
+    {
+        "..................",
+        "....DDDDDDDDD.....",
+        "..DDDWWWWWWWDDD...",
+        ".DDDWWWWWWWWWDDD..",
+        ".DDWWWWWWWWWWWDD..",
+        "DDDWWWWWWWWWWWDDD.",
+        "DDWWWDWWWWWDWWWDD.",
+        "DDWWWDWWWWWDWWWDD.",
+        "DDWWWWWWWWWWWWWDD.",
+        "DDWWWWWWDWWWWWWDD.",
+        ".DDWWWWWWWWWWWDD..",
+        ".DDDWWDDDDDWDDD...",
+        "..DDDWWWWWWWDDD...",
+        "....DDDDDDDDD.....",
+        "...DD.......DD....",
+        "..DDD.......DDD...",
+        "..DD.........DD...",
+        ".................."
+    };
+
+    // Stage 32: クジラ (18x18)
+    private static readonly string[] WhaleArt18 = new string[]
+    {
+        "..................",
+        "........LL........",
+        "......LLLLLL......",
+        ".....LBBBBBBBL....",
+        "...LBBBBBBBBBBL...",
+        "..LBBBBBBBBBBBBBL.",
+        ".LBBWBBBBBBBBBBBL.",
+        "LBBBBBBBBBBBBBBBL.",
+        "LBBBBBBBBBBBBBBBL.",
+        "LBBBBBBBBBBBBBBL..",
+        ".LBBBBBBBBBBBBBL..",
+        "..LLBBBBBBBBLL....",
+        "....LLBBBBLL......",
+        "......LLLL........",
+        ".........LL.......",
+        "..........LL......",
+        "..................",
+        ".................."
+    };
+
+    // Stage 33: ドーナツ (18x18)
+    private static readonly string[] DonutArt18 = new string[]
+    {
+        "..................",
+        "......KKKKKK......",
+        "....KKKKKKKKKKK...",
+        "...KKKKKKKKKKKKK..",
+        "..KKKKKKKKKKKKKK..",
+        ".KKKKKKKKKKKKKKKK.",
+        ".KKKKK......KKKKK.",
+        ".KKKKK......KKKKK.",
+        ".NNNN........NNNN.",
+        ".NNNN........NNNN.",
+        ".NNNNN......NNNNN.",
+        ".NNNNN......NNNNN.",
+        "..NNNNNNNNNNNNNN..",
+        "..NNNNNNNNNNNNNNN.",
+        "...NNNNNNNNNNNNN..",
+        "....NNNNNNNNNNN...",
+        "......NNNNNN......",
+        ".................."
+    };
+
+    // ---- 24x24 ピクセルアート ----
+
+    // Stage 34: フクロウ (24x24)
+    private static readonly string[] OwlArt24 = new string[]
+    {
+        "........................",
+        "........................",
+        "........NNNNNNNN........",
+        "......NNNNNNNNNNNN......",
+        ".....NNNNNNNNNNNNNN.....",
+        "....NNNNNNNNNNNNNNNN....",
+        "...NNNNNNNNNNNNNNNNNN...",
+        "..NNNNDWWNNNNNDWWNNN....",
+        "..NNNDWWWNNNNDWWWNNN....",
+        "..NNNWWDWNNNNWWDWNNN....",
+        "..NNNDWWWNNNNDWWWNNN....",
+        "..NNNNDWWNNNNNDWWNNN....",
+        "...NNNNNNNNNNNNNNNN.....",
+        "...NNNNNNNOONNNNNNN.....",
+        "....NNNNNNNNNNNNNN......",
+        "....NNNNDDDDDNNNNN......",
+        ".....NNNNNNNNNNNN.......",
+        "......NNNNNNNNNN........",
+        ".......NNNNNNNN.........",
+        ".......NN....NN.........",
+        "......NNN....NNN........",
+        "......NNN....NNN........",
+        "........................",
+        "........................"
+    };
+
+    // Stage 35: ヨットと海 (24x24)
+    private static readonly string[] SailboatArt24 = new string[]
+    {
+        "........................",
+        "............W...........",
+        "............WW..........",
+        "............WWW.........",
+        "............WWWW........",
+        "............WWWWW.......",
+        "............WWWWWW......",
+        ".....R......WWWWWWW.....",
+        ".....RR.....WWWWWW......",
+        ".....RRR....WWWWW.......",
+        ".....RRRR...WWWW........",
+        ".....RRRRRRRWWWW........",
+        "....NNNNNNNNNNNNN.......",
+        "...NNNNNNNNNNNNNNN......",
+        "..BBBBBBBBBBBBBBBBB.....",
+        "..BLLLLLLLLLLLLLLBB.....",
+        "...BBBBBBBBBBBBBBB......",
+        "LLLLLLLLLLLLLLLLLLLLLLLL",
+        "BBBBBBBBBBBBBBBBBBBBBBBB",
+        "LLLLLLLLLLLLLLLLLLLLLLLL",
+        "BBBBBBBBBBBBBBBBBBBBBBBB",
+        "........................",
+        "........................",
+        "........................"
+    };
+
+    // Stage 36: ロボット (24x24)
+    private static readonly string[] RobotArt24 = new string[]
+    {
+        "........................",
+        "..........DD............",
+        ".........DDDD...........",
+        ".......DDDDDDDD.........",
+        "......DDDDDDDDDD........",
+        ".....DDDDDDDDDDDDD......",
+        ".....DDDDWDDWDDDDD......",
+        ".....DDDDWDDWDDDDD......",
+        ".....DDDDDDDDDDDDD......",
+        ".....DDDDDRRDDDDDD......",
+        "......DDDDDDDDDDD.......",
+        ".......DDDDDDDDD........",
+        "........DDDDDDD.........",
+        "......DDDDDDDDDDD.......",
+        ".....DDDDDDDDDDDDD......",
+        ".....DDDDDDDDDDDDD......",
+        ".....DDDDDDDDDDDDDD.....",
+        ".....DDDDDDDDDDDDD......",
+        ".....DDDDDDDDDDDDD......",
+        "......DDDDDDDDDDD.......",
+        "......DDD......DDD......",
+        "......DDD......DDD......",
+        ".....DDDD......DDDD.....",
+        "........................"
     };
 
     static Texture2D CreateArtTexture(string[] art, string path)
     {
-        int width = 16;
-        int height = 16;
+        int height = art.Length;
+        int width = art[0].Length;
         Texture2D tex = new Texture2D(width, height, TextureFormat.RGBA32, false);
         tex.filterMode = FilterMode.Point;
 
         Color[] colors = new Color[width * height];
         for (int y = 0; y < height; y++)
         {
-            string line = art[15 - y];
+            string line = art[height - 1 - y];
             for (int x = 0; x < width; x++)
             {
                 char c = (x < line.Length) ? line[x] : '.';
@@ -138,6 +852,10 @@ public class CreateGameScene : EditorWindow
                     'O' => GemColor.Orange,
                     'C' => GemColor.Cyan,
                     'K' => GemColor.Pink,
+                    'W' => GemColor.White,
+                    'D' => GemColor.Black,
+                    'N' => GemColor.Brown,
+                    'L' => GemColor.LightBlue,
                     _ => GemColor.None
                 };
 
@@ -168,6 +886,9 @@ public class CreateGameScene : EditorWindow
 
     static StageData CreateStageFromArt(int number, string name, string[] art, float timeLimit)
     {
+        int artRows = art.Length;
+        int artCols = art[0].Length;
+
         string dir = "Assets/Textures/Stages";
         Directory.CreateDirectory(dir);
         string texPath = $"{dir}/Stage_{number:000}_Art.png";
@@ -182,10 +903,10 @@ public class CreateGameScene : EditorWindow
         var stageData = ScriptableObject.CreateInstance<StageData>();
         stageData.stageNumber = number;
         stageData.stageName = name;
-        stageData.mainRows = 16;
-        stageData.mainCols = 16;
-        stageData.paletteRows = 4;
-        stageData.paletteCols = 8;
+        stageData.mainRows = artRows;
+        stageData.mainCols = artCols;
+        stageData.paletteRows = 2;
+        stageData.paletteCols = 14;
         stageData.timeLimitSeconds = timeLimit;
         stageData.pixelArtTexture = tex;
 
@@ -194,10 +915,10 @@ public class CreateGameScene : EditorWindow
 
         List<StageData.CellColorDef> nonVoidCells = new List<StageData.CellColorDef>();
 
-        for (int y = 0; y < 16; y++)
+        for (int y = 0; y < artRows; y++)
         {
             string line = art[y];
-            for (int x = 0; x < 16; x++)
+            for (int x = 0; x < artCols; x++)
             {
                 char c = (x < line.Length) ? line[x] : '.';
                 GemColor gc = c switch
@@ -210,6 +931,10 @@ public class CreateGameScene : EditorWindow
                     'O' => GemColor.Orange,
                     'C' => GemColor.Cyan,
                     'K' => GemColor.Pink,
+                    'W' => GemColor.White,
+                    'D' => GemColor.Black,
+                    'N' => GemColor.Brown,
+                    'L' => GemColor.LightBlue,
                     _ => GemColor.None
                 };
 
@@ -525,7 +1250,7 @@ MonoBehaviour:
         es.AddComponent<EventSystem>();
         es.AddComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
 
-        // ---- 4. Canvas ----
+        // ---- 4. Canvas (uGUI — パズルグリッド描画専用) ----
         var canvasObj = new GameObject("[Canvas]");
         var canvas    = canvasObj.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
@@ -537,172 +1262,12 @@ MonoBehaviour:
         scaler.matchWidthOrHeight  = 0f;
 
         canvasObj.AddComponent<GraphicRaycaster>();
-        var gameUI = canvasObj.AddComponent<GameUI>();
 
-        // ---- 5. Title Panel ----
-        var titlePanel = MakeFullPanel("TitlePanel", canvasObj.transform, new Color(0.1f, 0.1f, 0.12f, 1f));
-        titlePanel.SetActive(true);
-
-        MakeText("TitleText", titlePanel.transform, "SORT GEMS", 64,
-            new Vector2(0, 0.7f), new Vector2(1, 0.9f), Vector2.zero, Vector2.zero)
-            .color = Color.white;
-
-        var playBtn = CreateButton("PlayButton", "PLAY", titlePanel.transform, new Vector2(0, -100), new Vector2(300, 100));
-
-        // ---- 6. Stage Select Panel ----
-        var stageSelectPanel = MakeFullPanel("StageSelectPanel", canvasObj.transform, new Color(0.1f, 0.1f, 0.12f, 1f));
-        stageSelectPanel.SetActive(false);
-
-        MakeText("SelectTitle", stageSelectPanel.transform, "SELECT STAGE", 48,
-            new Vector2(0, 0.85f), new Vector2(1, 0.95f), Vector2.zero, Vector2.zero)
-            .color = Color.white;
-
-        var activeStageText = MakeText("ActiveStageText", stageSelectPanel.transform, "ステージ 1：Star", 36,
-            new Vector2(0, 0.78f), new Vector2(1, 0.84f), Vector2.zero, Vector2.zero);
-        activeStageText.color = Color.yellow;
-        activeStageText.alignment = TextAnchor.MiddleCenter;
-
-        var selectBackBtn = CreateButton("BackButton", "Back", stageSelectPanel.transform, Vector2.zero, new Vector2(120, 60));
-        var selectBackRt = selectBackBtn.GetComponent<RectTransform>();
-        selectBackRt.anchorMin = new Vector2(0f, 1f);
-        selectBackRt.anchorMax = new Vector2(0f, 1f);
-        selectBackRt.pivot = new Vector2(0f, 1f);
-        selectBackRt.anchoredPosition = new Vector2(40f, -40f);
-
-        // スクロールコンテナ (横スクロール)
-        // 画面幅全体をカバーさせるため、アンカーを Min=(0f, 0.16f), Max=(1f, 0.76f) に設定
-        var scrollRectObj = MakeRect("StageCarouselScroll", stageSelectPanel.transform,
-            new Vector2(0f, 0.16f), new Vector2(1f, 0.76f), new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
-        var scrollRect = scrollRectObj.gameObject.AddComponent<ScrollRect>();
-        
-        var viewport = MakeRect("Viewport", scrollRectObj, Vector2.zero, Vector2.one, new Vector2(0, 1), Vector2.zero, Vector2.zero);
-        viewport.gameObject.AddComponent<RectMask2D>(); // RectMask2D は Image 不要で確実・高速な矩形マスクを実現します
-        
-        var scrollContent = MakeRect("Content", viewport, Vector2.zero, new Vector2(0, 1), new Vector2(0f, 0.5f), Vector2.zero, Vector2.zero);
-        
-        // ContentSizeFitter を追加して、子要素の Preferred Size に応じて横幅を自動拡張させる
-        var fitter = scrollContent.gameObject.AddComponent<ContentSizeFitter>();
-        fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
-        fitter.verticalFit = ContentSizeFitter.FitMode.Unconstrained;
-
-        var contentLayout = scrollContent.gameObject.AddComponent<HorizontalLayoutGroup>();
-        // childControlWidth/Height を true にして、LayoutElement の preferredWidth/Height をカードに適用させる
-        contentLayout.childControlWidth = true;
-        contentLayout.childControlHeight = true;
-        contentLayout.childForceExpandWidth = false;
-        contentLayout.childForceExpandHeight = false;
-        contentLayout.spacing = 80f;
-        // Viewportの幅 1080 に対し、カード幅 720。
-        // センタリング用Padding: (1080 - 720) / 2 = 180
-        contentLayout.padding = new RectOffset(180, 180, 20, 20);
-
-        scrollRect.viewport = viewport;
-        scrollRect.content = scrollContent;
-        scrollRect.horizontal = true;
-        scrollRect.vertical = false;
-
-        // カードテンプレート（角丸パネルなどのコンテナにする）
-        // サイズを 720x960 に設定
-        var stageCardTemplate = MakeRect("StageCardTemplate", scrollContent, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), Vector2.zero, new Vector2(720, 960));
-        var cardImage = stageCardTemplate.gameObject.AddComponent<Image>();
-        cardImage.color = new Color(0.18f, 0.18f, 0.22f, 1f); // 少し暗いグレーの背景
-
-        // LayoutElement をアタッチして、Preferred Size を ContentSizeFitter に伝える
-        var layoutElement = stageCardTemplate.gameObject.AddComponent<LayoutElement>();
-        layoutElement.preferredWidth = 720f;
-        layoutElement.preferredHeight = 960f;
-
-        stageCardTemplate.gameObject.SetActive(false);
-
-        // プレビューグリッドの親コンテナ (中央に配置)
-        // 最大16x16セルの場合、41.5 * 16 = 664。
-        // パズル画面と同じサイズにするため、664x664のサイズでコンテナを作成する
-        var previewGrid = MakeRect("PreviewGrid", stageCardTemplate.transform,
-            new Vector2(0.5f, 0.56f), new Vector2(0.5f, 0.56f), new Vector2(0.5f, 0.56f),
-            new Vector2(0f, 20f), new Vector2(664f, 664f));
-        
-        var gridLayout = previewGrid.gameObject.AddComponent<GridLayoutGroup>();
-        gridLayout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-        gridLayout.constraintCount = 16;
-        gridLayout.cellSize = new Vector2(CELL_SIZE, CELL_SIZE);
-        gridLayout.spacing = new Vector2(CELL_SPACING, CELL_SPACING);
-        
-        // 背景に薄い半透明ダークグレーを敷く
-        var gridImg = previewGrid.gameObject.AddComponent<Image>();
-        gridImg.sprite = null;
-        gridImg.color = new Color(0.08f, 0.08f, 0.1f, 0.35f);
-
-        // STARTボタン（カード内部に個別配置）
-        var startBtn = CreateButton("StartButton", "START", stageCardTemplate.transform, Vector2.zero, new Vector2(280, 90));
-        var startRt = startBtn.GetComponent<RectTransform>();
-        startRt.anchorMin = new Vector2(0.5f, 0.15f);
-        startRt.anchorMax = new Vector2(0.5f, 0.15f);
-        startRt.pivot = new Vector2(0.5f, 0.5f);
-        startRt.anchoredPosition = Vector2.zero;
-        var startTxt = startBtn.transform.Find("Text")?.GetComponent<Text>();
-        if (startTxt != null)
-        {
-            startTxt.fontSize = 36;
-            startTxt.color = Color.black;
-        }
-
-        // 左右切り替えボタン (カードの上に描画させるため、スクロールコンテナの後に生成する)
-        // サイズを少しコンパクトに 60x90 に調整
-        var leftBtn = CreateButton("LeftButton", "<", stageSelectPanel.transform, Vector2.zero, new Vector2(60, 90));
-        var leftRt = leftBtn.GetComponent<RectTransform>();
-        leftRt.anchorMin = new Vector2(0.02f, 0.45f);
-        leftRt.anchorMax = new Vector2(0.02f, 0.45f); // 画面左端基準に固定
-        leftRt.pivot = new Vector2(0f, 0.5f);
-        leftRt.anchoredPosition = new Vector2(20f, 0f);
-        var leftTxt = leftBtn.transform.Find("Text")?.GetComponent<Text>();
-        if (leftTxt != null) leftTxt.fontSize = 28;
-
-        var rightBtn = CreateButton("RightButton", ">", stageSelectPanel.transform, Vector2.zero, new Vector2(60, 90));
-        var rightRt = rightBtn.GetComponent<RectTransform>();
-        rightRt.anchorMin = new Vector2(0.98f, 0.45f);
-        rightRt.anchorMax = new Vector2(0.98f, 0.45f); // 画面右端基準に固定
-        rightRt.pivot = new Vector2(1f, 0.5f);
-        rightRt.anchoredPosition = new Vector2(-20f, 0f);
-        var rightTxt = rightBtn.transform.Find("Text")?.GetComponent<Text>();
-        if (rightTxt != null) rightTxt.fontSize = 28;
-
-        // 手前に描画されるように Sibling Index を一番下にする
-        leftBtn.transform.SetAsLastSibling();
-        rightBtn.transform.SetAsLastSibling();
-
-        // ---- 7. Game Play Panel ----
-        var gamePlayPanel = MakeFullPanel("GamePlayPanel", canvasObj.transform, new Color(0.15f, 0.15f, 0.18f, 1f));
+        // ---- 5. GamePlayPanel (uGUI — グリッドとパレットのみ) ----
+        var gamePlayPanel = MakeFullPanel("GamePlayPanel", canvasObj.transform, new Color(0.15f, 0.15f, 0.18f, 0f));
         gamePlayPanel.SetActive(false);
 
-        // ---- 8. Header（パズル用）----
-        var headerObj  = MakeRect("Header", gamePlayPanel.transform,
-            ancMin: new Vector2(0,1), ancMax: new Vector2(1,1),
-            pivot: new Vector2(0.5f,1), pos: Vector2.zero, size: new Vector2(0, HEADER_H));
-
-        var gamePlayBackBtn = CreateButton("BackButton", "Back", headerObj, Vector2.zero, new Vector2(120, 60));
-        var gamePlayBackRt = gamePlayBackBtn.GetComponent<RectTransform>();
-        gamePlayBackRt.anchorMin = new Vector2(0f, 0.5f);
-        gamePlayBackRt.anchorMax = new Vector2(0f, 0.5f);
-        gamePlayBackRt.pivot = new Vector2(0f, 0.5f);
-        gamePlayBackRt.anchoredPosition = new Vector2(20f, 0f);
-
-        var stageNameText = MakeText("StageNameText", headerObj,
-            "Stage Name", 32,
-            ancMin: new Vector2(0.2f,0), ancMax: new Vector2(0.6f,1),
-            pos: Vector2.zero, size: Vector2.zero);
-
-        var timerArea = MakeRect("TimerArea", headerObj,
-            ancMin: new Vector2(0.6f,0), ancMax: new Vector2(1,1),
-            pivot: new Vector2(0.5f,0.5f), pos: Vector2.zero, size: Vector2.zero);
-
-        var (slider, fillImage) = MakeSlider("TimerSlider", timerArea.transform);
-
-        var timerText = MakeText("TimerText", timerArea.transform,
-            "05:00", 28,
-            ancMin: new Vector2(0,0), ancMax: new Vector2(1,0.45f),
-            pos: Vector2.zero, size: Vector2.zero);
-
-        // ---- 9. Main Grid ----
+        // ---- 6. Main Grid ----
         float gridPx  = MAIN_COLS * (CELL_SIZE + CELL_SPACING);
         float gridH   = MAIN_ROWS * (CELL_SIZE + CELL_SPACING);
 
@@ -722,7 +1287,7 @@ MonoBehaviour:
         var mainLayout = gridContainerObj.gameObject.AddComponent<GridLayoutGroup>();
         ConfigureLayout(mainLayout, MAIN_COLS, CELL_SIZE, CELL_SPACING);
 
-        // ---- 10. Palette ----
+        // ---- 7. Palette ----
         float palW = PAL_COLS * (CELL_SIZE + CELL_SPACING);
         float palTop = gridTop + gridH + PALETTE_GAP;
 
@@ -740,62 +1305,7 @@ MonoBehaviour:
         SetRef(gridView, "_mainLayout",    mainLayout);
         SetRef(gridView, "_paletteLayout", paletteLayout);
 
-        // ---- 11. ButtonBar ----
-        var buttonBarObj = MakeRect("ButtonBar", gamePlayPanel.transform,
-            ancMin: new Vector2(0,0), ancMax: new Vector2(1,0),
-            pivot: new Vector2(0.5f,0), pos: Vector2.zero, size: new Vector2(0, BUTTON_H));
-
-        var undoBtn  = CreateButton("UndoButton",  "Undo",  buttonBarObj.transform, new Vector2(-160,0), new Vector2(120,56));
-        var hintBtn  = CreateButton("HintButton",  "Hint",  buttonBarObj.transform, new Vector2(0,0),    new Vector2(120,56));
-        var resetBtn = CreateButton("ResetButton", "Reset", buttonBarObj.transform, new Vector2(160,0),  new Vector2(120,56));
-
-        // ---- 12. Cleared / Failed パネル ----
-        var clearedPanel    = MakeFullPanel("ClearedPanel", gamePlayPanel.transform, new Color(0f, 0f, 0f, 0.65f));
-        MakeText("ClearedText", clearedPanel.transform, "STAGE CLEAR!", 52,
-            new Vector2(0.5f,0.5f), new Vector2(0.5f,0.5f), new Vector2(0, 700f), new Vector2(800, 100))
-            .color = Color.yellow;
-        var nextBtn         = CreateButton("NextStageButton", "Next Stage", clearedPanel.transform, new Vector2(0, -340f), new Vector2(280, 72));
-        var replayBtnC      = CreateButton("ReplayButton",    "Replay",     clearedPanel.transform, new Vector2(0, -460f), new Vector2(240, 64));
-        var backBtnC        = CreateButton("BackButton",      "Back",       clearedPanel.transform, new Vector2(0, -580f), new Vector2(240, 64));
-
-        var failedPanel     = MakeFullPanel("FailedPanel", gamePlayPanel.transform, new Color(0f, 0f, 0f, 0.65f));
-        MakeText("FailedText", failedPanel.transform, "TIME'S UP!", 52,
-            new Vector2(0.5f,0.5f), new Vector2(0.5f,0.5f), new Vector2(0, 700f), new Vector2(800, 100))
-            .color = Color.red;
-        var addTimeBtn      = CreateButton("AddTimeButton", "Watch Ad +1:00", failedPanel.transform, new Vector2(0, -340f), new Vector2(300, 72));
-        var replayBtnF      = CreateButton("ReplayButton",  "Retry",          failedPanel.transform, new Vector2(0, -460f), new Vector2(240, 64));
-        var backBtnF        = CreateButton("BackButton",    "Back",           failedPanel.transform, new Vector2(0, -580f), new Vector2(240, 64));
-        var addTimeLabel    = addTimeBtn.transform.Find("Text").GetComponent<Text>();
-
-        // GameUI 参照
-        SetRef(gameUI, "_timerSlider",         slider);
-        SetRef(gameUI, "_timerText",            timerText);
-        SetRef(gameUI, "_timerFill",            fillImage);
-        SetRef(gameUI, "_stageNameText",        stageNameText);
-        SetRef(gameUI, "_undoButton",           undoBtn);
-        SetRef(gameUI, "_hintButton",           hintBtn);
-        SetRef(gameUI, "_resetButton",          resetBtn);
-        SetRef(gameUI, "_clearedPanel",         clearedPanel);
-        SetRef(gameUI, "_nextStageButton",      nextBtn);
-        SetRef(gameUI, "_replayButton_Cleared", replayBtnC);
-        SetRef(gameUI, "_clearedBackButton",    backBtnC);
-        SetRef(gameUI, "_failedPanel",          failedPanel);
-        SetRef(gameUI, "_addTimeButton",        addTimeBtn);
-        SetRef(gameUI, "_replayButton_Failed",  replayBtnF);
-        SetRef(gameUI, "_failedBackButton",     backBtnF);
-        SetRef(gameUI, "_addTimeLabel",         addTimeLabel);
-        SetRef(gameUI, "_gridView",             gridView);
-        SetRef(gameUI, "_gridManager",          grd);
-        
-        SetRef(gameUI, "_playButton",           playBtn);
-        SetRef(gameUI, "_stageSelectBackButton",selectBackBtn);
-        SetRef(gameUI, "_gamePlayBackButton",   gamePlayBackBtn);
-        new SerializedObject(gameUI).ApplyModifiedProperties();
-
-        // ピクセルアート（GridContainer）がクリア/失敗時の黒マスクより手前に描画されるように最前面に移動
-        gridContainerObj.SetAsLastSibling();
-
-        // ---- 13. GemCell Prefab ----
+        // ---- 8. GemCell Prefab ----
         var prefabPath = "Assets/Prefabs/GemCell.prefab";
         Directory.CreateDirectory(Path.GetDirectoryName(prefabPath)!);
 
@@ -843,49 +1353,106 @@ MonoBehaviour:
         SetRef(gridView, "_cellPrefab", gemCellPrefab.GetComponent<GemCellView>());
         new SerializedObject(gridView).ApplyModifiedProperties();
 
-        // ---- 14. ステージアセット生成 ----
-        List<StageData> stages = new List<StageData>();
-        stages.Add(CreateStageFromArt(1, "Star", StarArt, 300f));
-        stages.Add(CreateStageFromArt(2, "Heart", HeartArt, 300f));
-        stages.Add(CreateStageFromArt(3, "Tree", TreeArt, 300f));
-        stages.Add(CreateStageFromArt(4, "Flower", FlowerArt, 300f));
+        // ---- 9. ステージアセット生成 ----
+        var handcraftedArts = new (string name, string[] art, float time)[]
+        {
+            // Easy (1-2色, 少ピクセル)
+            ("Star",        StarArt,        120f),
+            ("Music Note",  MusicNoteArt,   120f),
+            ("Heart",       HeartArt,       150f),
+            ("Umbrella",    UmbrellaArt,    150f),
+            ("Moon & Star", MoonStarArt,    150f),
+            ("Crown",       CrownArt,       150f),
+            ("Diamond",     DiamondArt,     180f),
+            ("Sun",         SunArt,         180f),
+            // Normal (2-3色, 中ピクセル)
+            ("Tree",        TreeArt,        180f),
+            ("Sunflower",   FlowerArt,      180f),
+            ("Apple",       AppleArt,       200f),
+            ("Turtle",      TurtleArt,      200f),
+            ("Butterfly",   ButterflyArt,   200f),
+            ("Dog",         DogArt,         200f),
+            ("Cat",         CatArt,         220f),
+            ("Ghost",       GhostArt,       220f),
+            ("Smiley",      SmileyArt,      220f),
+            ("Fish",        FishArt,        220f),
+            ("Snail",       SnailArt,       220f),
+            ("Sailboat",    SailboatArt,    240f),
+            // Hard (3-6色, 多ピクセル)
+            ("Mushroom",    MushroomArt,    240f),
+            ("Frog",        FrogArt,        240f),
+            ("Cupcake",     CupcakeArt,     240f),
+            ("Car",         CarArt,         260f),
+            ("Cake",        CakeArt,        260f),
+            ("Penguin",     PenguinArt,     260f),
+            ("Rocket",      RocketArt,      280f),
+            ("House",       HouseArt,       280f),
+            ("Watermelon",  WatermelonArt,  280f),
+            ("Rainbow",     RainbowArt,     300f),
+            // 18x18 ステージ
+            ("Panda",       PandaArt18,     300f),
+            ("Whale",       WhaleArt18,     300f),
+            ("Donut",       DonutArt18,     280f),
+            // 24x24 ステージ
+            ("Owl",         OwlArt24,       360f),
+            ("Sailboat L",  SailboatArt24,  360f),
+            ("Robot",       RobotArt24,     360f),
+        };
 
-        for (int i = 5; i <= 100; i++)
+        List<StageData> stages = new List<StageData>();
+        for (int i = 0; i < handcraftedArts.Length; i++)
+        {
+            var (name, art, time) = handcraftedArts[i];
+            stages.Add(CreateStageFromArt(i + 1, name, art, time));
+        }
+
+        for (int i = handcraftedArts.Length + 1; i <= 100; i++)
         {
             string stageName;
             string[] art = GenerateProceduralArt(i, out stageName);
             stages.Add(CreateStageFromArt(i, stageName, art, 300f));
         }
 
-        // ---- 15. GameBootstrap ----
-        var bootstrap = new GameObject("GameBootstrap").AddComponent<GameBootstrap>();
-        SetRef(bootstrap, "_gameManager", gm);
-        SetRef(bootstrap, "_gridView",    gridView);
-        SetRef(bootstrap, "_gameUI",      gameUI);
+        // ---- 10. UI Toolkit (ScreenManager) ----
+        string panelSettingsPath = "Assets/UI/DefaultPanelSettings.asset";
+        var panelSettings = AssetDatabase.LoadAssetAtPath<PanelSettings>(panelSettingsPath);
+        if (panelSettings == null)
+            Debug.LogError("[CreateGameScene] PanelSettings not found at " + panelSettingsPath);
 
-        SetRef(bootstrap, "_cellPrefab",       gemCellPrefab.GetComponent<GemCellView>());
-        SetRef(bootstrap, "_titlePanel",       titlePanel);
-        SetRef(bootstrap, "_stageSelectPanel", stageSelectPanel);
-        SetRef(bootstrap, "_gamePlayPanel",    gamePlayPanel);
-        SetRef(bootstrap, "_stageButtonContent",scrollContent.transform);
-        SetRef(bootstrap, "_stageButtonPrefab", stageCardTemplate.gameObject);
-        SetRef(bootstrap, "_leftButton",       leftBtn);
-        SetRef(bootstrap, "_rightButton",      rightBtn);
-        SetRef(bootstrap, "_scrollRect",       scrollRect);
-        SetRef(bootstrap, "_activeStageText",  activeStageText);
+        var titleUxml = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/UI/Screens/TitleScreen.uxml");
+        var stageSelectUxml = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/UI/Screens/StageSelectScreen.uxml");
+        var gamePlayUxml = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/UI/Screens/GamePlayHUD.uxml");
 
-        // ステージリスト（_stages）のシリアライズ
-        var bootstrapSo = new SerializedObject(bootstrap);
-        var stagesProp = bootstrapSo.FindProperty("_stages");
-        stagesProp.ClearArray();
+        if (titleUxml == null || stageSelectUxml == null || gamePlayUxml == null)
+            Debug.LogError("[CreateGameScene] UXML files not found under Assets/UI/Screens/");
+
+        var uiToolkitObj = new GameObject("[UIToolkit]");
+        var uiDoc = uiToolkitObj.AddComponent<UIDocument>();
+        if (panelSettings != null)
+            uiDoc.panelSettings = panelSettings;
+
+        var screenMgr = uiToolkitObj.AddComponent<ScreenManager>();
+
+        var smSo = new SerializedObject(screenMgr);
+        smSo.FindProperty("_titleScreen").objectReferenceValue = titleUxml;
+        smSo.FindProperty("_stageSelectScreen").objectReferenceValue = stageSelectUxml;
+        smSo.FindProperty("_gamePlayHUD").objectReferenceValue = gamePlayUxml;
+        smSo.FindProperty("_gameManager").objectReferenceValue = gm;
+        smSo.FindProperty("_gridView").objectReferenceValue = gridView;
+        smSo.FindProperty("_gridManager").objectReferenceValue = grd;
+        smSo.FindProperty("_uguiGamePlayPanel").objectReferenceValue = gamePlayPanel;
+        smSo.FindProperty("_cellPrefab").objectReferenceValue = gemCellPrefab.GetComponent<GemCellView>();
+
+        var smStagesProp = smSo.FindProperty("_stages");
+        smStagesProp.ClearArray();
         for (int i = 0; i < stages.Count; i++)
         {
-            stagesProp.InsertArrayElementAtIndex(i);
-            stagesProp.GetArrayElementAtIndex(i).objectReferenceValue = stages[i];
+            smStagesProp.InsertArrayElementAtIndex(i);
+            smStagesProp.GetArrayElementAtIndex(i).objectReferenceValue = stages[i];
         }
-        bootstrapSo.ApplyModifiedProperties();
+        smSo.ApplyModifiedProperties();
 
-        // ---- 16. Audio Visualizer シングルトンシステムの自動生成 ----
+        // ---- 11. Audio Visualizer シングルトンシステムの自動生成 ----
         // 画面最下部に固定され、シーン切り替え時も常駐する Canvas
         var visualizerCanvasObj = new GameObject("[DontDestroyVisualizer]");
         var vizCanvas = visualizerCanvasObj.AddComponent<Canvas>();
@@ -924,7 +1491,7 @@ MonoBehaviour:
         UnityEditor.SceneManagement.EditorSceneManager.SaveScene(scene, scenePath);
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
-        Debug.Log("[SortGems] GameScene 構築完了 — Title, StageSelect, GamePlay の3パネル構成 + 16x16ピクセルアート4ステージ + BGM自動割当 + ビジュアライザー生成");
+        Debug.Log("[SortGems] GameScene 構築完了 — UI Toolkit (ScreenManager) + uGUIパズルグリッド + ピクセルアート30ステージ + BGM自動割当 + ビジュアライザー生成");
     }
 
     // ===== ヘルパー =====
@@ -972,12 +1539,12 @@ MonoBehaviour:
         return text;
     }
 
-    static (Slider slider, Image fill) MakeSlider(string name, Transform parent)
+    static (UnityEngine.UI.Slider slider, UnityEngine.UI.Image fill) MakeSlider(string name, Transform parent)
     {
         var rt   = MakeRect(name, parent,
             new Vector2(0,0.5f), new Vector2(1,0.5f),
             new Vector2(0.5f,0.5f), new Vector2(0,10), new Vector2(-20,24));
-        var slider = rt.gameObject.AddComponent<Slider>();
+        var slider = rt.gameObject.AddComponent<UnityEngine.UI.Slider>();
 
         var bg    = MakeImageChild("Background", rt, new Color(0.25f,0.25f,0.25f,1), Vector2.zero, Vector2.one);
         var area  = MakeRect("Fill Area", rt, Vector2.zero, Vector2.one, new Vector2(0,0.5f), Vector2.zero, Vector2.zero);
@@ -989,12 +1556,12 @@ MonoBehaviour:
         return (slider, fill);
     }
 
-    static Image MakeImageChild(string name, Transform parent,
+    static UnityEngine.UI.Image MakeImageChild(string name, Transform parent,
         Color color, Vector2 ancMin, Vector2 ancMax)
     {
         var go  = new GameObject(name);
         go.transform.SetParent(parent, false);
-        var img = go.AddComponent<Image>();
+        var img = go.AddComponent<UnityEngine.UI.Image>();
         img.color = color;
         var r   = img.GetComponent<RectTransform>();
         r.anchorMin = ancMin; r.anchorMax = ancMax;
@@ -1006,19 +1573,19 @@ MonoBehaviour:
     {
         var rt  = MakeRect(name, parent, Vector2.zero, Vector2.one,
                            new Vector2(0.5f,0.5f), Vector2.zero, Vector2.zero);
-        rt.gameObject.AddComponent<Image>().color = bg;
+        rt.gameObject.AddComponent<UnityEngine.UI.Image>().color = bg;
         rt.gameObject.SetActive(false);
         return rt.gameObject;
     }
 
-    static Button CreateButton(string name, string label, Transform parent, Vector2 pos, Vector2 size)
+    static UnityEngine.UI.Button CreateButton(string name, string label, Transform parent, Vector2 pos, Vector2 size)
     {
         var rt  = MakeRect(name, parent,
             new Vector2(0.5f,0.5f), new Vector2(0.5f,0.5f),
             new Vector2(0.5f,0.5f), pos, size);
-        var img = rt.gameObject.AddComponent<Image>();
+        var img = rt.gameObject.AddComponent<UnityEngine.UI.Image>();
         img.color = new Color(0.28f, 0.28f, 0.38f, 1f);
-        var btn = rt.gameObject.AddComponent<Button>();
+        var btn = rt.gameObject.AddComponent<UnityEngine.UI.Button>();
         btn.targetGraphic = img;
 
         MakeText("Text", rt, label, 22,

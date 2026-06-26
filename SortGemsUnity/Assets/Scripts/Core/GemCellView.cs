@@ -265,6 +265,22 @@ namespace SortGems.Core
             }
         }
 
+        public void SetLocked(bool locked)
+        {
+            var cg = GetComponent<CanvasGroup>();
+            if (locked)
+            {
+                if (cg == null) cg = gameObject.AddComponent<CanvasGroup>();
+                cg.alpha = 0.3f;
+                cg.blocksRaycasts = false;
+            }
+            else if (cg != null)
+            {
+                cg.alpha = 1f;
+                cg.blocksRaycasts = true;
+            }
+        }
+
         public void PlayCompletedEffect()
         {
             if (_completedMark != null)

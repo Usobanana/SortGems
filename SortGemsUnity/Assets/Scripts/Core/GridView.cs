@@ -31,6 +31,9 @@ namespace SortGems.Core
 
         private GemCellView[,] _mainViews;
         private GemCellView[,] _paletteViews;
+        private GameObject _unlockButtonObj;
+
+        public System.Action OnUnlockButtonClicked;
 
         [Header("Move Animation Settings")]
         [SerializeField] private float _moveDuration = 0.15f;
@@ -45,10 +48,11 @@ namespace SortGems.Core
                 Debug.LogError("[GridView] _gridManager がアサインされていません。Tools > SortGems > Create Game Scene を実行してシーンを再構築してください。");
                 return;
             }
-            _gridManager.OnGroupSelected  += HandleGroupSelected;
-            _gridManager.OnGroupMoved     += HandleGroupMoved;
-            _gridManager.OnColorCompleted += HandleColorCompleted;
-            _gridManager.OnStageCleared   += HandleStageCleared;
+            _gridManager.OnGroupSelected    += HandleGroupSelected;
+            _gridManager.OnGroupMoved       += HandleGroupMoved;
+            _gridManager.OnColorCompleted   += HandleColorCompleted;
+            _gridManager.OnStageCleared     += HandleStageCleared;
+            _gridManager.OnPaletteRow2Unlocked += () => { RefreshArea(_paletteViews, true); UpdateUnlockButtonVisibility(); };
         }
 
         // ---- 構築 ----
@@ -150,7 +154,61 @@ namespace SortGems.Core
                       _currentPaletteCellSize, _paletteCellSpacing,
                       isPalette: true,  out _paletteViews);
 
+            CreatePaletteUnlockButton(stage);
             RefreshAll();
+        }
+
+        private void CreatePaletteUnlockButton(StageData stage)
+        {
+            if (_unlockButtonObj != null)
+                Destroy(_unlockButtonObj);
+
+            if (stage.paletteRows < 2) return;
+
+            _unlockButtonObj = new GameObject("UnlockRow2Button");
+            _unlockButtonObj.transform.SetParent(_paletteLayout.transform, false);
+
+            var rt = _unlockButtonObj.AddComponent<RectTransform>();
+            float row2Y = -_currentPaletteCellSize;
+            float btnW = _currentPaletteCellSize * 4f;
+            float btnH = _currentPaletteCellSize * 0.85f;
+            rt.anchorMin = new Vector2(0.5f, 1f);
+            rt.anchorMax = new Vector2(0.5f, 1f);
+            rt.pivot = new Vector2(0.5f, 1f);
+            rt.anchoredPosition = new Vector2(0f, row2Y);
+            rt.sizeDelta = new Vector2(btnW, btnH);
+
+            var img = _unlockButtonObj.AddComponent<Image>();
+            img.color = new Color(0.35f, 0.25f, 0.55f, 0.95f);
+            img.sprite = GemColorPalette.RoundedRectSprite;
+            img.type = Image.Type.Sliced;
+
+            var btn = _unlockButtonObj.AddComponent<UnityEngine.UI.Button>();
+            btn.targetGraphic = img;
+            btn.onClick.AddListener(() => OnUnlockButtonClicked?.Invoke());
+
+            var textGo = new GameObject("Text");
+            textGo.transform.SetParent(_unlockButtonObj.transform, false);
+            var textRt = textGo.AddComponent<RectTransform>();
+            textRt.anchorMin = Vector2.zero;
+            textRt.anchorMax = Vector2.one;
+            textRt.sizeDelta = Vector2.zero;
+            var text = textGo.AddComponent<UnityEngine.UI.Text>();
+            text.text = "\U0001F512 Unlock";
+            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            text.fontSize = Mathf.RoundToInt(btnH * 0.45f);
+            text.alignment = TextAnchor.MiddleCenter;
+            text.color = Color.white;
+
+            _unlockButtonObj.transform.SetAsLastSibling();
+            UpdateUnlockButtonVisibility();
+        }
+
+        private void UpdateUnlockButtonVisibility()
+        {
+            if (_unlockButtonObj == null) return;
+            bool show = _gridManager != null && !_gridManager.IsPaletteRow2Unlocked;
+            _unlockButtonObj.SetActive(show);
         }
 
         private void AdjustContainerLayout(RectTransform containerRt, int cols, int rows, float cellSize, float spacing)
@@ -284,7 +342,9 @@ namespace SortGems.Core
                     var cell = isPalette
                         ? _gridManager.GetPaletteCell(r, c)
                         : _gridManager.GetMainCell(r, c);
+                    bool isLockedRow = isPalette && r >= 1 && !_gridManager.IsPaletteRow2Unlocked;
                     views[r, c].SetGem(cell.color, cell.goalColor, cell.isVoid);
+                    views[r, c].SetLocked(isLockedRow);
                 }
         }
 

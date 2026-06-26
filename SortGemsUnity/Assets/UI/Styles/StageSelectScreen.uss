@@ -99,10 +99,13 @@
 }
 
 .stage-card-preview {
-    flex-grow: 1;
-    align-self: stretch;
-    align-items: center;
-    justify-content: center;
+    width: 500px;
+    height: 500px;
+    align-self: center;
+    -unity-background-scale-mode: scale-to-fit;
+    background-color: rgba(10, 10, 14, 0.4);
+    border-radius: 8px;
+    margin: 8px 0;
 }
 
 .stage-card-active {

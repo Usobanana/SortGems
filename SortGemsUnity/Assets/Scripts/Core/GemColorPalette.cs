@@ -17,6 +17,10 @@ namespace SortGems.Core
             new Color(1.00f, 0.50f, 0.00f),        // Orange — 濃オレンジ
             new Color(0.00f, 0.90f, 0.90f),        // Cyan   — シアン
             new Color(1.00f, 0.30f, 0.80f),        // Pink   — マゼンタピンク
+            new Color(0.95f, 0.95f, 0.95f),        // White  — オフホワイト
+            new Color(0.28f, 0.28f, 0.32f),        // Black  — ダークグレー（輪郭用）
+            new Color(0.60f, 0.35f, 0.15f),        // Brown  — チョコレートブラウン
+            new Color(0.45f, 0.75f, 1.00f),        // LightBlue — スカイブルー
         };
 
         // ゴールカラー（背景の薄い表示用）: 同系色の淡い版
@@ -31,6 +35,10 @@ namespace SortGems.Core
             new Color(1.00f, 0.50f, 0.00f, 0.22f),
             new Color(0.00f, 0.90f, 0.90f, 0.22f),
             new Color(1.00f, 0.30f, 0.80f, 0.22f),
+            new Color(0.95f, 0.95f, 0.95f, 0.22f),
+            new Color(0.15f, 0.15f, 0.18f, 0.22f),
+            new Color(0.60f, 0.35f, 0.15f, 0.22f),
+            new Color(0.45f, 0.75f, 1.00f, 0.22f),
         };
 
         // 暗めのゴールカラー（空の目標マス用ベタ塗り）: 同系色を暗めのトーンにしたベタ塗り版
@@ -45,6 +53,10 @@ namespace SortGems.Core
             new Color(0.25f, 0.12f, 0.02f, 1.00f), // Orange (暗め)
             new Color(0.02f, 0.18f, 0.20f, 1.00f), // Cyan (暗め)
             new Color(0.25f, 0.06f, 0.18f, 1.00f), // Pink (暗め)
+            new Color(0.20f, 0.20f, 0.20f, 1.00f), // White (暗め)
+            new Color(0.06f, 0.06f, 0.07f, 1.00f), // Black (暗め)
+            new Color(0.15f, 0.08f, 0.04f, 1.00f), // Brown (暗め)
+            new Color(0.10f, 0.18f, 0.25f, 1.00f), // LightBlue (暗め)
         };
 
         public static Color GetColor(GemColor gemColor)
@@ -231,7 +243,7 @@ namespace SortGems.Core
             GemColor closest = GemColor.None;
             float minDist = float.MaxValue;
 
-            for (int i = 1; i <= 8; i++) // Red (1) から Pink (8)
+            for (int i = 1; i <= 12; i++) // Red (1) から LightBlue (12)
             {
                 GemColor colorEnum = (GemColor)i;
                 Color gemColor = GetColor(colorEnum);

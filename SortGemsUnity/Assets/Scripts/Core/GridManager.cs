@@ -56,6 +56,15 @@ namespace SortGems.Core
         public int PaletteRows { get; private set; }
         public int PaletteCols { get; private set; }
         public GemGroup SelectedGroup => _selectedGroup;
+        public bool IsPaletteRow2Unlocked { get; private set; }
+
+        public void UnlockPaletteRow2()
+        {
+            IsPaletteRow2Unlocked = true;
+            OnPaletteRow2Unlocked?.Invoke();
+        }
+
+        public System.Action OnPaletteRow2Unlocked;
 
         // ---- 初期化 ----
 
@@ -70,6 +79,7 @@ namespace SortGems.Core
             _palette = new GemCell[PaletteRows, PaletteCols];
             _undoStack.Clear();
             _selectedGroup = null;
+            IsPaletteRow2Unlocked = false;
 
             // メイングリッド初期化
             for (int r = 0; r < MainRows; r++)
@@ -123,8 +133,10 @@ namespace SortGems.Core
             // ゲームの状態が Playing でない場合は操作をブロック（一時停止時などの入力制限）
             if (GameManager.Instance != null && GameManager.Instance.State != GameManager.GameState.Playing) return;
 
+            if (isPalette && row >= 1 && !IsPaletteRow2Unlocked) return;
+
             var cell = GetCell(row, col, isPalette);
-            if (cell.isVoid) return; // 空白マスはタップを無視
+            if (cell.isVoid) return;
 
             if (_selectedGroup == null)
             {
@@ -201,8 +213,8 @@ namespace SortGems.Core
 
             if (isPalette)
             {
-                // パレットの場合は、同じ色のすべてのジェムを1次元的に連続しているものとしてすべて選択する
-                for (int r = 0; r < PaletteRows; r++)
+                int maxRow = IsPaletteRow2Unlocked ? PaletteRows : 1;
+                for (int r = 0; r < maxRow; r++)
                 {
                     for (int c = 0; c < PaletteCols; c++)
                     {
@@ -366,8 +378,9 @@ namespace SortGems.Core
 
         private void PackPalette()
         {
+            int maxRow = IsPaletteRow2Unlocked ? PaletteRows : 1;
             var gems = new List<(GemColor color, int groupId)>();
-            for (int r = 0; r < PaletteRows; r++)
+            for (int r = 0; r < maxRow; r++)
             {
                 for (int c = 0; c < PaletteCols; c++)
                 {
@@ -378,10 +391,9 @@ namespace SortGems.Core
                 }
             }
 
-            // パレット内のジェムを GemColor (enumの定義順) で自動ソート
             gems = gems.OrderBy(g => (int)g.color).ToList();
 
-            for (int r = 0; r < PaletteRows; r++)
+            for (int r = 0; r < maxRow; r++)
             {
                 for (int c = 0; c < PaletteCols; c++)
                 {
@@ -391,7 +403,7 @@ namespace SortGems.Core
             }
 
             int index = 0;
-            for (int r = 0; r < PaletteRows; r++)
+            for (int r = 0; r < maxRow; r++)
             {
                 for (int c = 0; c < PaletteCols; c++)
                 {
@@ -422,6 +434,7 @@ namespace SortGems.Core
             bool IsAvailable(Vector2Int p)
             {
                 if (p.x < 0 || p.x >= rows || p.y < 0 || p.y >= cols) return false;
+                if (targetIsPalette && p.x >= 1 && !IsPaletteRow2Unlocked) return false;
 
                 bool isFree = grid[p.x, p.y].IsEmpty || srcSet.Contains(p);
                 if (!isFree) return false;
