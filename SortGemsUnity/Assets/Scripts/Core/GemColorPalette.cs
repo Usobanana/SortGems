@@ -87,10 +87,26 @@ namespace SortGems.Core
             {
                 if (_roundedRectSprite == null)
                 {
-                    Texture2D tex = CreateRoundedRectTexture(128, 128, 24); // 角丸半径24
+                    Texture2D tex = CreateRoundedRectTexture(128, 128, 24);
                     _roundedRectSprite = Sprite.Create(tex, new Rect(0, 0, 128, 128), new Vector2(0.5f, 0.5f));
                 }
                 return _roundedRectSprite;
+            }
+        }
+
+        private static Sprite _buttonSprite;
+        public static Sprite ButtonSprite
+        {
+            get
+            {
+                if (_buttonSprite == null)
+                {
+                    Texture2D tex = CreateRoundedRectTexture(64, 64, 8);
+                    _buttonSprite = Sprite.Create(
+                        tex, new Rect(0, 0, 64, 64), new Vector2(0.5f, 0.5f),
+                        100, 0, SpriteMeshType.FullRect, new Vector4(12, 12, 12, 12));
+                }
+                return _buttonSprite;
             }
         }
 

@@ -1267,6 +1267,29 @@ MonoBehaviour:
         var gamePlayPanel = MakeFullPanel("GamePlayPanel", canvasObj.transform, new Color(0.15f, 0.15f, 0.18f, 0f));
         gamePlayPanel.SetActive(false);
 
+        // 背景画像
+        string bgPath = "Assets/Textures/bg_puzzle_placeholder.png";
+        var bgImporter = AssetImporter.GetAtPath(bgPath) as TextureImporter;
+        if (bgImporter != null && bgImporter.textureType != TextureImporterType.Sprite)
+        {
+            bgImporter.textureType = TextureImporterType.Sprite;
+            bgImporter.spriteImportMode = SpriteImportMode.Single;
+            bgImporter.SaveAndReimport();
+        }
+        var bgSprite = AssetDatabase.LoadAssetAtPath<Sprite>(bgPath);
+        if (bgSprite != null)
+        {
+            var bgRt = MakeRect("Background", gamePlayPanel.transform,
+                Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
+            var bgImage = bgRt.gameObject.AddComponent<UnityEngine.UI.Image>();
+            bgImage.sprite = bgSprite;
+            bgImage.type = UnityEngine.UI.Image.Type.Simple;
+            bgImage.preserveAspect = false;
+            bgImage.color = Color.white;
+            bgImage.raycastTarget = false;
+            bgRt.SetAsFirstSibling();
+        }
+
         // ---- 6. Main Grid ----
         float gridPx  = MAIN_COLS * (CELL_SIZE + CELL_SPACING);
         float gridH   = MAIN_ROWS * (CELL_SIZE + CELL_SPACING);

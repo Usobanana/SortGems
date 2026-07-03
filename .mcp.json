@@ -10,6 +10,16 @@
         "LOGGING": "true",
         "LOGGING_FILE": "true"
       }
+    },
+    "comfyui": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "comfyui-mcp-server-node"],
+      "env": {
+        "COMFYUI_URL": "http://127.0.0.1:8000",
+        "COMFY_MCP_WORKFLOW_DIR": "C:/GitHub/SortGems/scratch/comfyui-workflows",
+        "COMFY_MCP_ASSET_TTL_HOURS": "24"
+      }
     }
   }
 }

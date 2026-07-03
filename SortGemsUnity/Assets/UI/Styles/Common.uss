@@ -1,19 +1,57 @@
 :root {
-    --color-bg: rgb(24, 24, 32);
-    --color-panel: rgba(40, 40, 56, 0.92);
-    --color-primary: rgb(80, 200, 120);
-    --color-primary-hover: rgb(100, 220, 140);
-    --color-accent: rgb(255, 200, 60);
-    --color-text: rgb(240, 240, 240);
-    --color-text-dim: rgb(160, 160, 180);
-    --color-danger: rgb(240, 80, 80);
-    --font-size-title: 48px;
-    --font-size-heading: 28px;
-    --font-size-body: 18px;
-    --font-size-small: 14px;
-    --border-radius: 12px;
+    /* ===== COLOR SYSTEM ===== */
+    --color-bg:              rgb(24, 24, 32);
+    --color-surface:         rgba(40, 40, 56, 0.92);
+    --color-surface-high:    rgba(50, 50, 70, 0.95);
+    --color-overlay:         rgba(0, 0, 0, 0.6);
+
+    --color-primary:         rgb(80, 200, 120);
+    --color-primary-hover:   rgb(100, 220, 140);
+    --color-primary-active:  rgb(60, 180, 100);
+
+    --color-secondary:       rgba(255, 255, 255, 0.10);
+    --color-secondary-hover: rgba(255, 255, 255, 0.20);
+
+    --color-accent:          rgb(255, 200, 60);
+    --color-danger:          rgb(240, 80, 80);
+    --color-success:         rgb(50, 215, 75);
+
+    --color-text:            rgb(240, 240, 240);
+    --color-text-dim:        rgb(170, 170, 190);
+    --color-text-on-primary: rgb(16, 16, 24);
+
+    --color-bar-bg:          rgba(0, 0, 0, 0.50);
+    --color-bar-track:       rgba(255, 255, 255, 0.15);
+
+    /* ===== TYPOGRAPHY ===== */
+    --fs-display:  72px;
+    --fs-title:    48px;
+    --fs-h1:       40px;
+    --fs-h2:       32px;
+    --fs-h3:       28px;
+    --fs-body-lg:  24px;
+    --fs-body:     20px;
+    --fs-btn-lg:   40px;
+    --fs-btn-md:   26px;
+    --fs-btn-sm:   19px;
+    --fs-small:    16px;
+
+    /* ===== SPACING ===== */
+    --sp-xs:  4px;
+    --sp-sm:  8px;
+    --sp-md:  16px;
+    --sp-lg:  24px;
+    --sp-xl:  32px;
+    --sp-2xl: 48px;
+
+    /* ===== RADIUS ===== */
+    --radius-sm:    8px;
+    --radius-md:    12px;
+    --radius-lg:    16px;
+    --radius-round: 50%;
 }
 
+/* ===== BASE SCREEN ===== */
 .screen {
     flex-grow: 1;
     align-items: center;
@@ -21,37 +59,101 @@
     background-color: var(--color-bg);
 }
 
+/* ===== TEXT LEGIBILITY (labels floating directly over background art) ===== */
+.text-outline {
+    -unity-text-outline-width: 1px;
+    -unity-text-outline-color: rgba(0, 0, 0, 0.75);
+}
+
+/* Frosted-glass scrim for UI blocks sitting on top of background art */
+.scrim {
+    background-color: rgba(14, 12, 20, 0.78);
+    border-radius: var(--radius-lg);
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* ===== BUTTON SYSTEM ===== */
+
+/* Base button */
 .btn {
-    font-size: var(--font-size-body);
     color: var(--color-text);
     background-color: var(--color-primary);
-    border-radius: 8px;
-    border-width: 0;
-    padding: 12px 32px;
+    border-width: 2px;
+    border-top-color: rgba(255, 255, 255, 0.35);
+    border-left-color: rgba(255, 255, 255, 0.22);
+    border-right-color: rgba(0, 0, 0, 0.3);
+    border-bottom-color: rgba(0, 0, 0, 0.4);
     -unity-font-style: bold;
     transition-duration: 0.15s;
+    /* Default: medium size */
+    font-size: var(--fs-btn-md);
+    padding: 16px 36px;
+    min-height: 58px;
+    border-radius: var(--radius-md);
 }
 
 .btn:hover {
     background-color: var(--color-primary-hover);
-    scale: 1.05;
+    scale: 1.03;
 }
 
 .btn:active {
+    background-color: var(--color-primary-active);
     scale: 0.97;
 }
 
+/* Large button (Play, Start, Next Stage, primary CTA) */
+.btn-lg {
+    font-size: var(--fs-btn-lg);
+    padding: 24px 56px;
+    min-height: 84px;
+    min-width: 280px;
+    border-width: 3px;
+}
+
+/* Small button */
+.btn-sm {
+    font-size: var(--fs-btn-sm);
+    padding: 10px 20px;
+    min-height: 46px;
+    border-radius: var(--radius-sm);
+}
+
+/* Icon button (back arrow etc) */
+.btn-icon {
+    font-size: var(--fs-body-lg);
+    padding: 12px;
+    min-width: 56px;
+    min-height: 56px;
+    border-radius: var(--radius-sm);
+}
+
+/* Secondary style */
 .btn-secondary {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: var(--color-secondary);
 }
 
 .btn-secondary:hover {
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: var(--color-secondary-hover);
 }
 
+/* ===== PANELS ===== */
 .panel {
-    background-color: var(--color-panel);
-    border-radius: var(--border-radius);
-    padding: 24px;
+    background-color: var(--color-surface);
+    border-radius: var(--radius-md);
+    padding: var(--sp-lg);
     align-items: center;
+}
+
+/* ===== OVERLAY ===== */
+.overlay-panel {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--color-overlay);
 }

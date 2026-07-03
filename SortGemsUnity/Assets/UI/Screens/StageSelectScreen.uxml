@@ -3,9 +3,9 @@
     <Style src="project://database/Assets/UI/Styles/StageSelectScreen.uss" />
 
     <ui:VisualElement name="stage-select-screen" class="screen">
-        <ui:VisualElement class="stage-header">
-            <ui:Button name="btn-back" text="&#x25C0; Back" class="btn btn-secondary btn-small" />
-            <ui:Label name="stage-title" text="Stage Select" class="stage-heading" />
+        <ui:VisualElement class="stage-header scrim">
+            <ui:Button name="btn-back" text="&#x25C0;" class="btn btn-secondary btn-icon" />
+            <ui:Label name="stage-title" text="Stage Select" class="stage-heading text-outline" />
         </ui:VisualElement>
 
         <ui:VisualElement class="carousel-wrapper">
@@ -16,9 +16,9 @@
             <ui:Button name="btn-next" text="&#x25B6;" class="btn btn-nav btn-nav-right" />
         </ui:VisualElement>
 
-        <ui:Label name="active-stage-text" text="" class="active-stage-label" />
+        <ui:Label name="active-stage-text" text="" class="active-stage-label scrim text-outline" />
 
-        <ui:Button name="btn-start" text="START" class="btn btn-start" />
+        <ui:Button name="btn-start" text="START" class="btn btn-lg" />
 
         <ui:VisualElement style="flex-grow: 1;" />
     </ui:VisualElement>

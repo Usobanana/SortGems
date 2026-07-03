@@ -64,7 +64,6 @@ namespace SortGems.Core
         {
             if (_gridManager == null) return;
 
-            // 1. 画面サイズ（幅・高さ）の動的取得
             float canvasWidth = 1080f;
             float canvasHeight = 1920f;
             var parentCanvas = GetComponentInParent<Canvas>();
@@ -78,42 +77,34 @@ namespace SortGems.Core
                 }
             }
 
-            float paddingVal = 16f; // コンテナ内余白
+            float sideMargin = 8f;
+            float padVal = 6f;
+            float headerH = 120f;
+            float bottomH = 100f;
+            float gap = 16f;
 
-            // メイングリッドのセルサイズ計算 (左右マージン40fとパディングを考慮)
-            float availableWidth = canvasWidth - 40f - (paddingVal * 2f);
-            float calculatedSize = availableWidth / stage.mainCols;
-            float roundedSize = Mathf.Floor(calculatedSize);
-            _currentCellSize = Mathf.Min(roundedSize, _maxMainCellSize);
+            float availW = canvasWidth - sideMargin * 2f - padVal * 2f;
+            float availH = canvasHeight - headerH - bottomH;
 
-            // パレットのセルサイズ計算 (左右マージン40fとパディングを考慮)
-            float availablePalWidth = canvasWidth - 40f - (paddingVal * 2f);
-            float calculatedPaletteSize = availablePalWidth / stage.paletteCols;
-            float roundedPaletteSize = Mathf.Floor(calculatedPaletteSize);
-            _currentPaletteCellSize = Mathf.Min(roundedPaletteSize, _maxPaletteCellSize);
+            float cellFromWidth = availW / stage.mainCols;
+            float cellFromHeight = (availH * 0.8f) / stage.mainRows;
+            _currentCellSize = Mathf.Min(Mathf.Floor(Mathf.Min(cellFromWidth, cellFromHeight)), _maxMainCellSize);
 
-            // 2. コンテナ全体の正確な幅・高さを計算
-            float mainW = stage.mainCols * _currentCellSize + (stage.mainCols - 1) * _mainCellSpacing + (paddingVal * 2f);
-            float mainH = stage.mainRows * _currentCellSize + (stage.mainRows - 1) * _mainCellSpacing + (paddingVal * 2f);
+            float mainW = stage.mainCols * _currentCellSize + padVal * 2f;
+            float mainH = stage.mainRows * _currentCellSize + padVal * 2f;
 
-            float palW = stage.paletteCols * _currentPaletteCellSize + (stage.paletteCols - 1) * _paletteCellSpacing + (paddingVal * 2f);
-            float palH = stage.paletteRows * _currentPaletteCellSize + (stage.paletteRows - 1) * _paletteCellSpacing + (paddingVal * 2f);
+            _currentPaletteCellSize = Mathf.Floor((mainW - padVal * 2f) / stage.paletteCols);
+            _currentPaletteCellSize = Mathf.Min(_currentPaletteCellSize, _maxPaletteCellSize);
+            float palW = mainW;
+            float palH = stage.paletteRows * _currentPaletteCellSize + padVal * 2f;
 
-            // 3. 有効な縦領域内での動的センタリング配置 (重なり防止)
-            float headerH = 160f; // ヘッダー領域の高さ
-            float buttonH = 140f; // 下部ボタン領域の高さ
-            float availableH = canvasHeight - headerH - buttonH;
+            float totalH = mainH + gap + palH;
+            float topMargin = (availH - totalH) / 2f;
+            topMargin = Mathf.Max(topMargin, 8f);
 
-            float gap = 32f; // メインとパレットの隙間
-            float totalContentH = mainH + gap + palH;
-
-            float margin = (availableH - totalContentH) / 2f;
-            margin = Mathf.Max(margin, 20f); // 最低20pxの余白を確保
-
-            float mainTopY = -headerH - margin;
+            float mainTopY = -headerH - topMargin;
             float palTopY = mainTopY - mainH - gap;
 
-            // メイングリッドコンテナのRectTransform調整
             var mainRt = _mainLayout.GetComponent<RectTransform>();
             mainRt.anchorMin = new Vector2(0.5f, 1f);
             mainRt.anchorMax = new Vector2(0.5f, 1f);
@@ -121,7 +112,6 @@ namespace SortGems.Core
             mainRt.anchoredPosition = new Vector2(0f, mainTopY);
             mainRt.sizeDelta = new Vector2(mainW, mainH);
 
-            // パレットコンテナのRectTransform調整
             var palRt = _paletteLayout.GetComponent<RectTransform>();
             palRt.anchorMin = new Vector2(0.5f, 1f);
             palRt.anchorMax = new Vector2(0.5f, 1f);
@@ -129,30 +119,27 @@ namespace SortGems.Core
             palRt.anchoredPosition = new Vector2(0f, palTopY);
             palRt.sizeDelta = new Vector2(palW, palH);
 
-            // 4. コンテナ背景（区切り枠）の設定（シンプルな矩形に変更）
             var mainImg = _mainLayout.GetComponent<Image>();
             if (mainImg == null) mainImg = _mainLayout.gameObject.AddComponent<Image>();
-            mainImg.sprite = null; // スプライトなし（シンプルな矩形）
-            mainImg.color = new Color(0.08f, 0.08f, 0.1f, 0.35f); // 半透明ダークグレー
+            mainImg.sprite = null;
+            mainImg.color = new Color(0.08f, 0.08f, 0.1f, 0.35f);
 
             var palImg = _paletteLayout.GetComponent<Image>();
             if (palImg == null) palImg = _paletteLayout.gameObject.AddComponent<Image>();
-            palImg.sprite = null; // スプライトなし（シンプルな矩形）
-            palImg.color = new Color(0.08f, 0.08f, 0.1f, 0.55f); // やや濃い半透明ダークグレー
+            palImg.sprite = null;
+            palImg.color = new Color(0.08f, 0.08f, 0.1f, 0.55f);
 
-            // 5. レイアウトパディングの適用
-            int pad = Mathf.RoundToInt(paddingVal);
+            int pad = Mathf.RoundToInt(padVal);
             _mainLayout.padding = new RectOffset(pad, pad, pad, pad);
             _paletteLayout.padding = new RectOffset(pad, pad, pad, pad);
 
-            // 6. 各エリアのセルを構築
-            BuildArea(_mainLayout,    stage.mainRows,    stage.mainCols,
+            BuildArea(_mainLayout, stage.mainRows, stage.mainCols,
                       _currentCellSize, _mainCellSpacing,
                       isPalette: false, out _mainViews);
 
             BuildArea(_paletteLayout, stage.paletteRows, stage.paletteCols,
                       _currentPaletteCellSize, _paletteCellSpacing,
-                      isPalette: true,  out _paletteViews);
+                      isPalette: true, out _paletteViews);
 
             CreatePaletteUnlockButton(stage);
             RefreshAll();
@@ -165,23 +152,30 @@ namespace SortGems.Core
 
             if (stage.paletteRows < 2) return;
 
+            var palRt = _paletteLayout.GetComponent<RectTransform>();
+            var parentTransform = palRt.parent;
+
             _unlockButtonObj = new GameObject("UnlockRow2Button");
-            _unlockButtonObj.transform.SetParent(_paletteLayout.transform, false);
+            _unlockButtonObj.transform.SetParent(parentTransform, false);
+
+            float pad = 16f;
+            float palW = stage.paletteCols * _currentPaletteCellSize + pad * 2f;
+            float btnW = palW * 0.6f;
+            float btnH = _currentPaletteCellSize * 0.8f;
 
             var rt = _unlockButtonObj.AddComponent<RectTransform>();
-            float row2Y = -_currentPaletteCellSize;
-            float btnW = _currentPaletteCellSize * 4f;
-            float btnH = _currentPaletteCellSize * 0.85f;
             rt.anchorMin = new Vector2(0.5f, 1f);
             rt.anchorMax = new Vector2(0.5f, 1f);
-            rt.pivot = new Vector2(0.5f, 1f);
-            rt.anchoredPosition = new Vector2(0f, row2Y);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            float palTop = palRt.anchoredPosition.y;
+            float row2CenterY = palTop - pad - _currentPaletteCellSize - _currentPaletteCellSize * 0.5f;
+            rt.anchoredPosition = new Vector2(0f, row2CenterY);
             rt.sizeDelta = new Vector2(btnW, btnH);
 
             var img = _unlockButtonObj.AddComponent<Image>();
-            img.color = new Color(0.35f, 0.25f, 0.55f, 0.95f);
-            img.sprite = GemColorPalette.RoundedRectSprite;
+            img.sprite = GemColorPalette.ButtonSprite;
             img.type = Image.Type.Sliced;
+            img.color = new Color(1f, 1f, 1f, 0.1f);
 
             var btn = _unlockButtonObj.AddComponent<UnityEngine.UI.Button>();
             btn.targetGraphic = img;
@@ -192,15 +186,15 @@ namespace SortGems.Core
             var textRt = textGo.AddComponent<RectTransform>();
             textRt.anchorMin = Vector2.zero;
             textRt.anchorMax = Vector2.one;
-            textRt.sizeDelta = Vector2.zero;
+            textRt.offsetMin = Vector2.zero;
+            textRt.offsetMax = Vector2.zero;
             var text = textGo.AddComponent<UnityEngine.UI.Text>();
-            text.text = "\U0001F512 Unlock";
+            text.text = "Unlock \U0001F512";
             text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            text.fontSize = Mathf.RoundToInt(btnH * 0.45f);
+            text.fontSize = Mathf.RoundToInt(btnH * 0.55f);
             text.alignment = TextAnchor.MiddleCenter;
             text.color = Color.white;
 
-            _unlockButtonObj.transform.SetAsLastSibling();
             UpdateUnlockButtonVisibility();
         }
 

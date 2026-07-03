@@ -1,28 +1,28 @@
+#title-screen {
+    background-image: url("project://database/Assets/Textures/bg_title_lofi.png");
+    background-size: cover;
+    background-position: center;
+}
+
+.title-card {
+    align-items: center;
+    padding: var(--sp-2xl) var(--sp-2xl);
+}
+
 .title-content {
     align-items: center;
-    margin-bottom: 60px;
+    margin-bottom: var(--sp-2xl);
 }
 
-.title-logo {
-    font-size: var(--font-size-title);
-    color: var(--color-accent);
-    -unity-font-style: bold;
-    letter-spacing: 4px;
-    margin-bottom: 8px;
-}
-
-.title-subtitle {
-    font-size: var(--font-size-body);
-    color: var(--color-text-dim);
-    letter-spacing: 2px;
+.title-logo-image {
+    width: 600px;
+    height: 339px;
+    background-image: url("project://database/Assets/Textures/logo_title.png");
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
 }
 
 .title-buttons {
     align-items: center;
-}
-
-.btn-play {
-    font-size: var(--font-size-heading);
-    padding: 16px 64px;
-    min-width: 200px;
 }
