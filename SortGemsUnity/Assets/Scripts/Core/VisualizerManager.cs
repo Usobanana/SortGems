@@ -23,7 +23,10 @@ namespace SortGems.Core
         [SerializeField] private int _barCount = 32;
 
         [Tooltip("バー同士の間隔（ピクセル）")]
-        [SerializeField] private float _spacing = 3f;
+        [SerializeField] private float _spacing = 14f;
+
+        [Tooltip("バー1本の幅（ピクセル）")]
+        [SerializeField] private float _barWidth = 6f;
 
         [Tooltip("周波数に対する伸縮の感度")]
         [SerializeField] private float _sensitivity = 2000f;
@@ -33,7 +36,7 @@ namespace SortGems.Core
 
         [Header("Visual Settings")]
         [Tooltip("バーの色と透明度（うっすら背景に馴染むようにアルファを低めに設定）")]
-        [SerializeField] private Color _barColor = new Color(1f, 1f, 1f, 0.4f);
+        [SerializeField] private Color _barColor = new Color(1f, 1f, 1f, 0.5f);
 
         [Tooltip("バーの最小の高さ（音がない時の高さ）")]
         [SerializeField] private float _minHeight = 10f;
@@ -90,10 +93,10 @@ namespace SortGems.Core
             if (layout == null) layout = _container.gameObject.AddComponent<HorizontalLayoutGroup>();
 
             layout.spacing = _spacing;
-            layout.childAlignment = TextAnchor.LowerLeft; // 下端揃えにして上に向かって伸びるようにする
+            layout.childAlignment = TextAnchor.LowerCenter; // 下端揃え・中央寄せにして上に向かって伸びるようにする
             layout.childControlWidth = true;
             layout.childControlHeight = false; // 高さはスクリプト（VisualizerBar）で制御するため
-            layout.childForceExpandWidth = true;
+            layout.childForceExpandWidth = false; // 幅は _barWidth 固定にして、バー間に隙間を作る
             layout.childForceExpandHeight = false;
             layout.childScaleWidth = false;
             layout.childScaleHeight = false;
@@ -129,6 +132,12 @@ namespace SortGems.Core
                 // ピボットを (0.5f, 0f) にすることで、高さが変更されたときに上方向に伸びるようになります。
                 rect.pivot = new Vector2(0.5f, 0f);
                 rect.sizeDelta = new Vector2(rect.sizeDelta.x, _minHeight);
+
+                // childForceExpandWidth = false のため、LayoutElementで幅を _barWidth に固定する
+                var layoutElement = barObj.GetComponent<LayoutElement>();
+                if (layoutElement == null) layoutElement = barObj.AddComponent<LayoutElement>();
+                layoutElement.preferredWidth = _barWidth;
+                layoutElement.flexibleWidth = 0f;
 
                 // 個々のバーを制御するスクリプトをアタッチ
                 var barScript = barObj.GetComponent<VisualizerBar>();

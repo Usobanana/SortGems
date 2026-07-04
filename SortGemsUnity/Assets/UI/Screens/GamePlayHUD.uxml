@@ -1,20 +1,15 @@
-<ui:UXML xmlns:ui="UnityEngine.UIElements">
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:sortgems="SortGems.UI">
     <Style src="project://database/Assets/UI/Styles/Common.uss" />
     <Style src="project://database/Assets/UI/Styles/GamePlayHUD.uss" />
 
     <ui:VisualElement name="gameplay-hud" class="screen" picking-mode="Ignore" style="background-color: rgba(0,0,0,0);">
+        <sortgems:EdgeGradientOverlay edge="Top" solid-size="80" fade-size="240" arch-amount="100" tint="#181820" />
+        <sortgems:EdgeGradientOverlay edge="Bottom" solid-size="80" fade-size="240" arch-amount="100" tint="#181820" />
+
         <!-- Top bar -->
         <ui:VisualElement class="hud-top">
             <ui:Button name="btn-back" text="&#x25C0;" class="btn btn-secondary btn-icon" />
             <ui:Label name="stage-name" text="Stage 1" class="hud-stage-name" />
-        </ui:VisualElement>
-
-        <!-- Timer -->
-        <ui:VisualElement class="timer-group" picking-mode="Ignore">
-            <ui:VisualElement name="timer-bar-bg" class="timer-bar-bg">
-                <ui:VisualElement name="timer-bar-fill" class="timer-bar-fill" />
-            </ui:VisualElement>
-            <ui:Label name="timer-text" text="03:00" class="timer-text" />
         </ui:VisualElement>
 
         <!-- Spacer -->
@@ -62,6 +57,14 @@
                     <ui:Button name="btn-unlock-cancel" text="Back" class="btn btn-secondary" />
                 </ui:VisualElement>
             </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- Timer, positioned near the grid, clear of the header gradient -->
+        <ui:VisualElement name="timer-group" class="timer-group" picking-mode="Ignore">
+            <ui:VisualElement name="timer-bar-bg" class="timer-bar-bg">
+                <ui:VisualElement name="timer-bar-fill" class="timer-bar-fill" />
+            </ui:VisualElement>
+            <ui:Label name="timer-text" text="03:00" class="timer-text" />
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

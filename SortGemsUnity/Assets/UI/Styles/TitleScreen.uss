@@ -11,18 +11,27 @@
 
 .title-content {
     align-items: center;
-    margin-bottom: var(--sp-2xl);
+    margin-bottom: var(--sp-md);
 }
 
-.title-logo-image {
-    width: 600px;
-    height: 339px;
-    background-image: url("project://database/Assets/Textures/logo_title.png");
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
+.title-logo-main {
+    font-size: 96px;
+    -unity-font-definition: url("project://database/Assets/Fonts/Caveat-Bold.ttf");
+    -unity-font-style: bold;
+    color: rgb(255, 255, 255);
+    letter-spacing: 2px;
+    -unity-text-align: middle-center;
+    margin-bottom: var(--sp-xs);
+    -unity-text-outline-width: 0.5px;
+    -unity-text-outline-color: rgba(0, 0, 0, 0.5);
+    text-shadow: 0 0 40px rgb(0, 0, 0);
 }
 
-.title-buttons {
-    align-items: center;
+.title-logo-sub {
+    font-size: 30px;
+    -unity-font-style: bold;
+    color: rgb(255, 255, 255);
+    letter-spacing: 8px;
+    -unity-text-align: middle-center;
 }
+

@@ -967,7 +967,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1749856602
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -984,6 +984,7 @@ MonoBehaviour:
   _container: {fileID: 797000281}
   _barCount: 32
   _spacing: 2
+  _barWidth: 6
   _sensitivity: 2500
   _lerpSpeed: 12
   _barColor: {r: 1, g: 1, b: 1, a: 0.45}

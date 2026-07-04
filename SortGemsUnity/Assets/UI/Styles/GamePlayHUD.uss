@@ -16,8 +16,11 @@
 
 /* ===== Timer ===== */
 .timer-group {
+    position: absolute;
+    top: 480px;
+    left: 0;
+    right: 0;
     align-items: center;
-    align-self: stretch;
     padding: var(--sp-sm) 0;
 }
 

@@ -1,16 +1,18 @@
-<ui:UXML xmlns:ui="UnityEngine.UIElements">
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:sortgems="SortGems.UI">
     <Style src="project://database/Assets/UI/Styles/Common.uss" />
     <Style src="project://database/Assets/UI/Styles/TitleScreen.uss" />
 
     <ui:VisualElement name="title-screen" class="screen">
-        <ui:VisualElement class="title-card scrim">
-            <ui:VisualElement class="title-content">
-                <ui:VisualElement class="title-logo-image" />
-            </ui:VisualElement>
+        <sortgems:EdgeGradientOverlay edge="Top" solid-size="80" fade-size="240" arch-amount="100" tint="#181820" />
+        <sortgems:EdgeGradientOverlay edge="Bottom" solid-size="80" fade-size="240" arch-amount="100" tint="#181820" />
 
-            <ui:VisualElement class="title-buttons">
-                <ui:Button name="btn-play" text="PLAY" class="btn btn-lg" />
+        <ui:VisualElement class="title-card">
+            <ui:VisualElement class="title-content">
+                <ui:Label text="Lo-Fi Chill" class="title-logo-main text-outline" />
+                <ui:Label text="Gems Sort Game" class="title-logo-sub text-outline" />
             </ui:VisualElement>
         </ui:VisualElement>
+
+        <ui:Button name="btn-play" text="Game Start" class="btn btn-lg btn-cta" />
     </ui:VisualElement>
 </ui:UXML>

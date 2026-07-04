@@ -1,11 +1,13 @@
-<ui:UXML xmlns:ui="UnityEngine.UIElements">
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:sortgems="SortGems.UI">
     <Style src="project://database/Assets/UI/Styles/Common.uss" />
     <Style src="project://database/Assets/UI/Styles/StageSelectScreen.uss" />
 
     <ui:VisualElement name="stage-select-screen" class="screen">
-        <ui:VisualElement class="stage-header scrim">
+        <sortgems:EdgeGradientOverlay edge="Top" solid-size="80" fade-size="240" arch-amount="100" tint="#181820" />
+        <sortgems:EdgeGradientOverlay edge="Bottom" solid-size="80" fade-size="240" arch-amount="100" tint="#181820" />
+
+        <ui:VisualElement class="stage-header">
             <ui:Button name="btn-back" text="&#x25C0;" class="btn btn-secondary btn-icon" />
-            <ui:Label name="stage-title" text="Stage Select" class="stage-heading text-outline" />
         </ui:VisualElement>
 
         <ui:VisualElement class="carousel-wrapper">
@@ -18,7 +20,7 @@
 
         <ui:Label name="active-stage-text" text="" class="active-stage-label scrim text-outline" />
 
-        <ui:Button name="btn-start" text="START" class="btn btn-lg" />
+        <ui:Button name="btn-start" text="Start" class="btn btn-lg btn-cta" />
 
         <ui:VisualElement style="flex-grow: 1;" />
     </ui:VisualElement>

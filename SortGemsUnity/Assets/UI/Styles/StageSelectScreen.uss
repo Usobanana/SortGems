@@ -12,18 +12,11 @@
     border-radius: 0;
 }
 
-.stage-heading {
-    font-size: var(--fs-h3);
-    color: var(--color-text);
-    -unity-font-style: bold;
-    flex-grow: 1;
-    -unity-text-align: middle-center;
-}
-
 .carousel-wrapper {
     flex-grow: 1;
     align-self: stretch;
     overflow: visible;
+    margin-top: 80px;
 }
 
 .carousel-viewport {
