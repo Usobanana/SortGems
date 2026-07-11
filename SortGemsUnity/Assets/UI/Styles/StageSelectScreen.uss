@@ -13,10 +13,9 @@
 }
 
 .carousel-wrapper {
-    flex-grow: 1;
     align-self: stretch;
     overflow: visible;
-    margin-top: 80px;
+    margin-top: var(--sp-lg);
 }
 
 .carousel-viewport {
@@ -111,10 +110,11 @@
 }
 
 .active-stage-label {
+    width: 800px;
     font-size: var(--fs-h3);
     color: var(--color-text);
     -unity-text-align: middle-center;
-    margin: var(--sp-md) 0;
+    margin: var(--sp-md) 0 0 0;
     padding: var(--sp-sm) var(--sp-lg);
     align-self: center;
 }

@@ -35,3 +35,14 @@
     -unity-text-align: middle-center;
 }
 
+.version-label {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 24px;
+    font-size: var(--fs-small);
+    -unity-font-style: normal;
+    color: var(--color-text-dim);
+    -unity-text-align: middle-center;
+}
+

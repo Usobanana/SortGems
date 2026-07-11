@@ -75,6 +75,7 @@ namespace SortGems.UI
             _titleScreen.CloneTree(_root);
 
             _root.Q<Button>("btn-play").clicked += ShowStageSelect;
+            _root.Q<Label>("version-label").text = $"v{Application.version}";
 
             if (_uguiGamePlayPanel != null) _uguiGamePlayPanel.SetActive(false);
 

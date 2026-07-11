@@ -511,6 +511,9 @@
               <span class="lbl" style="font-size:15px; color:var(--ink); font-weight:700;">“Lo-Fi Chill”<br/><span style="font-size:9px; letter-spacing:.14em; color:var(--ink-dim); font-weight:400;">GEMS SORT GAME</span></span>
             </div>
             <div class="wf-btn primary" style="left:20%; right:20%; bottom:18.75%; height:6.2%;">Game Start</div>
+            <div class="wf-box" style="left:30%; right:30%; bottom:1.5%; height:2.4%; background:transparent; border:none;">
+              <span class="lbl" style="font-size:7px;">v1.0 (version-label)</span>
+            </div>
             <div class="wf-label-tag" style="left:6px; top:6px;">edge-gradient ×2 (top/bottom)</div>
           </div>
           <p class="frame-caption">1080 × 1920 基準 / <b>bottom: 360px 固定</b>でCTA配置</p>
@@ -521,6 +524,7 @@
           <dl>
             <div class="row"><dt>ロゴ</dt><dd>2行固定テキスト。"Lo-Fi Chill" 96px + "Gems Sort Game" 30px letter-spacing 8px。将来的にロゴ画像化する場合はここを差し替え。</dd></div>
             <div class="row"><dt>CTA</dt><dd><span class="num">btn-lg</span>, width <span class="num">560px</span>, 画面下端から<span class="num">360px</span>固定位置。タップで Stage Select へ。</dd></div>
+            <div class="row"><dt>バージョン表記</dt><dd>画面最下部中央、<span class="num">bottom:24px</span>。<span class="num">Application.version</span>（<span class="num">PlayerSettings.bundleVersion</span>）を実行時にセット。（2026-07-11追加）</dd></div>
             <div class="row"><dt>背景</dt><dd>静止画1枚（<span class="num">bg_title_lofi.png</span>）。アニメーションなし。</dd></div>
           </dl>
           <div class="callout"><b>検討ポイント：</b>CTAが「下から360px」の絶対値なので、セーフエリアが大きい端末では相対的に位置が高く／低く見える可能性。ロゴとCTAの間の間隔も可変になっていない。</div>
@@ -546,15 +550,15 @@
             <div class="wf-box" style="inset:0; background:repeating-linear-gradient(135deg, var(--muted-fill) 0 10px, var(--paper) 10px 20px); border:none;"></div>
             <div class="wf-btn circle" style="left:4%; top:2.5%; width:9%; aspect-ratio:1;">◀</div>
 
-            <div class="wf-btn circle" style="left:2%; top:47%; width:11%; aspect-ratio:1;">◀</div>
-            <div class="wf-box dynamic emph" style="left:16%; right:16%; top:26%; height:46%; border-radius:10px;">
+            <div class="wf-box dynamic" style="left:16%; right:16%; top:14%; height:5%; border-radius:14px;">
+              <span class="lbl">active-stage-label (width = stage-cardと同幅)</span>
+            </div>
+            <div class="wf-btn circle" style="left:2%; top:42%; width:11%; aspect-ratio:1;">◀</div>
+            <div class="wf-box dynamic emph" style="left:16%; right:16%; top:21%; height:46%; border-radius:10px;">
               <span class="lbl">stage-card (800×700)<br/>preview 500×500<br/>“Stage N: 名前”<br/>status: CLEARED / LOCKED / —</span>
             </div>
-            <div class="wf-btn circle" style="right:2%; top:47%; width:11%; aspect-ratio:1;">▶</div>
+            <div class="wf-btn circle" style="right:2%; top:42%; width:11%; aspect-ratio:1;">▶</div>
 
-            <div class="wf-box dynamic" style="left:22%; right:22%; top:74%; height:5%; border-radius:14px;">
-              <span class="lbl">active-stage-label</span>
-            </div>
             <div class="wf-btn primary" style="left:24%; right:24%; top:82%; height:6%;">Start</div>
             <div class="wf-label-tag" style="right:6px; top:6px;">carousel: 3-card pool, 832px/card</div>
           </div>
@@ -565,6 +569,7 @@
           <h3 class="head">要素と挙動</h3>
           <dl>
             <div class="row"><dt>ヘッダー</dt><dd>戻る矢印のみ。タイトル文言なし。</dd></div>
+            <div class="row"><dt>active-stage-label</dt><dd>stage-card の<b>直上・同幅(800px)</b>に配置（旧: カード下部）。これに伴い carousel-wrapper の <span class="num">flex-grow:1</span> を外し、コンテンツに合わせたサイズへ変更。（2026-07-11変更）</dd></div>
             <div class="row"><dt>カルーセル</dt><dd>ドラッグ／慣性スワイプ + 前後矢印ボタン。カード幅 <span class="num">832px</span>固定、300ms未満のフリックで1ページ送り。</dd></div>
             <div class="row"><dt>カードプレビュー</dt><dd>ゴールレイアウトから動的生成した500×500ドット絵。未クリアはグレースケール。</dd></div>
             <div class="row"><dt>Start</dt><dd>未アンロックのステージでは<b>非表示</b>（disabledではなく非表示）。</dd></div>
@@ -596,11 +601,12 @@
         <div class="spec">
           <h3 class="head">要素と挙動</h3>
           <dl>
-            <div class="row"><dt>HUD top</dt><dd>戻る矢印 + ステージ名。バー背景 <span class="num">rgba(0,0,0,.5)</span>。</dd></div>
+            <div class="row"><dt>HUD top</dt><dd>戻る矢印 + ステージ名。背景帯なし（透過）。（旧: バー背景 <span class="num">rgba(0,0,0,.5)</span>、2026-07-11に削除）</dd></div>
             <div class="row"><dt>タイマー</dt><dd><span class="num">headerH</span>直下の予約帯に固定。残量比率で緑→黄→赤に遷移。</dd></div>
             <div class="row"><dt>メイングリッド</dt><dd>セルサイズ = <span class="num">min(幅/cols, 高さ×0.8/rows, 90px)</span>（旧上限45px）。予約帯（header+timer）の下から常に開始。</dd></div>
+            <div class="row"><dt>ジェム移動</dt><dd>選択中グループは<b>同じ目標色のマスにしか移動できない</b>。旧実装は目標色のない自由マスへ色を問わず移動できる抜け穴があった（2026-07-11修正、<code>GridManager.FindContiguousEmpty()</code>）。</dd></div>
             <div class="row"><dt>パレット</dt><dd>一時退避エリア。既定2段。2段目はロックされ、行全体タップで Unlock ダイアログ（旧: 専用の小ボタンのみ）。</dd></div>
-            <div class="row"><dt>HUD bottom</dt><dd>Undo / Hint / Reset の3ボタン。バー背景 <span class="num">rgba(0,0,0,.5)</span>。</dd></div>
+            <div class="row"><dt>HUD bottom</dt><dd>Undo / Hint / Reset の3ボタン。背景帯なし（透過）。（旧: バー背景 <span class="num">rgba(0,0,0,.5)</span>、2026-07-11に削除）</dd></div>
           </dl>
           <div class="callout"><b>決定事項：</b>タイマーは headerH と同じ「予約帯」方式に変更（旧: <span class="num">top:480px</span> 絶対値）。<span class="num">availH = canvasH − headerH − timerH − bottomH</span> とし、グリッドは構造的にこの帯の下からしか始まらない。詳細は <code>screen-specification.md §6-1</code>。</div>
           <div class="callout"><b>決定事項：</b>マス/ジェムが小さく見える主因は固定上限 <span class="num">maxMainCellSize=45px</span> だった。13×13（Stage_001実データ）では幅から約81px出せるのに45pxへ潰されていたため、上限を <span class="num">90px</span>（パレットは100px）に引き上げる。高密度ステージ（24列等）は幅制約が先に効くため副作用なし。上のフレームは新しい見え方（13×13, 6%マージン）で表示中。</div>
@@ -639,16 +645,19 @@
       <div class="stage-body">
         <div class="frame-wrap">
           <div class="frame" id="frame-cleared"></div>
-          <p class="frame-caption">タイトル色 <b style="color:#1f9d55">success accent</b> / 72px</p>
+          <p class="frame-caption">タイトル色 <b style="color:#1f9d55">success accent</b> / 72px　／　パネル <b>min-height 920px</b>・背景ほぼ不透明</p>
         </div>
         <div class="spec">
           <h3 class="head">要素と挙動</h3>
           <dl>
             <div class="row"><dt>タイトル</dt><dd>“CLEARED!” <span class="num">--fs-display 72px</span>、accentゴールド。</dd></div>
-            <div class="row"><dt>ボタン1</dt><dd>Next Stage（btn-lg）。次ステージがあれば広告確率表示 → ロード、無ければ Stage Select へ。</dd></div>
+            <div class="row"><dt>ボタン1</dt><dd>Next Stage。次ステージがあれば広告確率表示 → ロード、無ければ Stage Select へ。</dd></div>
             <div class="row"><dt>ボタン2/3</dt><dd>Replay（ステージ再挑戦） / Back（Stage Select）。</dd></div>
+            <div class="row"><dt>ボタンサイズ</dt><dd>3ボタンとも <span class="num">.btn-primary-size</span>（width:560px, font-size:48px, min-height:84px = Game Start/Startと同一）に統一。旧: ボタン1のみ大きく、2/3は小さいセカンダリサイズだった。（2026-07-11変更）</dd></div>
+            <div class="row"><dt>パネル</dt><dd><span class="num">min-height:920px</span> に拡大（縦長化）。背景の透過を大幅に抑制（<span class="num">--color-surface</span> alpha 0.92→1）。（2026-07-11変更）</dd></div>
           </dl>
           <div class="callout">クリア演出として、対象ステージの各マスに遅延つきエフェクトが順番に再生される（<span class="num">(r+c)*0.03s</span> ずらし）。ワイヤーフレームには不可視。</div>
+          <div class="callout"><b>修正済み：</b>ダイアログ表示中に <span class="num">timer-group</span> が最前面に出てしまう問題（UXML宣言順の問題）と、<span class="num">UIDocument</span>/<span class="num">Canvas</span> の <span class="num">Sort Order</span> 同値によりスクリムがuGUIグリッドの下に描画されていた問題を解消（詳細は <code>screen-specification.md §1・§4.4</code>）。</div>
         </div>
       </div>
     </section>
@@ -663,14 +672,15 @@
       <div class="stage-body">
         <div class="frame-wrap">
           <div class="frame" id="frame-failed"></div>
-          <p class="frame-caption">タイトル色 <b style="color:#d1483f">danger</b> / 72px</p>
+          <p class="frame-caption">タイトル色 <b style="color:#d1483f">danger</b> / 72px　／　パネル <b>min-height 920px</b>・背景ほぼ不透明</p>
         </div>
         <div class="spec">
           <h3 class="head">要素と挙動</h3>
           <dl>
             <div class="row"><dt>タイトル</dt><dd>“TIME UP” danger色。</dd></div>
-            <div class="row"><dt>ボタン1</dt><dd>+1:00 Watch Ad（btn-lg）。加算秒数は<span class="num">_addTimeSeconds</span>依存、文言に反映。</dd></div>
+            <div class="row"><dt>ボタン1</dt><dd>+1:00 Watch Ad。加算秒数は<span class="num">_addTimeSeconds</span>依存、文言に反映。</dd></div>
             <div class="row"><dt>ボタン2/3</dt><dd>Replay / Back。</dd></div>
+            <div class="row"><dt>ボタンサイズ／パネル</dt><dd>Cleared と同様に <span class="num">.btn-primary-size</span> 統一・パネル拡大＋不透明化を適用済み。</dd></div>
           </dl>
         </div>
       </div>
@@ -686,7 +696,7 @@
       <div class="stage-body">
         <div class="frame-wrap">
           <div class="frame" id="frame-unlock"></div>
-          <p class="frame-caption">パネル幅 <b>min-width 520px</b>（1080基準）</p>
+          <p class="frame-caption">パネル <b>min-width 520px / min-height 920px</b>（1080基準）・背景ほぼ不透明</p>
         </div>
         <div class="spec">
           <h3 class="head">要素と挙動</h3>
@@ -695,6 +705,7 @@
             <div class="row"><dt>説明文</dt><dd>「アイテム使用または広告視聴で2段目パレットを解放」。</dd></div>
             <div class="row"><dt>ボタン1</dt><dd>Use Item（<b>アイテム在庫チェック未実装 = TODO</b>）。</dd></div>
             <div class="row"><dt>ボタン2/3</dt><dd>Watch Ad / Back（キャンセルで再開）。</dd></div>
+            <div class="row"><dt>ボタンサイズ／パネル</dt><dd>Cleared と同様に <span class="num">.btn-primary-size</span> 統一・パネル拡大（<span class="num">min-height:920px</span>）＋不透明化（<span class="num">--color-surface</span> alpha→1）を適用済み。（2026-07-11変更）</dd></div>
           </dl>
           <div class="callout"><b>検討ポイント：</b>「Use Item」の在庫UIが存在しない。所持数0でもボタンは常に活性のまま押せてしまう現状。</div>
         </div>
@@ -748,8 +759,8 @@
     opts = opts || {};
     frame.innerHTML = "";
 
-    // HUD top bar
-    labelBox(frame, "emph", "left:0; right:0; top:0; height:6.2%; background:var(--muted-fill-2); border:none; border-bottom:1.4px solid var(--line-strong); justify-content:flex-start; padding-left:4%;",
+    // HUD top bar — no background band (removed 2026-07-11); dashed line only marks the zone
+    labelBox(frame, "emph", "left:0; right:0; top:0; height:6.2%; background:transparent; border:none; border-bottom:1.4px dashed var(--line-strong); justify-content:flex-start; padding-left:4%;",
       "◀&nbsp;&nbsp;Stage 1");
 
     // Reserved band = headerH (6.25%) + timerH (3.75%). Grid is structurally
@@ -802,8 +813,8 @@
     frame.appendChild(palWrap);
     tag(frame, "left:4px; top:79.5%;", "row2 = one large tap target (was: small button)");
 
-    // HUD bottom bar
-    var bottomBar = el("div", "", "position:absolute; left:0; right:0; bottom:0; height:8%; background:var(--muted-fill-2); border-top:1.4px solid var(--line-strong); display:flex; align-items:center; justify-content:center; gap:4%;");
+    // HUD bottom bar — no background band (removed 2026-07-11); dashed line only marks the zone
+    var bottomBar = el("div", "", "position:absolute; left:0; right:0; bottom:0; height:8%; background:transparent; border-top:1.4px dashed var(--line-strong); display:flex; align-items:center; justify-content:center; gap:4%;");
     ["Undo", "Hint", "Reset"].forEach(function (t) {
       var b = el("div", "wf-btn", "position:relative; width:22%; height:56%; font-size:8px;");
       b.textContent = t;
@@ -815,7 +826,10 @@
       var scrim = el("div", "wf-overlay-scrim", "");
       frame.appendChild(scrim);
 
-      var modal = el("div", "wf-modal", "left:12%; right:12%; top:34%; height:26%;");
+      // Panel enlarged (縦に長く) and made near-opaque (2026-07-11): min-height 920px,
+      // --color-surface alpha 0.92→1. Buttons are all the same size (.btn-primary-size,
+      // matches Title/StageSelect's CTA), not just the first one.
+      var modal = el("div", "wf-modal", "left:12%; right:12%; top:18%; height:58%;");
       var title = el("div", "", "font-size:11px; font-weight:700; color:" + opts.modal.titleColor + ";");
       title.textContent = opts.modal.title;
       modal.appendChild(title);
@@ -825,7 +839,9 @@
         modal.appendChild(desc);
       }
       opts.modal.buttons.forEach(function (b, idx) {
-        var bb = el("div", "wf-btn" + (idx === 0 ? " primary" : ""), "position:relative; width:70%; height:16%; margin-top:2%; font-size:8px;");
+        // All buttons now share one size (.btn-primary-size); only button 1 keeps
+        // the primary color treatment, 2/3 stay secondary-colored (size-only change).
+        var bb = el("div", "wf-btn" + (idx === 0 ? " primary" : ""), "position:relative; width:80%; height:12%; margin-top:2%; font-size:8px;");
         bb.textContent = b;
         modal.appendChild(bb);
       });

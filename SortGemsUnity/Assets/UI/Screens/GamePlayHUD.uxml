@@ -22,14 +22,22 @@
             <ui:Button name="btn-reset" text="Reset" class="btn btn-secondary" />
         </ui:VisualElement>
 
-        <!-- Cleared overlay -->
+        <!-- Timer, positioned near the grid, clear of the header gradient -->
+        <ui:VisualElement name="timer-group" class="timer-group" picking-mode="Ignore">
+            <ui:VisualElement name="timer-bar-bg" class="timer-bar-bg">
+                <ui:VisualElement name="timer-bar-fill" class="timer-bar-fill" />
+            </ui:VisualElement>
+            <ui:Label name="timer-text" text="03:00" class="timer-text" />
+        </ui:VisualElement>
+
+        <!-- Cleared overlay (declared after timer-group so it always paints on top, masking the whole screen incl. uGUI grid) -->
         <ui:VisualElement name="cleared-panel" class="overlay-panel" style="display: none;">
             <ui:VisualElement class="panel result-panel">
                 <ui:Label text="CLEARED!" class="result-title result-title-cleared" />
                 <ui:VisualElement class="result-buttons">
-                    <ui:Button name="btn-next" text="Next Stage" class="btn btn-lg" />
-                    <ui:Button name="btn-replay-cleared" text="Replay" class="btn btn-secondary" />
-                    <ui:Button name="btn-back-cleared" text="Back" class="btn btn-secondary" />
+                    <ui:Button name="btn-next" text="Next Stage" class="btn btn-primary-size" />
+                    <ui:Button name="btn-replay-cleared" text="Replay" class="btn btn-primary-size btn-secondary" />
+                    <ui:Button name="btn-back-cleared" text="Back" class="btn btn-primary-size btn-secondary" />
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
@@ -39,9 +47,9 @@
             <ui:VisualElement class="panel result-panel">
                 <ui:Label text="TIME UP" class="result-title result-title-failed" />
                 <ui:VisualElement class="result-buttons">
-                    <ui:Button name="btn-addtime" text="+1:00 Watch Ad" class="btn btn-lg" />
-                    <ui:Button name="btn-replay-failed" text="Replay" class="btn btn-secondary" />
-                    <ui:Button name="btn-back-failed" text="Back" class="btn btn-secondary" />
+                    <ui:Button name="btn-addtime" text="+1:00 Watch Ad" class="btn btn-primary-size" />
+                    <ui:Button name="btn-replay-failed" text="Replay" class="btn btn-primary-size btn-secondary" />
+                    <ui:Button name="btn-back-failed" text="Back" class="btn btn-primary-size btn-secondary" />
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
@@ -52,19 +60,11 @@
                 <ui:Label text="Unlock Row 2" class="unlock-title" />
                 <ui:Label text="Use an item or watch an ad to unlock the second palette row." class="unlock-desc" />
                 <ui:VisualElement class="unlock-buttons">
-                    <ui:Button name="btn-unlock-item" text="Use Item" class="btn btn-lg" />
-                    <ui:Button name="btn-unlock-ad" text="Watch Ad" class="btn btn-secondary" />
-                    <ui:Button name="btn-unlock-cancel" text="Back" class="btn btn-secondary" />
+                    <ui:Button name="btn-unlock-item" text="Use Item" class="btn btn-primary-size" />
+                    <ui:Button name="btn-unlock-ad" text="Watch Ad" class="btn btn-primary-size btn-secondary" />
+                    <ui:Button name="btn-unlock-cancel" text="Back" class="btn btn-primary-size btn-secondary" />
                 </ui:VisualElement>
             </ui:VisualElement>
-        </ui:VisualElement>
-
-        <!-- Timer, positioned near the grid, clear of the header gradient -->
-        <ui:VisualElement name="timer-group" class="timer-group" picking-mode="Ignore">
-            <ui:VisualElement name="timer-bar-bg" class="timer-bar-bg">
-                <ui:VisualElement name="timer-bar-fill" class="timer-bar-fill" />
-            </ui:VisualElement>
-            <ui:Label name="timer-text" text="03:00" class="timer-text" />
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

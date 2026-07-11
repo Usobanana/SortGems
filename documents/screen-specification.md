@@ -19,6 +19,8 @@ SortGemsの画面はUnityの2レイヤーで構成されている。
 
 キャンバス基準解像度: **1080 × 1920（9:16 縦持ち）**。`GridView.BuildGrid()` 内でハードコードされている。
 
+**【重要・不変条件】`[UIToolkit]`（`UIDocument`）の `Sort Order` は `[Canvas]`（uGUI, `sortingOrder: 0`）より必ず大きい値にすること。** 両者が同値の場合、Unityの描画順は保証されず、UI Toolkit側の半透明レイヤー（`.overlay-panel` のスクリムなど）だけがuGUI Canvasの下に描画され、不透明な子要素（ダイアログの `.panel` など）だけが上に見える、という不具合が発生する（2026-07-11に発見・修正）。現在 `UIDocument.m_SortingOrder = 10` を [GameScene.unity](../SortGemsUnity/Assets/Scenes/GameScene.unity) に設定済み。今後シーンを作り直す・複製する際は必ずこの値を維持すること（`CreateGameScene.cs` 側にも同様の明示設定を入れるのが望ましい・未実施）。
+
 ---
 
 ## 2. 画面遷移フロー
@@ -78,9 +80,11 @@ Next Stage → 次ステージがあれば Game Play へ再ロード、なけれ
 ### 3.4 ボタン
 
 - `.btn`: 基本形。padding 16×36、min-height 58px、角丸12px、ホバーで拡大(1.03)+明色化、押下で縮小(0.97)+暗色化。
-- `.btn-lg`: CTAボタン（Game Start / Start / Next Stage）。padding 24×56、min-height 84px、min-width 280px。
-- `.btn-secondary`: 半透明白背景（戻る、Undo/Hint/Reset、キャンセル系）。
-- `.btn-icon`: 正方形に近い、戻る矢印(◀)専用。56×56px。
+- `.btn-lg`: 大サイズ。padding 24×56、min-height 84px、min-width 280px。
+- `.btn-cta`: Title の Game Start / StageSelect の Start 専用。`.btn-lg` に加え `width:560px; font-size:48px;` を画面下から絶対位置固定(`bottom:360px`)で配置。
+- `.btn-primary-size`: `width:560px; font-size:48px; min-height:84px`（`.btn-cta` と同じ footprint、位置指定なし）。**ヘッダーに配置されるボタン（`.btn-icon` の戻る矢印等）を除く、ダイアログ内ボタンなど非ヘッダーの主要ボタンはこのサイズをルールとする**（2026-07-11決定）。現在は `cleared-panel` / `failed-panel` / `unlock-dialog` の全ボタン（Next Stage/Replay/Back 等）に適用済み。
+- `.btn-secondary`: 半透明白背景（戻る、Undo/Hint/Reset、キャンセル系）。`.btn-primary-size` と併用してサイズのみ揃えることが多い。
+- `.btn-icon`: 正方形に近い、戻る矢印(◀)専用。56×56px。サイズ統一ルールの対象外。
 - `.btn-nav`: ステージ選択のカルーセル送り矢印。円形64×64px、画面端に絶対配置。
 
 ---
@@ -101,25 +105,26 @@ Next Stage → 次ステージがあれば Game Play へ再ロード、なけれ
 │                            │
 │      [ Game Start ]        │ ← btn-cta, bottom:360px固定, width:560px
 │                            │
+│           v1.0              │ ← version-label（画面下部中央、Application.version）
 └──────────────────────────┘
 ```
 
-- 要素はロゴ2行のみ。中央揃え(`.screen`のalign-items/justify-content center)。
+- 要素はロゴ2行 + バージョン表記。中央揃え(`.screen`のalign-items/justify-content center)。
 - `EdgeGradientOverlay` が上端・下端にアーチ状のグラデーション幕（黒フェード）を重ねる。
 - CTAボタンは画面下から360px固定位置（画面高に対する相対値ではない = 縦長比率が変わると余白比率がズレる）。
+- **【2026-07-11追加】バージョン表記。** `version-label`（`--fs-small` 16px、`--color-text-dim`）を画面最下部(`bottom:24px`)に中央揃えで配置。`ScreenManager.ShowTitle()` が `Application.version`（`PlayerSettings.bundleVersion`）を実行時にセットする。
 
 ### 4.2 ステージ選択画面 (`StageSelectScreen.uxml`)
 
 ```
 ┌──────────────────────────┐
 │ [◀]                       │ ← stage-header、戻るボタンのみ
-│                            │
+│   Stage N: 名前ラベル      │ ← active-stage-label, scrim付き, width:800px(stage-cardと同幅)
 │  ◀   ┌────────────┐   ▶   │ ← btn-nav（円形送りボタン、前後ステージが無い時は非表示）
 │      │  [preview] │       │ ← stage-card 800×700、カルーセル中央=アクティブ(scale 1.05)
 │      │ Stage N: 名 │       │
 │      │  [CLEARED]  │       │ ← 未クリア鍵無しは空文字、ロック中は"LOCKED"+opacity0.4
 │      └────────────┘       │
-│   Stage N: 名前ラベル      │ ← active-stage-label, scrim付き
 │                            │
 │        [ Start ]           │ ← btn-cta, 未アンロック時は非表示
 └──────────────────────────┘
@@ -128,6 +133,7 @@ Next Stage → 次ステージがあれば Game Play へ再ロード、なけれ
 - カルーセルは**仮想化**（DOMプールは常に3枚、スワイプ/矢印ボタンで中身を差し替え）。カード幅832px固定。
 - 各カードのプレビューはゴールレイアウトから動的生成した500×500のドットアートテクスチャ（`GetOrCreatePreview`）。未クリアはグレースケール、クリア済みはフルカラー。
 - ロック判定: 直前ステージが `StageCleared_{N}` でない場合 `LOCKED`。
+- **【2026-07-11変更】`active-stage-label` の位置。** 従来はカルーセルの下（Startボタンの上）に配置していたが、`stage-card` の直上・同幅(800px)に変更。これに伴い `carousel-wrapper` から `flex-grow:1` を外し、コンテンツ量に応じたサイズへ変更（末尾のスペーサーが余った縦スペースを吸収する構成に統一）。
 
 ### 4.3 ゲームプレイ画面
 
@@ -135,17 +141,19 @@ Next Stage → 次ステージがあれば Game Play へ再ロード、なけれ
 
 ```
 ┌──────────────────────────┐
-│ [◀] Stage 1                │ ← hud-top, バー背景 rgba(0,0,0,0.5)
+│ [◀] Stage 1                │ ← hud-top, 背景なし（透過）
 │                            │
 │      ▓▓▓▓▓▓▓▓░░░ 03:00     │ ← timer-group（headerH直下の予約帯、高さtimerH固定）
 │                            │
-│   (uGUIパズルグリッド)      │ ← Canvas側で動的配置。HUDより下のZ
+│   (uGUIパズルグリッド)      │ ← Canvas側で動的配置
 │                            │
 │   (パレット2段 + Unlock)   │
 │                            │
-│ [ Undo ] [ Hint ] [ Reset ]│ ← hud-bottom, バー背景 rgba(0,0,0,0.5)
+│ [ Undo ] [ Hint ] [ Reset ]│ ← hud-bottom, 背景なし（透過）
 └──────────────────────────┘
 ```
+
+- **【2026-07-11変更】`hud-top` / `hud-bottom` の背景帯を削除。** 従来は `background-color: var(--color-bar-bg)`（黒50%）の帯を敷いていたが、下地なしの透過表示に変更。ボタン自体は `.btn`/`.btn-secondary` の背景で視認性を確保する。
 
 - **【決定】タイマー帯は headerH / bottomH と同じ「予約帯」方式にする。** 旧実装は `timer-group` を `top: 480px` の絶対値でハードコードしており、グリッドの実際の開始Y座標（ステージごとに可変）と無関係だったため、行数の多いステージでグリッドとタイマーが近接／重なる可能性があった。
   - 新方式: `GridView.cs` の `availH` 計算に `timerH`（タイマーバー分の高さ、目安72px）を追加し、`availH = canvasHeight - headerH - timerH - bottomH`、グリッド開始Y `mainTopY = -headerH - timerH - topMargin` とする。
@@ -185,6 +193,8 @@ Next Stage → 次ステージがあれば Game Play へ再ロード、なけれ
 
 - **本当の火種はランタイム側ではなくステージ生成ツール側**（`StageArtAutofixWindow.cs` 等）。`documents/pixel-art-rules.md` に記録されている「12×12の元アートを13×13へ強制拡張する際、オフセット計算 `(13-12)/2=0` で左上詰めになり余白が偏る」というバグがこれにあたる。画面レイアウト設計としての追加対応は不要。
 
+**【2026-07-11決定・実装済み】移動ルール: 選択中グループは同じ目標色のマスにしか移動できない。** 従来は「目標色（`goalColor`）が設定されていないメイングリッド上の空きマス（ピクセルアート形状内だが目標のない自由マス）」には、色を問わず自由に流し込める抜け穴があった。ハイライト表示（`GridView.HighlightEmpties`）は元々「選択色と同じ`goalColor`のマスのみ」を光らせていたため、見た目上のヒントと実際に許可される移動の間に不整合があった。`GridManager.FindContiguousEmpty()` の `IsAvailable()` を「メイングリッドへの移動は常に `goalColor == group.color` のマスのみ許可（自グループが現在占有しているマス=`srcSet`は対象外）」に統一し、ハイライトと実際の移動可否を一致させた。パレットへの退避（`goalColor`を持たない）は従来通り色フリーのまま。
+
 セル1つの見た目（`GemCellView.cs`、前回プッシュ版）:
 - 背景（`_backgroundImage`）＝フルサイズ。ジェムが目標色と一致していれば鮮やかな色、不一致なら目標色を薄く表示、空マスならグレー。
 - ジェム本体（`_gemImage`）＝角丸スプライト、背景の72%スケールで中央配置。正解時は影(Shadow)を消してフラットに見せる。
@@ -200,13 +210,16 @@ Next Stage → 次ステージがあれば Game Play へ再ロード、なけれ
 
 ### 4.4 オーバーレイダイアログ（すべて `GamePlayHUD.uxml` 内、`display:none`初期）
 
-3種類とも共通の `.overlay-panel`（画面全面スクリム）+ `.panel`（中央カード、`--color-surface`）構造。
+3種類とも共通の `.overlay-panel`（画面全面スクリム、`--color-overlay` = 黒60%）+ `.panel`（中央カード、`--color-surface`）構造。ボタンはヘッダー系（戻る矢印等）を除き全て `.btn-primary-size`（§3.4参照、Game Start/Startと同サイズ）に統一。
 
-| ダイアログ | タイトル | ボタン（上から） |
+| ダイアログ | タイトル | ボタン（上から、いずれも同サイズ） |
 |---|---|---|
-| `cleared-panel` | "CLEARED!"（accent色、72px） | Next Stage(btn-lg) / Replay / Back |
-| `failed-panel` | "TIME UP"（danger色、72px） | +1:00 Watch Ad(btn-lg) / Replay / Back |
-| `unlock-dialog` | "Unlock Row 2"（40px） | Use Item(btn-lg) / Watch Ad / Back |
+| `cleared-panel` | "CLEARED!"（accent色、72px） | Next Stage / Replay / Back |
+| `failed-panel` | "TIME UP"（danger色、72px） | +1:00 Watch Ad / Replay / Back |
+| `unlock-dialog` | "Unlock Row 2"（40px） | Use Item / Watch Ad / Back |
+
+- **【2026-07-11修正】UXML上の宣言順を `timer-group` の後ろに変更。** UI Toolkit内では後に宣言された兄弟要素ほど手前に描画されるため、旧構成では `timer-group` がダイアログより後に宣言されており、ダイアログ表示中でもタイマーが最前面に出てしまう問題があった。ダイアログ3種を `timer-group` の後ろへ移動して解消。
+- **【2026-07-11修正】全画面マスクが効かない不具合。** §1に記載の `UIDocument`/`Canvas` の `Sort Order` 同値問題により、`.overlay-panel` の半透明スクリムがuGUIパズルグリッドの下に描画され、ダイアログの不透明パネルだけが浮いて見える状態だった。`UIDocument.m_SortingOrder = 10` に設定して解消。
 
 ---
 
@@ -232,6 +245,10 @@ Next Stage → 次ステージがあれば Game Play へ再ロード、なけれ
 3. ~~**パレット2段目ロックUI**~~ → **解決方針決定済み（実装待ち）**。詳細は §4.3.2「パレット仕様」参照。専用の小さなアンロックボタンを廃止し、ロック行のセル自体をタップ領域にする。
 4. **キャンバス基準1080×1920固定 → 実質的には非問題、既存ドキュメントへの追記のみ**。`GridView.BuildGrid()` は実際には親`Canvas`の実サイズを実行時に読んでおり、1080×1920は取得失敗時のフォールバックに過ぎない（§4.3.2の表を参照、記述を修正済み）。対応: `documents/mobile-safe-area.md` に、uGUI側では `headerH`(120px)/`bottomH`(100px) が簡易的なセーフエリア代わりとして機能している旨を追記し、将来的に `Screen.safeArea` と連動させる拡張余地を明記する（未実施）。
 5. **ステージカードの固定ピクセルサイズ**（800×700、カード幅832px固定）→ **対応不要と判断**。ゲーム全体が固定基準解像度＋CanvasScalerでスケールする設計を前提にしている以上、基準解像度内での固定pxは想定通りの設計であり、レスポンシブ化の必要はない。
+6. **UI Toolkit（HUD）とuGUI（グリッド）のハイブリッド構成そのものの是非**（2026-07-11提起）。今回、両者の描画順（`Sort Order`）が同値だとダイアログのスクリムだけがグリッドの下に描かれる不具合が実際に発生した（§1・§4.4参照）。境界を跨ぐたびに手動でソート順を握り合わせる必要がある点は構成上のコストとして残る。
+   - **現時点の判断: ハイブリッド構成を維持**。`Sort Order` の大小関係（UIDocument=10 > Canvas=0）を明示的な不変条件としてドキュメント化する対症療法に留める。
+   - **理由**: パズルグリッドは `GridLayoutGroup` ベースで多数セルを動的生成する性能シビアな部分であり、UI Toolkit（Yogaレイアウト）へ丸ごと移行するのは書き直しリスクが大きい。一方でTitle/StageSelect/HUDは既にUI Toolkit化済みで、越境が発生するのはこのダイアログ表示のような限定的な箇所のみ。
+   - **見直しトリガー**: 同種の越境バグ（描画順・入力ヒット判定・座標系のズレなど）が再発した場合、またはパズルグリッド側で大きな性能改修を行うタイミングで、グリッドのUI Toolkit移行を再検討する。
 
 ---
 

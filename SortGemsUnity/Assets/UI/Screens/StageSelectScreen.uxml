@@ -10,6 +10,10 @@
             <ui:Button name="btn-back" text="&#x25C0;" class="btn btn-secondary btn-icon" />
         </ui:VisualElement>
 
+        <ui:VisualElement style="flex-grow: 1;" />
+
+        <ui:Label name="active-stage-text" text="" class="active-stage-label scrim text-outline" />
+
         <ui:VisualElement class="carousel-wrapper">
             <ui:VisualElement name="carousel-viewport" class="carousel-viewport">
                 <ui:VisualElement name="carousel-content" class="carousel-content" />
@@ -17,8 +21,6 @@
             <ui:Button name="btn-prev" text="&#x25C0;" class="btn btn-nav btn-nav-left" />
             <ui:Button name="btn-next" text="&#x25B6;" class="btn btn-nav btn-nav-right" />
         </ui:VisualElement>
-
-        <ui:Label name="active-stage-text" text="" class="active-stage-label scrim text-outline" />
 
         <ui:Button name="btn-start" text="Start" class="btn btn-lg btn-cta" />
 

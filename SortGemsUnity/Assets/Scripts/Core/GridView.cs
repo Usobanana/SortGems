@@ -21,6 +21,8 @@ namespace SortGems.Core
         [Header("Palette")]
         [SerializeField] private GridLayoutGroup _paletteLayout;
         [SerializeField] private float _paletteCellSpacing = 10f;
+        [SerializeField] private float _paletteCellSpacingY = 28f;
+        [SerializeField] private float _palettePaddingY = 28f;
         [SerializeField] private Color _paletteBgColor = new Color(0.08f, 0.08f, 0.1f, 0.92f);
 
         [Header("Layout Settings")]
@@ -105,14 +107,15 @@ namespace SortGems.Core
             float mainW = stage.mainCols * _currentCellSize + padVal * 2f;
             float mainH = stage.mainRows * _currentCellSize + padVal * 2f;
 
-            // パレットのセルサイズは、列間スペーシング分を差し引いてから列数で割る
-            // （そうしないと隙間の分だけ列がパレット幅からはみ出す）。
+            // パレットのセルサイズは、列間スペーシング分と左右パディング分を差し引いてから列数で割る
+            // （そうしないと隙間の分だけ列がパレット幅からはみ出す）。左右パディングは上下と揃えて
+            // _palettePaddingY を使う（パレット全体のサイズ=palWは変えず、代わりにマスを少し縮める）。
             float paletteSpacingTotalW = (stage.paletteCols - 1) * _paletteCellSpacing;
-            _currentPaletteCellSize = Mathf.Floor((mainW - padVal * 2f - paletteSpacingTotalW) / stage.paletteCols);
+            _currentPaletteCellSize = Mathf.Floor((mainW - _palettePaddingY * 2f - paletteSpacingTotalW) / stage.paletteCols);
             _currentPaletteCellSize = Mathf.Min(_currentPaletteCellSize, _maxPaletteCellSize);
             float palW = mainW;
-            float paletteSpacingTotalH = (stage.paletteRows - 1) * _paletteCellSpacing;
-            float palH = stage.paletteRows * _currentPaletteCellSize + paletteSpacingTotalH + padVal * 2f;
+            float paletteSpacingTotalH = (stage.paletteRows - 1) * _paletteCellSpacingY;
+            float palH = stage.paletteRows * _currentPaletteCellSize + paletteSpacingTotalH + _palettePaddingY * 2f;
 
             float totalH = mainH + gap + palH;
             float topMargin = (availH - totalH) / 2f;
@@ -146,15 +149,16 @@ namespace SortGems.Core
             palImg.color = _paletteBgColor;
 
             int pad = Mathf.RoundToInt(padVal);
+            int palPadY = Mathf.RoundToInt(_palettePaddingY);
             _mainLayout.padding = new RectOffset(pad, pad, pad, pad);
-            _paletteLayout.padding = new RectOffset(pad, pad, pad, pad);
+            _paletteLayout.padding = new RectOffset(palPadY, palPadY, palPadY, palPadY);
 
             BuildArea(_mainLayout, stage.mainRows, stage.mainCols,
-                      _currentCellSize, _mainCellSpacing,
+                      _currentCellSize, new Vector2(_mainCellSpacing, _mainCellSpacing),
                       isPalette: false, out _mainViews);
 
             BuildArea(_paletteLayout, stage.paletteRows, stage.paletteCols,
-                      _currentPaletteCellSize, _paletteCellSpacing,
+                      _currentPaletteCellSize, new Vector2(_paletteCellSpacing, _paletteCellSpacingY),
                       isPalette: true, out _paletteViews);
 
             CreatePaletteUnlockLabel(stage);
@@ -190,8 +194,8 @@ namespace SortGems.Core
             rt.anchorMax = new Vector2(0.5f, 1f);
             rt.pivot = new Vector2(0.5f, 0.5f);
             float palTop = palRt.anchoredPosition.y;
-            // 行間スペーシング（_paletteCellSpacing）分もrow2の開始位置に加算する
-            float row2CenterY = palTop - pad - _currentPaletteCellSize - _paletteCellSpacing - _currentPaletteCellSize * 0.5f;
+            // row2の開始位置は「実際の上部パディング（_palettePaddingY）＋行間スペーシング（_paletteCellSpacingY）」分だけ下にずれる
+            float row2CenterY = palTop - _palettePaddingY - _currentPaletteCellSize - _paletteCellSpacingY - _currentPaletteCellSize * 0.5f;
             rt.anchoredPosition = new Vector2(0f, row2CenterY);
             rt.sizeDelta = new Vector2(palW, rowH);
 
@@ -243,7 +247,7 @@ namespace SortGems.Core
         }
 
         private void BuildArea(GridLayoutGroup layout, int rows, int cols,
-                               float cellSize, float spacing, bool isPalette,
+                               float cellSize, Vector2 spacing, bool isPalette,
                                out GemCellView[,] views)
         {
             foreach (Transform child in layout.transform)
@@ -252,7 +256,7 @@ namespace SortGems.Core
             layout.constraint      = GridLayoutGroup.Constraint.FixedColumnCount;
             layout.constraintCount = cols;
             layout.cellSize        = new Vector2(cellSize, cellSize);
-            layout.spacing         = new Vector2(spacing, spacing);
+            layout.spacing         = spacing;
 
             views = new GemCellView[rows, cols];
             for (int r = 0; r < rows; r++)
@@ -444,7 +448,12 @@ namespace SortGems.Core
                 float startSize = step.fromIsPalette ? _currentPaletteCellSize : _currentCellSize;
                 float endSize   = step.toIsPalette   ? _currentPaletteCellSize : _currentCellSize;
 
-                var co = StartCoroutine(AnimateSingleGem(fromCell.transform.position, toCell.transform.position, color, startSize, endSize));
+                // 移動先の目標色（メイングリッドの正解表示用。パレットは常にNone）
+                var toCellData = step.toIsPalette
+                    ? _gridManager.GetPaletteCell(step.toPos.x, step.toPos.y)
+                    : _gridManager.GetMainCell(step.toPos.x, step.toPos.y);
+
+                var co = StartCoroutine(AnimateSingleGem(fromCell.transform.position, toCell.transform.position, color, startSize, endSize, toCell, toCellData.goalColor));
                 activeTweens.Add(co);
 
                 yield return new WaitForSeconds(_delayBetweenGems);
@@ -454,6 +463,10 @@ namespace SortGems.Core
             {
                 yield return co;
             }
+
+            // ジェムが着地してから初めてパレットの自動整列を反映する
+            // （着地前に整列すると、飛行先がタップしたマスとズレて見える）
+            _gridManager?.FinalizePalettePacking();
 
             _isAnimating = false;
             RefreshAll();
@@ -465,12 +478,19 @@ namespace SortGems.Core
             }
         }
 
-        private IEnumerator AnimateSingleGem(Vector3 startWorldPos, Vector3 endWorldPos, GemColor color, float startSize, float endSize)
+        private IEnumerator AnimateSingleGem(Vector3 startWorldPos, Vector3 endWorldPos, GemColor color, float startSize, float endSize,
+                                              GemCellView toCell, GemColor toGoalColor)
         {
+            // GridView自身（=メイングリッドのコンテナ）の子として生成すると、兄弟であるパレットの
+            // コンテナより描画順が下になり、パレットを跨ぐ移動でジェムがパレットの背後に隠れて見える。
+            // 両コンテナの共通の親（GamePlayPanel相当）に生成し最前面へ回すことで常に手前に描画する。
+            var animParent = transform.parent != null ? transform.parent : transform;
+
             // プレハブをベースに複製することで、移動中のビジュアル不一致や比率の崩れを完全に防ぐ
-            var dummyCell = Instantiate(_cellPrefab, transform);
+            var dummyCell = Instantiate(_cellPrefab, animParent);
             dummyCell.gameObject.name = "DummyGem";
             dummyCell.gameObject.SetActive(false); // 設定が完了するまで非表示
+            dummyCell.transform.SetAsLastSibling(); // 常に最前面に描画
 
             // 不要な入力を防ぐためコンポーネントを無効化・削除
             var button = dummyCell.GetComponent<Button>();
@@ -514,6 +534,11 @@ namespace SortGems.Core
             }
 
             dummyCell.transform.position = endWorldPos;
+
+            // 着地と同時に実セルへ即座に反映する。複数ジェムの一括移動では他のジェムがまだ飛行中で
+            // バッチ全体のRefreshAll()はまだ呼ばれないため、ここで反映しないと先に着地したジェムだけ
+            // 一時的に消えて見えるギャップが生まれる。
+            if (toCell != null) toCell.SetGem(color, toGoalColor);
 
             // 目的地にハマった瞬間にSEとバイブレーション（実機のみ）をトリガー
             if (SoundManager.Instance != null) SoundManager.Instance.PlayPlace();

@@ -14,5 +14,7 @@
         </ui:VisualElement>
 
         <ui:Button name="btn-play" text="Game Start" class="btn btn-lg btn-cta" />
+
+        <ui:Label name="version-label" text="" class="version-label text-outline" />
     </ui:VisualElement>
 </ui:UXML>

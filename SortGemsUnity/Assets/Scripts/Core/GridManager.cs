@@ -44,6 +44,10 @@ namespace SortGems.Core
         private GemGroup _selectedGroup;
         private Stack<(GemCell[,] main, GemCell[,] palette, GemGroup selectedGroup)> _undoStack = new();
 
+        // 移動アニメーションが着地した後に PackPalette() を実行するための保留フラグ。
+        // TryMoveGroup() 内で即座に詰めてしまうと移動アニメーションの着地位置とズレるため。
+        private bool _paletteNeedsPacking;
+
         // 8方向オフセット（上下左右＋斜め）
         private static readonly Vector2Int[] Dirs8 = {
             new(-1,-1), new(-1,0), new(-1,1),
@@ -80,6 +84,7 @@ namespace SortGems.Core
             _undoStack.Clear();
             _selectedGroup = null;
             IsPaletteRow2Unlocked = false;
+            _paletteNeedsPacking = false;
 
             // メイングリッド初期化
             for (int r = 0; r < MainRows; r++)
@@ -312,51 +317,20 @@ namespace SortGems.Core
                 dstGrid[pos.x, pos.y].groupId = group.groupId;
             }
 
-            // パレットの自動整列（左詰め）
-            PackPalette();
+            // パレットの自動整列（左詰め）は移動アニメーションが着地した後にまとめて行う
+            // （FinalizePalettePacking 参照）。ここで先に詰めてしまうと steps の toPos が
+            // 詰め直し後の座標とズレ、「タップしたマスとは別の場所へ着地する」ように見えるため。
+            _paletteNeedsPacking = true;
 
-            // 部分配置後の選択継続チェック
+            // 部分配置後の選択継続チェック（この時点ではまだ詰め直していないため、
+            // 残りのジェムは元の座標のまま = entry.pos がそのまま正しい位置になる）
             if (moveCount < group.cells.Count)
             {
-                // 残りのジェムがある場合は選択状態を維持（新たなグループを再構成）
                 var remainingGroup = new GemGroup(group.groupId, group.color);
-                
-                // メイングリッドに残っているジェム（ソケット移動しないもの）を追加
                 for (int i = moveCount; i < group.cells.Count; i++)
                 {
                     var entry = group.cells[i];
-                    if (!entry.isPalette)
-                    {
-                        remainingGroup.AddCell(entry.pos, false);
-                    }
-                }
-
-                // パレットに残っているジェムは、PackPalette()によって座標が左詰めに動いているため、
-                // PackPalette()後のパレット内から同じgroupId/colorのセルを見つけ出して登録する
-                int remainingPaletteCount = 0;
-                for (int i = moveCount; i < group.cells.Count; i++)
-                {
-                    if (group.cells[i].isPalette) remainingPaletteCount++;
-                }
-
-                if (remainingPaletteCount > 0)
-                {
-                    int foundCount = 0;
-                    for (int r = 0; r < PaletteRows; r++)
-                    {
-                        for (int c = 0; c < PaletteCols; c++)
-                        {
-                            if (_palette[r, c].color == group.color)
-                            {
-                                remainingGroup.AddCell(new Vector2Int(r, c), true);
-                                foundCount++;
-                                if (foundCount >= remainingPaletteCount)
-                                    break;
-                            }
-                        }
-                        if (foundCount >= remainingPaletteCount)
-                            break;
-                    }
+                    remainingGroup.AddCell(entry.pos, entry.isPalette);
                 }
 
                 _selectedGroup = remainingGroup;
@@ -374,6 +348,43 @@ namespace SortGems.Core
             if (!targetIsPalette) CheckColorCompletion(group.color);
             CheckStageCleared();
             return true;
+        }
+
+        /// <summary>
+        /// 移動アニメーションの着地後に呼び出す。保留中のパレット整列があれば実行し、
+        /// 呼び出し側（GridView）はこの後に表示を更新することで「着地 → 整列」の順を保つ。
+        /// </summary>
+        public void FinalizePalettePacking()
+        {
+            if (!_paletteNeedsPacking) return;
+            _paletteNeedsPacking = false;
+            PackPalette();
+
+            // 整列でパレット内の座標が動くため、選択中グループにパレットのセルが
+            // 含まれる場合は詰め直し後の実座標に登録し直す（同色セルを再スキャン）
+            if (_selectedGroup != null && _selectedGroup.cells.Exists(e => e.isPalette))
+            {
+                int paletteCount = _selectedGroup.cells.FindAll(e => e.isPalette).Count;
+                var remapped = new GemGroup(_selectedGroup.groupId, _selectedGroup.color);
+                foreach (var entry in _selectedGroup.cells)
+                    if (!entry.isPalette) remapped.AddCell(entry.pos, false);
+
+                int found = 0;
+                for (int r = 0; r < PaletteRows && found < paletteCount; r++)
+                {
+                    for (int c = 0; c < PaletteCols && found < paletteCount; c++)
+                    {
+                        if (_palette[r, c].color == _selectedGroup.color)
+                        {
+                            remapped.AddCell(new Vector2Int(r, c), true);
+                            found++;
+                        }
+                    }
+                }
+
+                _selectedGroup = remapped;
+                OnGroupSelected?.Invoke(_selectedGroup);
+            }
         }
 
         private void PackPalette()
@@ -427,10 +438,6 @@ namespace SortGems.Core
                 ? new HashSet<Vector2Int>(group.cells.Select(e => e.pos))
                 : new HashSet<Vector2Int>();
 
-            // タップしたセルの目標色
-            GemColor pivotGoalColor = grid[pivot.x, pivot.y].goalColor;
-            bool isFromPalette = group.cells.Count > 0 && group.cells[0].isPalette;
-
             bool IsAvailable(Vector2Int p)
             {
                 if (p.x < 0 || p.x >= rows || p.y < 0 || p.y >= cols) return false;
@@ -439,19 +446,11 @@ namespace SortGems.Core
                 bool isFree = grid[p.x, p.y].IsEmpty || srcSet.Contains(p);
                 if (!isFree) return false;
 
-                // パレットからメインに戻す際のみ、同色の目標マスにのみ配置できるように制限
-                if (!targetIsPalette && isFromPalette)
+                // メイングリッドへの移動は、選択中グループと同じ目標色のマスにのみ許可する
+                // （すでに選択グループが占有しているマス＝srcSetは、この移動で空くマスなので対象外）
+                if (!targetIsPalette && !srcSet.Contains(p) && grid[p.x, p.y].goalColor != group.color)
                 {
-                    if (grid[p.x, p.y].goalColor != group.color)
-                    {
-                        return false;
-                    }
-                }
-
-                // メイングリッドでタップ位置に目標色がある場合、同じ目標色のマスのみに連結を制限する
-                if (!targetIsPalette && pivotGoalColor != GemColor.None)
-                {
-                    return grid[p.x, p.y].goalColor == pivotGoalColor;
+                    return false;
                 }
 
                 return true;
@@ -535,11 +534,12 @@ namespace SortGems.Core
             if (_undoStack.Count == 0) return;
             GemGroup prevGroup;
             (_main, _palette, prevGroup) = _undoStack.Pop();
-            
+            _paletteNeedsPacking = false; // 巻き戻し先のスナップショットは常に整列済み
+
             // 選択状態を移動前のグループに戻す
             _selectedGroup = prevGroup;
             OnGroupSelected?.Invoke(_selectedGroup);
-            
+
             OnGroupMoved?.Invoke(null, GemColor.None);
         }
 
@@ -550,6 +550,7 @@ namespace SortGems.Core
             _palette = CloneGrid(_initPalette);
             _undoStack.Clear();
             _selectedGroup = null;
+            _paletteNeedsPacking = false;
             OnGroupMoved?.Invoke(null, GemColor.None);
         }
 
@@ -585,10 +586,11 @@ namespace SortGems.Core
 
             _selectedGroup = null;
             OnGroupSelected?.Invoke(null);
-            
+            _paletteNeedsPacking = false; // パレットは全て空にした直後なので整列不要
+
             // ビューを更新するためにイベントを発火
             OnGroupMoved?.Invoke(null, GemColor.None);
-            
+
             // クリア判定を実行
             CheckStageCleared();
         }

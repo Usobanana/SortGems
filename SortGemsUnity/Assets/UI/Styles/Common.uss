@@ -1,7 +1,7 @@
 :root {
     /* ===== COLOR SYSTEM ===== */
     --color-bg:              rgb(24, 24, 32);
-    --color-surface:         rgba(40, 40, 56, 0.92);
+    --color-surface:         rgba(40, 40, 56, 1);
     --color-surface-high:    rgba(50, 50, 70, 0.95);
     --color-overlay:         rgba(0, 0, 0, 0.6);
 
@@ -168,4 +168,12 @@
     translate: -50% 0;
     width: 560px;
     font-size: 48px;
+}
+
+/* Shared button footprint — same size as Title/StageSelect's primary CTA.
+   Used by non-header buttons (e.g. dialog buttons) that aren't bottom-docked. */
+.btn-primary-size {
+    width: 560px;
+    font-size: 48px;
+    min-height: 84px;
 }

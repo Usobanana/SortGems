@@ -4,7 +4,6 @@
     align-items: center;
     align-self: stretch;
     padding: var(--sp-sm) var(--sp-md);
-    background-color: var(--color-bar-bg);
 }
 
 .hud-stage-name {
@@ -57,7 +56,6 @@
     justify-content: center;
     align-self: stretch;
     padding: var(--sp-sm) var(--sp-md);
-    background-color: var(--color-bar-bg);
 }
 
 .hud-bottom > .btn {
@@ -67,7 +65,9 @@
 /* ===== Result Overlays ===== */
 .result-panel {
     min-width: 520px;
+    min-height: 920px;
     padding: var(--sp-2xl) var(--sp-2xl);
+    justify-content: center;
 }
 
 .result-title {
@@ -86,24 +86,20 @@
 }
 
 .result-buttons {
-    align-items: stretch;
-    align-self: stretch;
+    align-items: center;
 }
 
 .result-buttons > .btn {
     margin: var(--sp-sm) 0;
 }
 
-.result-buttons > .btn:first-child {
-    font-size: var(--fs-btn-lg);
-    min-height: 64px;
-}
-
 /* ===== Unlock Dialog ===== */
 .unlock-panel {
     min-width: 520px;
+    min-height: 920px;
     padding: var(--sp-2xl) var(--sp-2xl);
     align-items: center;
+    justify-content: center;
 }
 
 .unlock-title {
@@ -123,15 +119,9 @@
 }
 
 .unlock-buttons {
-    align-items: stretch;
-    align-self: stretch;
+    align-items: center;
 }
 
 .unlock-buttons > .btn {
     margin: var(--sp-sm) 0;
-}
-
-.unlock-buttons > .btn:first-child {
-    font-size: var(--fs-btn-lg);
-    min-height: 64px;
 }
