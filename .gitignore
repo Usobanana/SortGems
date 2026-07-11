@@ -1,6 +1,9 @@
 # Unity standard gitignore
 /[Ss]cratch/
 
+# MCP Unity bridge's own tool-call log (regenerates on every MCP tool use)
+/log.txt
+
 # Unity project exclusions
 /[Ss]ortGemsUnity/[Ll]ibrary/
 /[Ss]ortGemsUnity/[Tt]emp/

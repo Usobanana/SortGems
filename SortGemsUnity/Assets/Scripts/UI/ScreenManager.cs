@@ -104,6 +104,14 @@ namespace SortGems.UI
             _root.Clear();
             _gamePlayHUD.CloneTree(_root);
 
+            // headerH/timerH の「正」は GridView 側にあるので、タイマー予約帯の位置を
+            // ここで注入する（GamePlayHUD.uss の top:120px はCanvasが見つからない場合等のフォールバック）。
+            if (_gridView != null)
+            {
+                var timerGroup = _root.Q("timer-group");
+                if (timerGroup != null) timerGroup.style.top = _gridView.HeaderH;
+            }
+
             _root.Q<Button>("btn-back").clicked += ShowStageSelect;
             _root.Q<Button>("btn-undo").clicked += () => _gameManager?.Undo();
             _root.Q<Button>("btn-hint").clicked += OnHintClicked;

@@ -15,9 +15,12 @@
 }
 
 /* ===== Timer ===== */
+/* top はフォールバック値（GridView._headerH と同じ120px）。実際の値は
+   ScreenManager.ShowGamePlay() が GridView.HeaderH を読んで実行時に上書きする
+   （headerH/timerH の「正」は GridView 側の1箇所に統一している）。 */
 .timer-group {
     position: absolute;
-    top: 480px;
+    top: 120px;
     left: 0;
     right: 0;
     align-items: center;

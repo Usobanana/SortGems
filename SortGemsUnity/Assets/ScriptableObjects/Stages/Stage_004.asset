@@ -13,233 +13,260 @@ MonoBehaviour:
   m_Name: Stage_004
   m_EditorClassIdentifier: Assembly-CSharp::SortGems.Core.StageData
   stageNumber: 4
-  stageName: Umbrella
+  stageName: Headphones
   timeLimitSeconds: 150
-  mainRows: 16
-  mainCols: 16
+  mainRows: 15
+  mainCols: 15
   paletteRows: 2
   paletteCols: 14
   goalLayout:
   - row: 0
+    col: 4
+    color: 2
+  - row: 0
+    col: 5
+    color: 2
+  - row: 0
+    col: 6
+    color: 2
+  - row: 0
     col: 7
-    color: 11
+    color: 2
   - row: 0
     col: 8
-    color: 11
+    color: 2
+  - row: 0
+    col: 9
+    color: 2
+  - row: 0
+    col: 10
+    color: 2
+  - row: 1
+    col: 2
+    color: 2
+  - row: 1
+    col: 3
+    color: 2
   - row: 1
     col: 4
-    color: 5
+    color: 2
   - row: 1
     col: 5
-    color: 5
+    color: 2
   - row: 1
     col: 6
-    color: 5
+    color: 2
   - row: 1
     col: 7
-    color: 5
+    color: 2
   - row: 1
     col: 8
-    color: 5
+    color: 2
   - row: 1
     col: 9
-    color: 5
+    color: 2
   - row: 1
     col: 10
-    color: 5
+    color: 2
   - row: 1
     col: 11
-    color: 5
+    color: 2
+  - row: 1
+    col: 12
+    color: 2
+  - row: 2
+    col: 1
+    color: 2
   - row: 2
     col: 2
-    color: 5
+    color: 2
   - row: 2
     col: 3
-    color: 5
+    color: 4
   - row: 2
     col: 4
-    color: 5
+    color: 4
   - row: 2
     col: 5
-    color: 5
+    color: 4
   - row: 2
     col: 6
-    color: 5
+    color: 4
   - row: 2
     col: 7
-    color: 5
+    color: 4
   - row: 2
     col: 8
-    color: 5
+    color: 4
   - row: 2
     col: 9
-    color: 5
+    color: 4
   - row: 2
     col: 10
-    color: 5
+    color: 4
   - row: 2
     col: 11
-    color: 5
+    color: 2
   - row: 2
     col: 12
-    color: 5
-  - row: 2
-    col: 13
-    color: 5
+    color: 2
+  - row: 3
+    col: 0
+    color: 2
   - row: 3
     col: 1
-    color: 5
+    color: 4
   - row: 3
     col: 2
-    color: 5
+    color: 4
   - row: 3
     col: 3
-    color: 5
+    color: 4
   - row: 3
     col: 4
-    color: 5
+    color: 4
   - row: 3
     col: 5
-    color: 5
+    color: 4
   - row: 3
     col: 6
-    color: 5
+    color: 4
   - row: 3
     col: 7
-    color: 5
+    color: 4
   - row: 3
     col: 8
-    color: 5
+    color: 4
   - row: 3
     col: 9
-    color: 5
+    color: 4
   - row: 3
     col: 10
-    color: 5
+    color: 4
   - row: 3
     col: 11
-    color: 5
+    color: 4
   - row: 3
     col: 12
-    color: 5
+    color: 4
   - row: 3
     col: 13
-    color: 5
+    color: 4
   - row: 3
     col: 14
-    color: 5
+    color: 2
   - row: 4
     col: 0
-    color: 10
+    color: 2
   - row: 4
     col: 1
-    color: 5
+    color: 4
   - row: 4
     col: 2
-    color: 5
+    color: 4
   - row: 4
     col: 3
-    color: 10
+    color: 6
   - row: 4
     col: 4
-    color: 5
+    color: 6
   - row: 4
     col: 5
-    color: 5
+    color: 6
   - row: 4
     col: 6
-    color: 10
+    color: 6
   - row: 4
     col: 7
-    color: 5
+    color: 6
   - row: 4
     col: 8
-    color: 5
+    color: 6
   - row: 4
     col: 9
-    color: 10
+    color: 6
   - row: 4
     col: 10
-    color: 5
+    color: 6
   - row: 4
     col: 11
-    color: 5
+    color: 6
   - row: 4
     col: 12
-    color: 10
+    color: 4
   - row: 4
     col: 13
-    color: 5
+    color: 4
   - row: 4
     col: 14
-    color: 5
-  - row: 4
-    col: 15
-    color: 10
+    color: 2
   - row: 5
     col: 0
-    color: 5
+    color: 2
   - row: 5
     col: 1
-    color: 5
+    color: 4
   - row: 5
     col: 2
-    color: 5
+    color: 6
   - row: 5
     col: 3
-    color: 5
+    color: 6
   - row: 5
     col: 4
-    color: 5
+    color: 6
   - row: 5
     col: 5
-    color: 5
+    color: 6
   - row: 5
     col: 6
-    color: 5
+    color: 6
   - row: 5
     col: 7
-    color: 5
+    color: 6
   - row: 5
     col: 8
-    color: 5
+    color: 6
   - row: 5
     col: 9
-    color: 5
+    color: 6
   - row: 5
     col: 10
-    color: 5
+    color: 6
   - row: 5
     col: 11
-    color: 5
+    color: 6
   - row: 5
     col: 12
-    color: 5
+    color: 6
   - row: 5
     col: 13
-    color: 5
+    color: 4
   - row: 5
     col: 14
-    color: 5
-  - row: 5
-    col: 15
-    color: 5
+    color: 2
   - row: 6
     col: 0
-    color: 5
+    color: 2
   - row: 6
     col: 1
-    color: 5
+    color: 8
+  - row: 6
+    col: 2
+    color: 8
   - row: 6
     col: 3
-    color: 5
+    color: 8
   - row: 6
     col: 4
-    color: 5
+    color: 8
   - row: 6
     col: 5
     color: 5
   - row: 6
+    col: 6
+    color: 5
+  - row: 6
     col: 7
     color: 5
   - row: 6
@@ -249,135 +276,348 @@ MonoBehaviour:
     col: 9
     color: 5
   - row: 6
+    col: 10
+    color: 8
+  - row: 6
     col: 11
-    color: 5
+    color: 8
   - row: 6
     col: 12
-    color: 5
+    color: 8
   - row: 6
     col: 13
-    color: 5
+    color: 8
   - row: 6
-    col: 15
+    col: 14
+    color: 2
+  - row: 7
+    col: 0
+    color: 2
+  - row: 7
+    col: 1
+    color: 8
+  - row: 7
+    col: 2
+    color: 8
+  - row: 7
+    col: 3
+    color: 8
+  - row: 7
+    col: 4
+    color: 8
+  - row: 7
+    col: 5
+    color: 5
+  - row: 7
+    col: 6
     color: 5
   - row: 7
     col: 7
-    color: 11
+    color: 5
   - row: 7
     col: 8
-    color: 11
+    color: 5
+  - row: 7
+    col: 9
+    color: 5
+  - row: 7
+    col: 10
+    color: 8
+  - row: 7
+    col: 11
+    color: 8
+  - row: 7
+    col: 12
+    color: 8
+  - row: 7
+    col: 13
+    color: 8
+  - row: 7
+    col: 14
+    color: 2
+  - row: 8
+    col: 0
+    color: 2
+  - row: 8
+    col: 1
+    color: 8
+  - row: 8
+    col: 2
+    color: 8
+  - row: 8
+    col: 3
+    color: 8
+  - row: 8
+    col: 4
+    color: 8
+  - row: 8
+    col: 5
+    color: 5
+  - row: 8
+    col: 6
+    color: 5
   - row: 8
     col: 7
-    color: 11
+    color: 5
   - row: 8
     col: 8
-    color: 11
+    color: 5
+  - row: 8
+    col: 9
+    color: 5
+  - row: 8
+    col: 10
+    color: 8
+  - row: 8
+    col: 11
+    color: 8
+  - row: 8
+    col: 12
+    color: 8
+  - row: 8
+    col: 13
+    color: 8
+  - row: 8
+    col: 14
+    color: 2
+  - row: 9
+    col: 0
+    color: 2
+  - row: 9
+    col: 1
+    color: 8
+  - row: 9
+    col: 2
+    color: 8
+  - row: 9
+    col: 3
+    color: 8
+  - row: 9
+    col: 4
+    color: 8
+  - row: 9
+    col: 5
+    color: 5
+  - row: 9
+    col: 6
+    color: 5
   - row: 9
     col: 7
-    color: 11
+    color: 5
   - row: 9
     col: 8
-    color: 11
+    color: 5
+  - row: 9
+    col: 9
+    color: 5
+  - row: 9
+    col: 10
+    color: 8
+  - row: 9
+    col: 11
+    color: 8
+  - row: 9
+    col: 12
+    color: 8
+  - row: 9
+    col: 13
+    color: 8
+  - row: 9
+    col: 14
+    color: 2
+  - row: 10
+    col: 1
+    color: 2
+  - row: 10
+    col: 2
+    color: 2
+  - row: 10
+    col: 3
+    color: 12
+  - row: 10
+    col: 4
+    color: 12
+  - row: 10
+    col: 5
+    color: 12
+  - row: 10
+    col: 6
+    color: 12
   - row: 10
     col: 7
-    color: 11
+    color: 12
   - row: 10
     col: 8
-    color: 11
+    color: 12
+  - row: 10
+    col: 9
+    color: 12
+  - row: 10
+    col: 10
+    color: 12
+  - row: 10
+    col: 11
+    color: 12
+  - row: 10
+    col: 12
+    color: 2
+  - row: 10
+    col: 13
+    color: 2
+  - row: 11
+    col: 2
+    color: 12
+  - row: 11
+    col: 3
+    color: 12
+  - row: 11
+    col: 4
+    color: 12
+  - row: 11
+    col: 5
+    color: 12
+  - row: 11
+    col: 6
+    color: 12
   - row: 11
     col: 7
-    color: 11
+    color: 12
   - row: 11
     col: 8
-    color: 11
+    color: 12
+  - row: 11
+    col: 9
+    color: 12
+  - row: 11
+    col: 10
+    color: 12
+  - row: 11
+    col: 11
+    color: 12
+  - row: 11
+    col: 12
+    color: 12
+  - row: 12
+    col: 3
+    color: 9
+  - row: 12
+    col: 4
+    color: 9
+  - row: 12
+    col: 5
+    color: 9
+  - row: 12
+    col: 6
+    color: 9
   - row: 12
     col: 7
-    color: 11
+    color: 9
   - row: 12
     col: 8
-    color: 11
-  - row: 13
-    col: 7
-    color: 11
-  - row: 13
-    col: 8
-    color: 11
-  - row: 13
+    color: 9
+  - row: 12
     col: 9
-    color: 11
-  - row: 14
-    col: 8
-    color: 11
-  - row: 14
-    col: 9
-    color: 11
+    color: 9
+  - row: 12
+    col: 10
+    color: 9
+  - row: 12
+    col: 11
+    color: 9
   initialMainCells:
   - row: 0
+    col: 4
+    color: 6
+  - row: 0
+    col: 5
+    color: 4
+  - row: 0
+    col: 6
+    color: 12
+  - row: 0
     col: 7
     color: 5
   - row: 0
     col: 8
-    color: 11
-  - row: 1
-    col: 4
-    color: 5
-  - row: 1
-    col: 5
-    color: 5
-  - row: 1
-    col: 6
-    color: 11
-  - row: 1
-    col: 7
-    color: 5
-  - row: 1
-    col: 8
-    color: 5
-  - row: 1
+    color: 12
+  - row: 0
     col: 9
     color: 5
+  - row: 0
+    col: 10
+    color: 12
+  - row: 1
+    col: 2
+    color: 6
+  - row: 1
+    col: 3
+    color: 2
+  - row: 1
+    col: 4
+    color: 8
+  - row: 1
+    col: 5
+    color: 12
+  - row: 1
+    col: 6
+    color: 2
+  - row: 1
+    col: 7
+    color: 2
+  - row: 1
+    col: 8
+    color: 2
+  - row: 1
+    col: 9
+    color: 2
   - row: 1
     col: 10
-    color: 5
+    color: 6
   - row: 1
     col: 11
-    color: 5
+    color: 8
+  - row: 1
+    col: 12
+    color: 12
+  - row: 2
+    col: 1
+    color: 12
   - row: 2
     col: 2
-    color: 5
+    color: 8
   - row: 2
     col: 3
-    color: 5
+    color: 6
   - row: 2
     col: 4
-    color: 5
+    color: 12
   - row: 2
     col: 5
-    color: 5
+    color: 12
   - row: 2
     col: 6
     color: 5
   - row: 2
     col: 7
-    color: 5
+    color: 2
   - row: 2
     col: 8
-    color: 5
+    color: 4
   - row: 2
     col: 9
-    color: 11
+    color: 4
   - row: 2
     col: 10
-    color: 5
+    color: 8
   - row: 2
     col: 11
-    color: 5
+    color: 6
   - row: 2
     col: 12
-    color: 5
-  - row: 2
-    col: 13
-    color: 11
+    color: 8
+  - row: 3
+    col: 0
+    color: 6
   - row: 3
     col: 1
     color: 5
@@ -386,222 +626,408 @@ MonoBehaviour:
     color: 5
   - row: 3
     col: 3
-    color: 5
+    color: 6
   - row: 3
     col: 4
-    color: 5
+    color: 4
   - row: 3
     col: 5
-    color: 11
+    color: 4
   - row: 3
     col: 6
-    color: 5
+    color: 4
   - row: 3
     col: 7
-    color: 5
+    color: 4
   - row: 3
     col: 8
-    color: 11
+    color: 8
   - row: 3
     col: 9
-    color: 5
+    color: 4
   - row: 3
     col: 10
-    color: 5
+    color: 6
   - row: 3
     col: 11
-    color: 5
+    color: 6
   - row: 3
     col: 12
-    color: 5
+    color: 8
   - row: 3
     col: 13
-    color: 10
+    color: 9
   - row: 3
     col: 14
-    color: 5
+    color: 8
   - row: 4
     col: 0
-    color: 11
+    color: 2
   - row: 4
     col: 1
-    color: 11
+    color: 5
   - row: 4
     col: 2
-    color: 5
+    color: 2
   - row: 4
     col: 3
-    color: 5
+    color: 2
   - row: 4
     col: 4
-    color: 5
+    color: 4
   - row: 4
     col: 5
     color: 5
   - row: 4
     col: 6
-    color: 5
+    color: 2
   - row: 4
     col: 7
-    color: 5
+    color: 2
   - row: 4
     col: 8
-    color: 5
+    color: 8
   - row: 4
     col: 9
-    color: 10
+    color: 6
   - row: 4
     col: 10
-    color: 11
+    color: 8
   - row: 4
     col: 11
-    color: 5
+    color: 9
   - row: 4
     col: 12
-    color: 11
+    color: 2
   - row: 4
     col: 13
-    color: 10
+    color: 12
   - row: 4
     col: 14
-    color: 5
-  - row: 4
-    col: 15
-    color: 11
+    color: 2
   - row: 5
     col: 0
-    color: 10
+    color: 8
   - row: 5
     col: 1
-    color: 5
+    color: 2
   - row: 5
     col: 2
-    color: 5
+    color: 4
   - row: 5
     col: 3
-    color: 5
+    color: 8
   - row: 5
     col: 4
-    color: 5
+    color: 4
   - row: 5
     col: 5
-    color: 5
+    color: 12
   - row: 5
     col: 6
-    color: 5
+    color: 8
   - row: 5
     col: 7
-    color: 5
+    color: 8
   - row: 5
     col: 8
-    color: 5
+    color: 2
   - row: 5
     col: 9
     color: 5
   - row: 5
     col: 10
-    color: 5
+    color: 2
   - row: 5
     col: 11
-    color: 11
+    color: 9
   - row: 5
     col: 12
     color: 5
   - row: 5
     col: 13
-    color: 5
+    color: 6
   - row: 5
     col: 14
-    color: 5
-  - row: 5
-    col: 15
-    color: 5
+    color: 2
   - row: 6
     col: 0
-    color: 5
+    color: 2
   - row: 6
     col: 1
-    color: 5
+    color: 2
+  - row: 6
+    col: 2
+    color: 12
   - row: 6
     col: 3
-    color: 5
+    color: 2
   - row: 6
     col: 4
-    color: 5
+    color: 12
   - row: 6
     col: 5
     color: 5
   - row: 6
+    col: 6
+    color: 4
+  - row: 6
     col: 7
-    color: 5
+    color: 2
   - row: 6
     col: 8
-    color: 5
+    color: 9
   - row: 6
     col: 9
-    color: 5
+    color: 12
+  - row: 6
+    col: 10
+    color: 4
   - row: 6
     col: 11
-    color: 11
+    color: 12
   - row: 6
     col: 12
-    color: 5
+    color: 2
   - row: 6
     col: 13
-    color: 10
+    color: 8
   - row: 6
-    col: 15
+    col: 14
+    color: 8
+  - row: 7
+    col: 0
+    color: 8
+  - row: 7
+    col: 1
+    color: 2
+  - row: 7
+    col: 2
     color: 5
   - row: 7
+    col: 3
+    color: 6
+  - row: 7
+    col: 4
+    color: 4
+  - row: 7
+    col: 5
+    color: 4
+  - row: 7
+    col: 6
+    color: 6
+  - row: 7
     col: 7
-    color: 11
+    color: 9
   - row: 7
     col: 8
-    color: 11
+    color: 8
+  - row: 7
+    col: 9
+    color: 2
+  - row: 7
+    col: 10
+    color: 6
+  - row: 7
+    col: 11
+    color: 2
+  - row: 7
+    col: 12
+    color: 12
+  - row: 7
+    col: 13
+    color: 2
+  - row: 7
+    col: 14
+    color: 8
+  - row: 8
+    col: 0
+    color: 2
+  - row: 8
+    col: 1
+    color: 5
+  - row: 8
+    col: 2
+    color: 8
+  - row: 8
+    col: 3
+    color: 12
+  - row: 8
+    col: 4
+    color: 12
+  - row: 8
+    col: 5
+    color: 2
+  - row: 8
+    col: 6
+    color: 5
   - row: 8
     col: 7
-    color: 11
+    color: 4
   - row: 8
     col: 8
-    color: 10
+    color: 6
+  - row: 8
+    col: 9
+    color: 6
+  - row: 8
+    col: 10
+    color: 2
+  - row: 8
+    col: 11
+    color: 8
+  - row: 8
+    col: 12
+    color: 5
+  - row: 8
+    col: 13
+    color: 12
+  - row: 8
+    col: 14
+    color: 6
   - row: 9
-    col: 7
+    col: 0
+    color: 4
+  - row: 9
+    col: 1
+    color: 2
+  - row: 9
+    col: 2
     color: 5
   - row: 9
+    col: 3
+    color: 8
+  - row: 9
+    col: 4
+    color: 4
+  - row: 9
+    col: 5
+    color: 4
+  - row: 9
+    col: 6
+    color: 2
+  - row: 9
+    col: 7
+    color: 4
+  - row: 9
+    col: 8
+    color: 12
+  - row: 9
+    col: 9
+    color: 2
+  - row: 9
+    col: 10
+    color: 2
+  - row: 9
+    col: 11
+    color: 4
+  - row: 9
+    col: 12
+    color: 6
+  - row: 9
+    col: 13
+    color: 5
+  - row: 9
+    col: 14
+    color: 4
+  - row: 10
+    col: 1
+    color: 9
+  - row: 10
+    col: 2
+    color: 8
+  - row: 10
+    col: 3
+    color: 12
+  - row: 10
+    col: 4
+    color: 8
+  - row: 10
+    col: 5
+    color: 2
+  - row: 10
+    col: 6
+    color: 4
+  - row: 10
+    col: 7
+    color: 8
+  - row: 10
     col: 8
     color: 5
   - row: 10
-    col: 7
-    color: 11
+    col: 9
+    color: 8
   - row: 10
-    col: 8
-    color: 5
+    col: 10
+    color: 9
+  - row: 10
+    col: 11
+    color: 6
+  - row: 10
+    col: 12
+    color: 8
+  - row: 10
+    col: 13
+    color: 2
+  - row: 11
+    col: 2
+    color: 8
+  - row: 11
+    col: 3
+    color: 8
+  - row: 11
+    col: 4
+    color: 2
+  - row: 11
+    col: 5
+    color: 4
+  - row: 11
+    col: 6
+    color: 9
   - row: 11
     col: 7
-    color: 5
+    color: 4
   - row: 11
     col: 8
-    color: 11
+    color: 2
+  - row: 11
+    col: 9
+    color: 6
+  - row: 11
+    col: 10
+    color: 5
+  - row: 11
+    col: 11
+    color: 5
+  - row: 11
+    col: 12
+    color: 4
+  - row: 12
+    col: 3
+    color: 4
+  - row: 12
+    col: 4
+    color: 8
+  - row: 12
+    col: 5
+    color: 2
+  - row: 12
+    col: 6
+    color: 2
   - row: 12
     col: 7
     color: 5
   - row: 12
     col: 8
-    color: 5
-  - row: 13
-    col: 7
-    color: 5
-  - row: 13
-    col: 8
-    color: 11
-  - row: 13
+    color: 8
+  - row: 12
     col: 9
-    color: 5
-  - row: 14
-    col: 8
-    color: 5
-  - row: 14
-    col: 9
-    color: 5
+    color: 2
+  - row: 12
+    col: 10
+    color: 8
+  - row: 12
+    col: 11
+    color: 9
   initialPaletteCells: []
   pixelArtTexture: {fileID: 2800000, guid: 88be59fe7a4a6394fbf3385763c0cfa9, type: 3}

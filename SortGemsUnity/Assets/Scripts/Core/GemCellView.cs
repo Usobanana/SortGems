@@ -215,8 +215,15 @@ namespace SortGems.Core
             _isSelected = selected;
             UpdateVisual();
 
-            float targetScale = selected ? 1.15f : 1f;
-            ScaleTo(_baseScale * targetScale, 0.12f);
+            // 【変更】マス自体を拡大する演出は撤廃（マスが動いて見える原因になっていたため）。
+            // 選択のフィードバックは下の枠線の明滅のみで行う。
+            //
+            // 【却下】個別Canvas+overrideSortingで描画順を最前面にする案は撤回した。
+            // uGUIのCanvas.sortingOrderとUI ToolkitのPanelSettings.sortingOrderが同じ土俵で
+            // 比較されており（本プロジェクトでは両方0）、セル側に正のsortingOrderを与えると
+            // HUDのポップアップより前面に出てしまい、かつパレット側のタップ判定も壊れたため。
+            // 拡大演出をやめたことで重なり量自体が小さくなったので、現状は据え置く。
+            ScaleTo(_baseScale, 0.12f);
 
             // ジェムの Y 軸浮き上がり演出
             if (_gemImage != null)
@@ -270,9 +277,11 @@ namespace SortGems.Core
             var cg = GetComponent<CanvasGroup>();
             if (locked)
             {
+                // パレット2段目ロック時のみ使用。blocksRaycasts は true のまま維持し、
+                // タップ自体は GridView が受けてアンロック導線に回す（専用ボタンは廃止済み）。
                 if (cg == null) cg = gameObject.AddComponent<CanvasGroup>();
-                cg.alpha = 0.3f;
-                cg.blocksRaycasts = false;
+                cg.alpha = 0.4f;
+                cg.blocksRaycasts = true;
             }
             else if (cg != null)
             {

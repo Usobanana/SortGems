@@ -91,6 +91,12 @@ ScreenManager の各画面で root に SafeAreaContainer を挟む:
 - ブラウザのアドレスバー・ツールバーはCSS viewport が管理
 - 追加対応不要（現状のまま動作）
 
+## uGUI側（パズルグリッド）の現状
+
+`GridView.BuildGrid()` は `Screen.safeArea` を直接参照していない。代わりに `headerH`(120px) / `bottomH`(100px) という固定マージンが、実質的に「簡易セーフエリア」としてHUDの上下バー分を除外する役割を兼ねている（`documents/screen-specification.md` §4.3.2参照）。
+
+これは実機で確認済みの値ではなく経験則の固定値なので、将来的に上記 `SafeAreaContainer` を導入する際は、`headerH`/`bottomH` を `Screen.safeArea` の実測値と突き合わせて、不足があれば底上げする（＝uGUI側にもセーフエリア連動の余地を残しておく）。
+
 ## 実装優先度
 
 1. **Phase 1（現在不要）**: WebGLのみなら対応不要

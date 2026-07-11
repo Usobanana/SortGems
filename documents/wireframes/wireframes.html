@@ -1,0 +1,891 @@
+<title>SortGems — Screen Wireframes</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root {
+    --bg: #eef0f5;
+    --paper: #ffffff;
+    --ink: #1a1d27;
+    --ink-dim: #5b6072;
+    --line: #b7bdce;
+    --line-strong: #8a90a6;
+    --muted-fill: #e6e9f1;
+    --muted-fill-2: #dde1ec;
+    --accent: #3450e6;
+    --accent-soft: rgba(52, 80, 230, 0.07);
+    --accent-line: rgba(52, 80, 230, 0.55);
+    --success: #1f9d55;
+    --danger: #d1483f;
+    --gold: #b8811c;
+    --rail-bg: #14161f;
+    --rail-ink: #cfd3e6;
+    --rail-ink-dim: #7a7f97;
+    --shadow: 0 1px 2px rgba(20, 22, 35, 0.06), 0 8px 24px -12px rgba(20, 22, 35, 0.18);
+    color-scheme: light;
+  }
+  :root[data-theme="dark"] {
+    --bg: #14151b;
+    --paper: #1c1e28;
+    --ink: #e7e9f2;
+    --ink-dim: #9498ab;
+    --line: #3a3f52;
+    --line-strong: #565c76;
+    --muted-fill: #262a38;
+    --muted-fill-2: #2c3040;
+    --accent: #7c92ff;
+    --accent-soft: rgba(124, 146, 255, 0.10);
+    --accent-line: rgba(124, 146, 255, 0.55);
+    --success: #3fbf76;
+    --danger: #e2685f;
+    --gold: #d6a23f;
+    --rail-bg: #0d0e13;
+    --rail-ink: #d6d9ea;
+    --rail-ink-dim: #6a6f85;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 28px -12px rgba(0, 0, 0, 0.55);
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #14151b;
+      --paper: #1c1e28;
+      --ink: #e7e9f2;
+      --ink-dim: #9498ab;
+      --line: #3a3f52;
+      --line-strong: #565c76;
+      --muted-fill: #262a38;
+      --muted-fill-2: #2c3040;
+      --accent: #7c92ff;
+      --accent-soft: rgba(124, 146, 255, 0.10);
+      --accent-line: rgba(124, 146, 255, 0.55);
+      --success: #3fbf76;
+      --danger: #e2685f;
+      --gold: #d6a23f;
+      --rail-bg: #0d0e13;
+      --rail-ink: #d6d9ea;
+      --rail-ink-dim: #6a6f85;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 28px -12px rgba(0, 0, 0, 0.55);
+      color-scheme: dark;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: ui-monospace, "SFMono-Regular", "Cascadia Mono", "Consolas", "Liberation Mono", monospace;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    background-position: -1px -1px;
+    background-color: var(--bg);
+  }
+
+  .head {
+    font-family: -apple-system, "Segoe UI", "Hiragino Sans", "Yu Gothic", sans-serif;
+  }
+
+  a { color: inherit; }
+
+  .app {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    min-height: 100vh;
+  }
+  @media (max-width: 860px) {
+    .app { grid-template-columns: 1fr; }
+  }
+
+  /* ---------- Rail ---------- */
+  .rail {
+    background: var(--rail-bg);
+    color: var(--rail-ink);
+    padding: 28px 20px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    position: sticky;
+    top: 0;
+    align-self: start;
+    min-height: 100vh;
+  }
+  @media (max-width: 860px) {
+    .rail { position: static; min-height: auto; }
+  }
+  .rail-brand {
+    font-family: -apple-system, "Segoe UI", "Hiragino Sans", "Yu Gothic", sans-serif;
+  }
+  .rail-brand .sheet-no {
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    color: var(--rail-ink-dim);
+    text-transform: uppercase;
+  }
+  .rail-brand h1 {
+    margin: 4px 0 0;
+    font-size: 19px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+  }
+  .rail-brand p {
+    margin: 6px 0 0;
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--rail-ink-dim);
+  }
+
+  .rail-nav {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .rail-nav .group-label {
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--rail-ink-dim);
+    padding: 14px 10px 6px;
+  }
+  .rail-nav button {
+    all: unset;
+    cursor: pointer;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 9px 10px;
+    border-radius: 4px;
+    font-size: 13px;
+    color: var(--rail-ink-dim);
+    border-left: 2px solid transparent;
+  }
+  .rail-nav button .tag {
+    font-size: 10px;
+    color: var(--rail-ink-dim);
+    min-width: 18px;
+  }
+  .rail-nav button:hover { background: rgba(255,255,255,0.05); color: var(--rail-ink); }
+  .rail-nav button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .rail-nav button[aria-current="true"] {
+    background: rgba(124, 146, 255, 0.12);
+    color: #fff;
+    border-left-color: var(--accent);
+  }
+  .rail-nav button[aria-current="true"] .tag { color: var(--accent); }
+
+  .rail-foot {
+    margin-top: auto;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+  }
+  .theme-toggle {
+    all: unset;
+    cursor: pointer;
+    font-size: 11px;
+    color: var(--rail-ink-dim);
+    letter-spacing: 0.06em;
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .theme-toggle:hover { color: var(--rail-ink); }
+  .theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  /* ---------- Main ---------- */
+  main {
+    padding: 36px 40px 80px;
+    max-width: 1180px;
+  }
+  @media (max-width: 860px) { main { padding: 24px 18px 60px; } }
+
+  .stage-head {
+    font-family: -apple-system, "Segoe UI", "Hiragino Sans", "Yu Gothic", sans-serif;
+    margin-bottom: 26px;
+  }
+  .stage-head .eyebrow {
+    font-family: ui-monospace, monospace;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .stage-head h2 {
+    margin: 6px 0 8px;
+    font-size: 26px;
+    font-weight: 700;
+    text-wrap: balance;
+  }
+  .stage-head p {
+    margin: 0;
+    max-width: 62ch;
+    font-family: ui-monospace, monospace;
+    font-size: 13px;
+    line-height: 1.75;
+    color: var(--ink-dim);
+  }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    margin: 20px 0 30px;
+    font-size: 11.5px;
+    color: var(--ink-dim);
+  }
+  .legend span { display: inline-flex; align-items: center; gap: 7px; }
+  .swatch { width: 20px; height: 12px; border-radius: 2px; flex-shrink: 0; }
+  .swatch.static { background: var(--muted-fill-2); border: 1px solid var(--line-strong); }
+  .swatch.dynamic { background: var(--accent-soft); border: 1.5px dashed var(--accent-line); }
+  .swatch.tap { background: transparent; border: 1.5px solid var(--ink-dim); border-radius: 6px; }
+
+  .stage-body {
+    display: grid;
+    grid-template-columns: minmax(260px, 320px) 1fr;
+    gap: 40px;
+    align-items: start;
+  }
+  @media (max-width: 760px) {
+    .stage-body { grid-template-columns: 1fr; }
+  }
+
+  /* ---------- Phone frame ---------- */
+  .frame-wrap { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .frame {
+    position: relative;
+    width: 300px;
+    aspect-ratio: 1080 / 1920;
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    border-radius: 22px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .frame-caption {
+    font-size: 11px;
+    color: var(--ink-dim);
+    text-align: center;
+  }
+  .frame-caption b { color: var(--ink); font-weight: 600; }
+
+  .wf-box {
+    position: absolute;
+    border: 1.4px solid var(--line-strong);
+    background: var(--muted-fill);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2px;
+    overflow: hidden;
+  }
+  .wf-box.dynamic {
+    border: 1.4px dashed var(--accent-line);
+    background: var(--accent-soft);
+  }
+  .wf-box .lbl {
+    font-size: 8.5px;
+    line-height: 1.35;
+    color: var(--ink-dim);
+    letter-spacing: 0.01em;
+  }
+  .wf-box.emph .lbl { color: var(--ink); font-weight: 600; }
+
+  .wf-btn {
+    position: absolute;
+    border: 1.4px solid var(--ink);
+    border-radius: 5px;
+    background: var(--paper);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8.5px;
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: 0.01em;
+  }
+  .wf-btn.primary { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent); }
+  .wf-btn.circle { border-radius: 50%; }
+
+  .wf-grid {
+    position: absolute;
+    display: grid;
+    gap: 1px;
+    background: var(--line-strong);
+    border: 1.4px dashed var(--accent-line);
+    padding: 3px;
+  }
+  .wf-cell { background: var(--paper); }
+  .wf-cell.locked { background: repeating-linear-gradient(135deg, var(--muted-fill-2) 0 3px, var(--paper) 3px 6px); }
+
+  .wf-label-tag {
+    position: absolute;
+    font-size: 7.5px;
+    color: var(--accent);
+    background: var(--paper);
+    padding: 1px 4px;
+    border: 1px solid var(--accent-line);
+    border-radius: 3px;
+    line-height: 1.4;
+    z-index: 5;
+  }
+
+  .wf-overlay-scrim {
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(45deg, rgba(0,0,0,0.06) 0 2px, transparent 2px 8px);
+  }
+
+  .wf-modal {
+    position: absolute;
+    border: 1.6px solid var(--ink);
+    border-radius: 10px;
+    background: var(--paper);
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 6px 8px;
+  }
+
+  /* ---------- Spec panel ---------- */
+  .spec {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+  }
+  .spec h3 {
+    font-family: -apple-system, "Segoe UI", "Hiragino Sans", "Yu Gothic", sans-serif;
+    margin: 0;
+    padding: 14px 18px;
+    font-size: 13.5px;
+    border-bottom: 1px solid var(--line);
+    letter-spacing: 0.01em;
+  }
+  .spec dl {
+    margin: 0;
+    padding: 6px 18px 16px;
+  }
+  .spec .row {
+    display: grid;
+    grid-template-columns: 128px 1fr;
+    gap: 12px;
+    padding: 9px 0;
+    border-bottom: 1px dotted var(--line);
+    font-size: 12.5px;
+  }
+  .spec .row:last-child { border-bottom: none; }
+  .spec dt { color: var(--ink-dim); }
+  .spec dd { margin: 0; color: var(--ink); line-height: 1.55; }
+  .spec dd .num { color: var(--accent); font-variant-numeric: tabular-nums; }
+
+  .callout {
+    margin: 16px 18px 18px;
+    padding: 10px 12px;
+    border: 1px dashed var(--line-strong);
+    border-radius: 6px;
+    font-size: 11.5px;
+    line-height: 1.7;
+    color: var(--ink-dim);
+  }
+  .callout b { color: var(--ink); }
+
+  .parity-check {
+    margin: 4px 18px 20px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+  }
+  .parity-check h4 {
+    margin: 0 0 6px;
+    font-size: 12.5px;
+  }
+  .parity-check p {
+    margin: 0 0 14px;
+    font-size: 11.5px;
+    line-height: 1.7;
+    color: var(--ink-dim);
+  }
+  .parity-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .parity-item { flex: 1 1 200px; min-width: 180px; }
+  .parity-label {
+    font-size: 10.5px;
+    color: var(--ink);
+    margin-bottom: 6px;
+  }
+  .parity-label span { color: var(--ink-dim); }
+  .parity-grid-wrap { position: relative; }
+  .parity-grid {
+    display: grid;
+    gap: 1.5px;
+    background: var(--line-strong);
+    border: 1.4px solid var(--line-strong);
+    padding: 2px;
+    border-radius: 4px;
+  }
+  .parity-grid > div { aspect-ratio: 1; background: var(--paper); }
+  .parity-centerline {
+    position: absolute;
+    left: 50%;
+    top: -6px;
+    bottom: -6px;
+    width: 0;
+    border-left: 1.5px dashed var(--accent);
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  .view { display: none; }
+  .view[data-active="true"] { display: block; animation: fade 0.18s ease-out; }
+  @media (prefers-reduced-motion: reduce) {
+    .view[data-active="true"] { animation: none; }
+  }
+  @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+  footer.notes {
+    margin-top: 46px;
+    padding-top: 18px;
+    border-top: 1px dashed var(--line);
+    font-size: 11.5px;
+    color: var(--ink-dim);
+    line-height: 1.8;
+    max-width: 78ch;
+  }
+</style>
+
+<div class="app">
+  <nav class="rail">
+    <div class="rail-brand head">
+      <div class="sheet-no">SortGems / UI Draft</div>
+      <h1>Screen Wireframes</h1>
+      <p>Unity実装前のレイアウト検討用。実データ・実寸ではなく構造のみを示す下書き。</p>
+    </div>
+
+    <ul class="rail-nav" id="nav-list">
+      <li class="group-label">Flow</li>
+      <li><button data-view="title" aria-current="true"><span class="tag">01</span>Title</button></li>
+      <li><button data-view="select"><span class="tag">02</span>Stage Select</button></li>
+      <li><button data-view="play"><span class="tag">03</span>Game Play</button></li>
+      <li class="group-label">Overlays (on Game Play)</li>
+      <li><button data-view="cleared"><span class="tag">03a</span>Cleared</button></li>
+      <li><button data-view="failed"><span class="tag">03b</span>Failed / Time Up</button></li>
+      <li><button data-view="unlock"><span class="tag">03c</span>Unlock Row 2</button></li>
+    </ul>
+
+    <div class="rail-foot">
+      <button class="theme-toggle" id="theme-toggle" type="button">◐ toggle theme</button>
+    </div>
+  </nav>
+
+  <main>
+    <!-- ============ 01 TITLE ============ -->
+    <section class="view" data-view="title" data-active="true">
+      <div class="stage-head head">
+        <div class="eyebrow">01 — Flow</div>
+        <h2>Title</h2>
+        <p>起動直後の画面。ロゴ2行とCTAボタンのみの最小構成。背景はロフィ系イラスト（静止画）。</p>
+      </div>
+      <div class="legend">
+        <span><i class="swatch static"></i>静的シェル（常に同じ）</span>
+        <span><i class="swatch dynamic"></i>動的／データ依存</span>
+        <span><i class="swatch tap"></i>タップ領域</span>
+      </div>
+      <div class="stage-body">
+        <div class="frame-wrap">
+          <div class="frame" id="frame-title">
+            <div class="wf-box" style="inset:0; background:repeating-linear-gradient(135deg, var(--muted-fill) 0 10px, var(--paper) 10px 20px); border:none;">
+              <span class="lbl" style="position:absolute; top:8px; left:8px;">bg_title_lofi.png<br/>(cover, center)</span>
+            </div>
+            <div class="wf-box emph" style="left:8%; right:8%; top:30%; height:16%; background:transparent; border:none;">
+              <span class="lbl" style="font-size:15px; color:var(--ink); font-weight:700;">“Lo-Fi Chill”<br/><span style="font-size:9px; letter-spacing:.14em; color:var(--ink-dim); font-weight:400;">GEMS SORT GAME</span></span>
+            </div>
+            <div class="wf-btn primary" style="left:20%; right:20%; bottom:18.75%; height:6.2%;">Game Start</div>
+            <div class="wf-label-tag" style="left:6px; top:6px;">edge-gradient ×2 (top/bottom)</div>
+          </div>
+          <p class="frame-caption">1080 × 1920 基準 / <b>bottom: 360px 固定</b>でCTA配置</p>
+        </div>
+
+        <div class="spec">
+          <h3 class="head">要素と挙動</h3>
+          <dl>
+            <div class="row"><dt>ロゴ</dt><dd>2行固定テキスト。"Lo-Fi Chill" 96px + "Gems Sort Game" 30px letter-spacing 8px。将来的にロゴ画像化する場合はここを差し替え。</dd></div>
+            <div class="row"><dt>CTA</dt><dd><span class="num">btn-lg</span>, width <span class="num">560px</span>, 画面下端から<span class="num">360px</span>固定位置。タップで Stage Select へ。</dd></div>
+            <div class="row"><dt>背景</dt><dd>静止画1枚（<span class="num">bg_title_lofi.png</span>）。アニメーションなし。</dd></div>
+          </dl>
+          <div class="callout"><b>検討ポイント：</b>CTAが「下から360px」の絶対値なので、セーフエリアが大きい端末では相対的に位置が高く／低く見える可能性。ロゴとCTAの間の間隔も可変になっていない。</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 02 STAGE SELECT ============ -->
+    <section class="view" data-view="select">
+      <div class="stage-head head">
+        <div class="eyebrow">02 — Flow</div>
+        <h2>Stage Select</h2>
+        <p>横スワイプ式カルーセル。中央のカードがアクティブステージ。DOM上は常に3枚のみ保持する仮想化構成。</p>
+      </div>
+      <div class="legend">
+        <span><i class="swatch static"></i>静的シェル</span>
+        <span><i class="swatch dynamic"></i>動的／データ依存</span>
+        <span><i class="swatch tap"></i>タップ領域</span>
+      </div>
+      <div class="stage-body">
+        <div class="frame-wrap">
+          <div class="frame" id="frame-select">
+            <div class="wf-box" style="inset:0; background:repeating-linear-gradient(135deg, var(--muted-fill) 0 10px, var(--paper) 10px 20px); border:none;"></div>
+            <div class="wf-btn circle" style="left:4%; top:2.5%; width:9%; aspect-ratio:1;">◀</div>
+
+            <div class="wf-btn circle" style="left:2%; top:47%; width:11%; aspect-ratio:1;">◀</div>
+            <div class="wf-box dynamic emph" style="left:16%; right:16%; top:26%; height:46%; border-radius:10px;">
+              <span class="lbl">stage-card (800×700)<br/>preview 500×500<br/>“Stage N: 名前”<br/>status: CLEARED / LOCKED / —</span>
+            </div>
+            <div class="wf-btn circle" style="right:2%; top:47%; width:11%; aspect-ratio:1;">▶</div>
+
+            <div class="wf-box dynamic" style="left:22%; right:22%; top:74%; height:5%; border-radius:14px;">
+              <span class="lbl">active-stage-label</span>
+            </div>
+            <div class="wf-btn primary" style="left:24%; right:24%; top:82%; height:6%;">Start</div>
+            <div class="wf-label-tag" style="right:6px; top:6px;">carousel: 3-card pool, 832px/card</div>
+          </div>
+          <p class="frame-caption">カードは非アクティブ時 <b>opacity .4</b>（ロック）/ アクティブは<b>scale 1.05</b></p>
+        </div>
+
+        <div class="spec">
+          <h3 class="head">要素と挙動</h3>
+          <dl>
+            <div class="row"><dt>ヘッダー</dt><dd>戻る矢印のみ。タイトル文言なし。</dd></div>
+            <div class="row"><dt>カルーセル</dt><dd>ドラッグ／慣性スワイプ + 前後矢印ボタン。カード幅 <span class="num">832px</span>固定、300ms未満のフリックで1ページ送り。</dd></div>
+            <div class="row"><dt>カードプレビュー</dt><dd>ゴールレイアウトから動的生成した500×500ドット絵。未クリアはグレースケール。</dd></div>
+            <div class="row"><dt>Start</dt><dd>未アンロックのステージでは<b>非表示</b>（disabledではなく非表示）。</dd></div>
+            <div class="row"><dt>前後矢印</dt><dd>先頭/末尾ページでは非表示。</dd></div>
+          </dl>
+          <div class="callout"><b>検討ポイント：</b>カードサイズ・カルーセル幅が固定px。将来グリッドサイズがステージごとに可変になる場合、プレビュー生成側の縦横比も揃える必要あり。</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 03 GAME PLAY (shared frame builder target) ============ -->
+    <section class="view" data-view="play">
+      <div class="stage-head head">
+        <div class="eyebrow">03 — Flow</div>
+        <h2>Game Play</h2>
+        <p>UI Toolkit製のHUD（透明背景・最前面）と、uGUI製のパズル本体（グリッド＋パレット）の2層構造。</p>
+      </div>
+      <div class="legend">
+        <span><i class="swatch static"></i>HUD（UI Toolkit）</span>
+        <span><i class="swatch dynamic"></i>パズル本体（uGUI・データ依存）</span>
+        <span><i class="swatch tap"></i>タップ領域</span>
+      </div>
+      <div class="stage-body">
+        <div class="frame-wrap">
+          <div class="frame" id="frame-play"></div>
+          <p class="frame-caption">グリッド寸法はステージごとに<b>実行時計算</b>（右パネル参照）</p>
+        </div>
+
+        <div class="spec">
+          <h3 class="head">要素と挙動</h3>
+          <dl>
+            <div class="row"><dt>HUD top</dt><dd>戻る矢印 + ステージ名。バー背景 <span class="num">rgba(0,0,0,.5)</span>。</dd></div>
+            <div class="row"><dt>タイマー</dt><dd><span class="num">headerH</span>直下の予約帯に固定。残量比率で緑→黄→赤に遷移。</dd></div>
+            <div class="row"><dt>メイングリッド</dt><dd>セルサイズ = <span class="num">min(幅/cols, 高さ×0.8/rows, 90px)</span>（旧上限45px）。予約帯（header+timer）の下から常に開始。</dd></div>
+            <div class="row"><dt>パレット</dt><dd>一時退避エリア。既定2段。2段目はロックされ、行全体タップで Unlock ダイアログ（旧: 専用の小ボタンのみ）。</dd></div>
+            <div class="row"><dt>HUD bottom</dt><dd>Undo / Hint / Reset の3ボタン。バー背景 <span class="num">rgba(0,0,0,.5)</span>。</dd></div>
+          </dl>
+          <div class="callout"><b>決定事項：</b>タイマーは headerH と同じ「予約帯」方式に変更（旧: <span class="num">top:480px</span> 絶対値）。<span class="num">availH = canvasH − headerH − timerH − bottomH</span> とし、グリッドは構造的にこの帯の下からしか始まらない。詳細は <code>screen-specification.md §6-1</code>。</div>
+          <div class="callout"><b>決定事項：</b>マス/ジェムが小さく見える主因は固定上限 <span class="num">maxMainCellSize=45px</span> だった。13×13（Stage_001実データ）では幅から約81px出せるのに45pxへ潰されていたため、上限を <span class="num">90px</span>（パレットは100px）に引き上げる。高密度ステージ（24列等）は幅制約が先に効くため副作用なし。上のフレームは新しい見え方（13×13, 6%マージン）で表示中。</div>
+
+          <div class="parity-check">
+            <h4 class="head">列数の偶数・奇数センタリング確認</h4>
+            <p>ランタイムのセンタリング計算は列数の偶奇を区別しない。奇数なら中央に1本の軸、偶数なら中央が2列の境界になるだけで、どちらも中心線に対して対称になる。</p>
+            <div class="parity-row">
+              <div class="parity-item">
+                <div class="parity-label">偶数: 8列 <span>（中央は2列の境界）</span></div>
+                <div class="parity-grid-wrap">
+                  <div class="parity-centerline"></div>
+                  <div class="parity-grid" id="parity-even" style="grid-template-columns: repeat(8, 1fr);"></div>
+                </div>
+              </div>
+              <div class="parity-item">
+                <div class="parity-label">奇数: 13列 <span>（中央に軸マス1つ）</span></div>
+                <div class="parity-grid-wrap">
+                  <div class="parity-centerline"></div>
+                  <div class="parity-grid" id="parity-odd" style="grid-template-columns: repeat(13, 1fr);"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 03a CLEARED ============ -->
+    <section class="view" data-view="cleared">
+      <div class="stage-head head">
+        <div class="eyebrow">03a — Overlay on Game Play</div>
+        <h2>Cleared</h2>
+        <p>全マスの色が一致すると表示。背景スクリムの上に中央固定パネル。</p>
+      </div>
+      <div class="stage-body">
+        <div class="frame-wrap">
+          <div class="frame" id="frame-cleared"></div>
+          <p class="frame-caption">タイトル色 <b style="color:#1f9d55">success accent</b> / 72px</p>
+        </div>
+        <div class="spec">
+          <h3 class="head">要素と挙動</h3>
+          <dl>
+            <div class="row"><dt>タイトル</dt><dd>“CLEARED!” <span class="num">--fs-display 72px</span>、accentゴールド。</dd></div>
+            <div class="row"><dt>ボタン1</dt><dd>Next Stage（btn-lg）。次ステージがあれば広告確率表示 → ロード、無ければ Stage Select へ。</dd></div>
+            <div class="row"><dt>ボタン2/3</dt><dd>Replay（ステージ再挑戦） / Back（Stage Select）。</dd></div>
+          </dl>
+          <div class="callout">クリア演出として、対象ステージの各マスに遅延つきエフェクトが順番に再生される（<span class="num">(r+c)*0.03s</span> ずらし）。ワイヤーフレームには不可視。</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 03b FAILED ============ -->
+    <section class="view" data-view="failed">
+      <div class="stage-head head">
+        <div class="eyebrow">03b — Overlay on Game Play</div>
+        <h2>Failed / Time Up</h2>
+        <p>制限時間切れで表示。広告視聴で時間延長し Playing に復帰できる。</p>
+      </div>
+      <div class="stage-body">
+        <div class="frame-wrap">
+          <div class="frame" id="frame-failed"></div>
+          <p class="frame-caption">タイトル色 <b style="color:#d1483f">danger</b> / 72px</p>
+        </div>
+        <div class="spec">
+          <h3 class="head">要素と挙動</h3>
+          <dl>
+            <div class="row"><dt>タイトル</dt><dd>“TIME UP” danger色。</dd></div>
+            <div class="row"><dt>ボタン1</dt><dd>+1:00 Watch Ad（btn-lg）。加算秒数は<span class="num">_addTimeSeconds</span>依存、文言に反映。</dd></div>
+            <div class="row"><dt>ボタン2/3</dt><dd>Replay / Back。</dd></div>
+          </dl>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 03c UNLOCK ============ -->
+    <section class="view" data-view="unlock">
+      <div class="stage-head head">
+        <div class="eyebrow">03c — Overlay on Game Play</div>
+        <h2>Unlock Row 2</h2>
+        <p>パレット2段目（ロック中）をタップすると表示。ゲームは一時停止する。</p>
+      </div>
+      <div class="stage-body">
+        <div class="frame-wrap">
+          <div class="frame" id="frame-unlock"></div>
+          <p class="frame-caption">パネル幅 <b>min-width 520px</b>（1080基準）</p>
+        </div>
+        <div class="spec">
+          <h3 class="head">要素と挙動</h3>
+          <dl>
+            <div class="row"><dt>タイトル</dt><dd>“Unlock Row 2” 40px。</dd></div>
+            <div class="row"><dt>説明文</dt><dd>「アイテム使用または広告視聴で2段目パレットを解放」。</dd></div>
+            <div class="row"><dt>ボタン1</dt><dd>Use Item（<b>アイテム在庫チェック未実装 = TODO</b>）。</dd></div>
+            <div class="row"><dt>ボタン2/3</dt><dd>Watch Ad / Back（キャンセルで再開）。</dd></div>
+          </dl>
+          <div class="callout"><b>検討ポイント：</b>「Use Item」の在庫UIが存在しない。所持数0でもボタンは常に活性のまま押せてしまう現状。</div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="notes head">
+      <b>凡例の読み方：</b> 実線＝毎回同じ静的UIシェル。破線＝ステージデータ／プレイ状況によって内容や個数が変わる領域。数値はすべて現行実装のソースコードから抽出した参考値（1080×1920基準）で、最終デザインでの確定値ではありません。詳細は <code>documents/screen-specification.md</code> を参照。
+    </footer>
+  </main>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  function el(tag, cls, style) {
+    var e = document.createElement("div");
+    if (cls) e.className = cls;
+    if (style) e.setAttribute("style", style);
+    return e;
+  }
+
+  function labelBox(container, cls, style, text) {
+    var b = el("div", "wf-box " + cls, style);
+    var l = document.createElement("span");
+    l.className = "lbl";
+    l.innerHTML = text;
+    b.appendChild(l);
+    container.appendChild(b);
+    return b;
+  }
+
+  function btn(container, cls, style, text) {
+    var b = el("div", "wf-btn " + cls, style);
+    b.textContent = text;
+    container.appendChild(b);
+    return b;
+  }
+
+  function tag(container, style, text) {
+    var t = el("div", "wf-label-tag", style);
+    t.textContent = text;
+    container.appendChild(t);
+    return t;
+  }
+
+  // Build the shared "Game Play" chrome (HUD + grid + palette) into a frame,
+  // then optionally layer a modal on top for the overlay variants.
+  function buildPlayFrame(frame, opts) {
+    opts = opts || {};
+    frame.innerHTML = "";
+
+    // HUD top bar
+    labelBox(frame, "emph", "left:0; right:0; top:0; height:6.2%; background:var(--muted-fill-2); border:none; border-bottom:1.4px solid var(--line-strong); justify-content:flex-start; padding-left:4%;",
+      "◀&nbsp;&nbsp;Stage 1");
+
+    // Reserved band = headerH (6.25%) + timerH (3.75%). Grid is structurally
+    // forbidden from starting above this line, regardless of stage size.
+    var reservedEnd = 10; // %
+    labelBox(frame, "", "left:0; right:0; top:0; height:" + reservedEnd + "%; background:transparent; border:none; border-bottom:1.6px dashed var(--accent-line);", "");
+    var bracket = el("div", "", "position:absolute; left:2px; top:0; bottom:calc(100% - " + reservedEnd + "%); width:5px; border:1.4px solid var(--accent); border-right:none;");
+    frame.appendChild(bracket);
+    tag(frame, "left:10px; top:" + (reservedEnd + 0.6) + "%;", "reserved band: headerH + timerH — grid may never start above this line");
+
+    // Timer group — pinned inside the reserved band, directly under the header
+    var timerWrap = el("div", "", "position:absolute; left:10%; right:10%; top:7.1%; height:2.5%;");
+    var bar = el("div", "", "position:relative; height:60%; background:var(--muted-fill-2); border:1px solid var(--line-strong); border-radius:6px; overflow:hidden;");
+    var fill = el("div", "", "position:absolute; left:0; top:0; bottom:0; width:62%; background:var(--success); opacity:.55;");
+    bar.appendChild(fill);
+    timerWrap.appendChild(bar);
+    frame.appendChild(timerWrap);
+
+    // Main grid — always starts right after the reserved band, whatever the
+    // stage's row/col count is (its actual height still varies per stage).
+    // Shown at 13x13 = Stage_001's real data (odd column count on purpose),
+    // filling near-full width now that the 45px hard cap is gone (was capped
+    // at 45px even though ~81px was available -- see spec §4.3.2).
+    var mainN = 13;
+    var gridWrap = el("div", "wf-grid", "left:6%; right:6%; top:" + (reservedEnd + 1) + "%; height:37%; grid-template-columns: repeat(" + mainN + ", 1fr); grid-template-rows: repeat(" + mainN + ", 1fr);");
+    for (var i = 0; i < mainN * mainN; i++) {
+      var lockedLikeGoal = (i % 7 === 0);
+      gridWrap.appendChild(el("div", "wf-cell" + (lockedLikeGoal ? "" : "")));
+    }
+    frame.appendChild(gridWrap);
+    tag(frame, "right:4px; top:" + (reservedEnd + 1.4) + "%;", "13×13 (Stage_001 real data) — cap raised 45→90px");
+
+    // Palette (2 visual rows x 14 cols, matching Stage_001) -- row 2 locked
+    var palWrap = el("div", "", "position:absolute; left:6%; right:6%; top:68%; height:11%;");
+    var row1 = el("div", "wf-grid", "position:relative; left:0; right:0; top:0; height:42%; grid-template-columns: repeat(14, 1fr); grid-template-rows: 1fr;");
+    for (var p = 0; p < 14; p++) row1.appendChild(el("div", "wf-cell"));
+    palWrap.appendChild(row1);
+
+    // Row 2: the WHOLE row is now the tap target (no separate small button).
+    // Wrapped in a dashed "tappable band" so it reads as one large hit area.
+    var row2Band = el("div", "", "position:relative; left:-2%; right:-2%; top:12%; height:52%; padding:3%; border:1.6px dashed var(--accent-line); border-radius:6px; background:var(--accent-soft);");
+    var row2 = el("div", "wf-grid", "position:relative; left:0; right:0; top:0; height:100%; grid-template-columns: repeat(14, 1fr); grid-template-rows: 1fr; border:none; background:transparent; padding:0;");
+    for (var q = 0; q < 14; q++) row2.appendChild(el("div", "wf-cell locked"));
+    row2Band.appendChild(row2);
+    var lockLbl = el("div", "", "position:absolute; left:0; right:0; top:50%; transform:translateY(-50%); text-align:center; font-size:7px; color:var(--accent); pointer-events:none; text-shadow:0 0 3px var(--paper), 0 0 3px var(--paper);");
+    lockLbl.textContent = "🔒 tap anywhere in row to unlock";
+    row2Band.appendChild(lockLbl);
+    palWrap.appendChild(row2Band);
+
+    frame.appendChild(palWrap);
+    tag(frame, "left:4px; top:79.5%;", "row2 = one large tap target (was: small button)");
+
+    // HUD bottom bar
+    var bottomBar = el("div", "", "position:absolute; left:0; right:0; bottom:0; height:8%; background:var(--muted-fill-2); border-top:1.4px solid var(--line-strong); display:flex; align-items:center; justify-content:center; gap:4%;");
+    ["Undo", "Hint", "Reset"].forEach(function (t) {
+      var b = el("div", "wf-btn", "position:relative; width:22%; height:56%; font-size:8px;");
+      b.textContent = t;
+      bottomBar.appendChild(b);
+    });
+    frame.appendChild(bottomBar);
+
+    if (opts.modal) {
+      var scrim = el("div", "wf-overlay-scrim", "");
+      frame.appendChild(scrim);
+
+      var modal = el("div", "wf-modal", "left:12%; right:12%; top:34%; height:26%;");
+      var title = el("div", "", "font-size:11px; font-weight:700; color:" + opts.modal.titleColor + ";");
+      title.textContent = opts.modal.title;
+      modal.appendChild(title);
+      if (opts.modal.desc) {
+        var desc = el("div", "", "font-size:7px; color:var(--ink-dim); text-align:center; padding:0 6%;");
+        desc.textContent = opts.modal.desc;
+        modal.appendChild(desc);
+      }
+      opts.modal.buttons.forEach(function (b, idx) {
+        var bb = el("div", "wf-btn" + (idx === 0 ? " primary" : ""), "position:relative; width:70%; height:16%; margin-top:2%; font-size:8px;");
+        bb.textContent = b;
+        modal.appendChild(bb);
+      });
+      frame.appendChild(modal);
+    }
+  }
+
+  buildPlayFrame(document.getElementById("frame-play"));
+  buildPlayFrame(document.getElementById("frame-cleared"), {
+    modal: { title: "CLEARED!", titleColor: "var(--success)", buttons: ["Next Stage", "Replay", "Back"] }
+  });
+  buildPlayFrame(document.getElementById("frame-failed"), {
+    modal: { title: "TIME UP", titleColor: "var(--danger)", buttons: ["+1:00 Watch Ad", "Replay", "Back"] }
+  });
+  buildPlayFrame(document.getElementById("frame-unlock"), {
+    modal: {
+      title: "Unlock Row 2",
+      titleColor: "var(--ink)",
+      desc: "Use an item or watch an ad to unlock the second palette row.",
+      buttons: ["Use Item", "Watch Ad", "Back"]
+    }
+  });
+
+  // ---- Parity check mini-grids (even vs. odd column count) ----
+  function fillParityGrid(id, n) {
+    var grid = document.getElementById(id);
+    if (!grid) return;
+    var center = (n - 1) / 2;
+    for (var i = 0; i < n; i++) {
+      var isAxis = n % 2 === 1 && i === center;
+      grid.appendChild(el("div", isAxis ? "" : "", isAxis ? "background:var(--accent-soft);" : ""));
+    }
+  }
+  fillParityGrid("parity-even", 8);
+  fillParityGrid("parity-odd", 13);
+
+  // ---- Nav ----
+  var buttons = Array.prototype.slice.call(document.querySelectorAll(".rail-nav button"));
+  var views = Array.prototype.slice.call(document.querySelectorAll(".view"));
+  buttons.forEach(function (b) {
+    b.addEventListener("click", function () {
+      var target = b.getAttribute("data-view");
+      buttons.forEach(function (x) { x.removeAttribute("aria-current"); });
+      b.setAttribute("aria-current", "true");
+      views.forEach(function (v) {
+        v.setAttribute("data-active", v.getAttribute("data-view") === target ? "true" : "false");
+      });
+    });
+  });
+
+  // ---- Theme toggle ----
+  var root = document.documentElement;
+  var toggle = document.getElementById("theme-toggle");
+  toggle.addEventListener("click", function () {
+    var current = root.getAttribute("data-theme");
+    var prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+    var next;
+    if (!current) next = prefersDark ? "light" : "dark";
+    else next = current === "dark" ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+  });
+})();
+</script>

@@ -20,18 +20,31 @@ namespace SortGems.Core
 
         [Header("Palette")]
         [SerializeField] private GridLayoutGroup _paletteLayout;
-        [SerializeField] private float _paletteCellSpacing = 0f;
+        [SerializeField] private float _paletteCellSpacing = 10f;
+        [SerializeField] private Color _paletteBgColor = new Color(0.08f, 0.08f, 0.1f, 0.92f);
 
         [Header("Layout Settings")]
-        [SerializeField] private float _maxMainCellSize = 45f;
-        [SerializeField] private float _maxPaletteCellSize = 75f;
+        [SerializeField] private float _maxMainCellSize = 90f;
+        [SerializeField] private float _maxPaletteCellSize = 100f;
+        [SerializeField] private float _sideMargin = 60f;
+
+        [Header("Reserved Bands (excluded from grid area, shared with HUD)")]
+        [SerializeField] private float _headerH = 120f;
+        [SerializeField] private float _timerH = 72f;
+        [SerializeField] private float _bottomH = 100f;
+
+        // HUD (UI Toolkit) が同じ帯を参照するための公開プロパティ。
+        // ScreenManager がタイマー要素の style.top にこの値を注入し、
+        // headerH/timerH の「正」を GridView 側1箇所に保つ。
+        public float HeaderH => _headerH;
+        public float TimerH => _timerH;
 
         [Header("Prefab")]
         [SerializeField] private GemCellView _cellPrefab;
 
         private GemCellView[,] _mainViews;
         private GemCellView[,] _paletteViews;
-        private GameObject _unlockButtonObj;
+        private GameObject _unlockLabelObj;
 
         public System.Action OnUnlockButtonClicked;
 
@@ -77,14 +90,13 @@ namespace SortGems.Core
                 }
             }
 
-            float sideMargin = 8f;
             float padVal = 6f;
-            float headerH = 120f;
-            float bottomH = 100f;
             float gap = 16f;
 
-            float availW = canvasWidth - sideMargin * 2f - padVal * 2f;
-            float availH = canvasHeight - headerH - bottomH;
+            // headerH + timerH は HUD 側の固定帯（予約帯）。グリッドは常にこの下から始まる。
+            // 実際の値は _headerH / _timerH（1箇所の正）。ScreenManager がHUDのタイマー位置に同じ値を注入する。
+            float availW = canvasWidth - _sideMargin * 2f - padVal * 2f;
+            float availH = canvasHeight - _headerH - _timerH - _bottomH;
 
             float cellFromWidth = availW / stage.mainCols;
             float cellFromHeight = (availH * 0.8f) / stage.mainRows;
@@ -93,16 +105,20 @@ namespace SortGems.Core
             float mainW = stage.mainCols * _currentCellSize + padVal * 2f;
             float mainH = stage.mainRows * _currentCellSize + padVal * 2f;
 
-            _currentPaletteCellSize = Mathf.Floor((mainW - padVal * 2f) / stage.paletteCols);
+            // パレットのセルサイズは、列間スペーシング分を差し引いてから列数で割る
+            // （そうしないと隙間の分だけ列がパレット幅からはみ出す）。
+            float paletteSpacingTotalW = (stage.paletteCols - 1) * _paletteCellSpacing;
+            _currentPaletteCellSize = Mathf.Floor((mainW - padVal * 2f - paletteSpacingTotalW) / stage.paletteCols);
             _currentPaletteCellSize = Mathf.Min(_currentPaletteCellSize, _maxPaletteCellSize);
             float palW = mainW;
-            float palH = stage.paletteRows * _currentPaletteCellSize + padVal * 2f;
+            float paletteSpacingTotalH = (stage.paletteRows - 1) * _paletteCellSpacing;
+            float palH = stage.paletteRows * _currentPaletteCellSize + paletteSpacingTotalH + padVal * 2f;
 
             float totalH = mainH + gap + palH;
             float topMargin = (availH - totalH) / 2f;
             topMargin = Mathf.Max(topMargin, 8f);
 
-            float mainTopY = -headerH - topMargin;
+            float mainTopY = -_headerH - _timerH - topMargin;
             float palTopY = mainTopY - mainH - gap;
 
             var mainRt = _mainLayout.GetComponent<RectTransform>();
@@ -127,7 +143,7 @@ namespace SortGems.Core
             var palImg = _paletteLayout.GetComponent<Image>();
             if (palImg == null) palImg = _paletteLayout.gameObject.AddComponent<Image>();
             palImg.sprite = null;
-            palImg.color = new Color(0.08f, 0.08f, 0.1f, 0.55f);
+            palImg.color = _paletteBgColor;
 
             int pad = Mathf.RoundToInt(padVal);
             _mainLayout.padding = new RectOffset(pad, pad, pad, pad);
@@ -141,48 +157,52 @@ namespace SortGems.Core
                       _currentPaletteCellSize, _paletteCellSpacing,
                       isPalette: true, out _paletteViews);
 
-            CreatePaletteUnlockButton(stage);
+            CreatePaletteUnlockLabel(stage);
             RefreshAll();
         }
 
-        private void CreatePaletteUnlockButton(StageData stage)
+        /// <summary>
+        /// パレット2段目ロック中に表示する案内ラベル。
+        /// 【設計変更】以前は独立した Button（幅=パレット幅60%）だけがタップ対象だったが、
+        /// ロック行のセル自体をタップ可能にしたため（GemCellView.SetLocked参照）、
+        /// このラベルは行全体を覆う非インタラクティブな案内表示に変更した
+        /// （raycastTarget=false で、タップは下のセルへそのまま通す）。
+        /// </summary>
+        private void CreatePaletteUnlockLabel(StageData stage)
         {
-            if (_unlockButtonObj != null)
-                Destroy(_unlockButtonObj);
+            if (_unlockLabelObj != null)
+                Destroy(_unlockLabelObj);
 
             if (stage.paletteRows < 2) return;
 
             var palRt = _paletteLayout.GetComponent<RectTransform>();
             var parentTransform = palRt.parent;
 
-            _unlockButtonObj = new GameObject("UnlockRow2Button");
-            _unlockButtonObj.transform.SetParent(parentTransform, false);
+            _unlockLabelObj = new GameObject("UnlockRow2Label");
+            _unlockLabelObj.transform.SetParent(parentTransform, false);
 
             float pad = 16f;
             float palW = stage.paletteCols * _currentPaletteCellSize + pad * 2f;
-            float btnW = palW * 0.6f;
-            float btnH = _currentPaletteCellSize * 0.8f;
+            float rowH = _currentPaletteCellSize * 0.8f;
 
-            var rt = _unlockButtonObj.AddComponent<RectTransform>();
+            var rt = _unlockLabelObj.AddComponent<RectTransform>();
             rt.anchorMin = new Vector2(0.5f, 1f);
             rt.anchorMax = new Vector2(0.5f, 1f);
             rt.pivot = new Vector2(0.5f, 0.5f);
             float palTop = palRt.anchoredPosition.y;
-            float row2CenterY = palTop - pad - _currentPaletteCellSize - _currentPaletteCellSize * 0.5f;
+            // 行間スペーシング（_paletteCellSpacing）分もrow2の開始位置に加算する
+            float row2CenterY = palTop - pad - _currentPaletteCellSize - _paletteCellSpacing - _currentPaletteCellSize * 0.5f;
             rt.anchoredPosition = new Vector2(0f, row2CenterY);
-            rt.sizeDelta = new Vector2(btnW, btnH);
+            rt.sizeDelta = new Vector2(palW, rowH);
 
-            var img = _unlockButtonObj.AddComponent<Image>();
+            var img = _unlockLabelObj.AddComponent<Image>();
             img.sprite = GemColorPalette.ButtonSprite;
             img.type = Image.Type.Sliced;
-            img.color = new Color(1f, 1f, 1f, 0.1f);
-
-            var btn = _unlockButtonObj.AddComponent<UnityEngine.UI.Button>();
-            btn.targetGraphic = img;
-            btn.onClick.AddListener(() => OnUnlockButtonClicked?.Invoke());
+            img.color = new Color(1f, 1f, 1f, 0.08f);
+            img.raycastTarget = false;
 
             var textGo = new GameObject("Text");
-            textGo.transform.SetParent(_unlockButtonObj.transform, false);
+            textGo.transform.SetParent(_unlockLabelObj.transform, false);
             var textRt = textGo.AddComponent<RectTransform>();
             textRt.anchorMin = Vector2.zero;
             textRt.anchorMax = Vector2.one;
@@ -191,18 +211,19 @@ namespace SortGems.Core
             var text = textGo.AddComponent<UnityEngine.UI.Text>();
             text.text = "Unlock \U0001F512";
             text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            text.fontSize = Mathf.RoundToInt(btnH * 0.55f);
+            text.fontSize = Mathf.RoundToInt(rowH * 0.5f);
             text.alignment = TextAnchor.MiddleCenter;
             text.color = Color.white;
+            text.raycastTarget = false;
 
             UpdateUnlockButtonVisibility();
         }
 
         private void UpdateUnlockButtonVisibility()
         {
-            if (_unlockButtonObj == null) return;
+            if (_unlockLabelObj == null) return;
             bool show = _gridManager != null && !_gridManager.IsPaletteRow2Unlocked;
-            _unlockButtonObj.SetActive(show);
+            _unlockLabelObj.SetActive(show);
         }
 
         private void AdjustContainerLayout(RectTransform containerRt, int cols, int rows, float cellSize, float spacing)
@@ -245,10 +266,18 @@ namespace SortGems.Core
                     view.OnTappedWithEvent += (v, eventData) =>
                     {
                         if (_isAnimating) return; // アニメーション中は操作をブロック
-                        
+
                         // タップ位置に基づいて最も適切な優先セルに補正（吸い寄せ）
                         GemCellView correctedView = CorrectTapTarget(v, eventData);
-                        
+
+                        // パレット2段目ロック中はセル自体がアンロック導線（専用ボタンは廃止）。
+                        // 行全体がタップ対象になるので、セルが小さいステージでも押しやすい。
+                        if (correctedView.IsPalette && correctedView.Row >= 1 && _gridManager != null && !_gridManager.IsPaletteRow2Unlocked)
+                        {
+                            OnUnlockButtonClicked?.Invoke();
+                            return;
+                        }
+
                         if (correctedView.IsPalette) _gridManager.OnPaletteCellTapped(correctedView.Row, correctedView.Col);
                         else           _gridManager.OnMainCellTapped(correctedView.Row, correctedView.Col);
                     };

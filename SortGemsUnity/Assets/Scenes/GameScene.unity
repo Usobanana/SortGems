@@ -533,9 +533,13 @@ MonoBehaviour:
   _mainLayout: {fileID: 1040996807}
   _mainCellSpacing: 0
   _paletteLayout: {fileID: 465197930}
-  _paletteCellSpacing: 0
-  _maxMainCellSize: 45
-  _maxPaletteCellSize: 75
+  _paletteCellSpacing: 10
+  _maxMainCellSize: 90
+  _maxPaletteCellSize: 100
+  _headerH: 120
+  _timerH: 72
+  _bottomH: 100
+  _sideMargin: 60
   _cellPrefab: {fileID: 8067162435973269518, guid: 6043375417549284c8e3f94ec1fd45f6, type: 3}
   _moveDuration: 0.15
   _delayBetweenGems: 0.04
