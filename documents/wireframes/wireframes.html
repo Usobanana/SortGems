@@ -462,6 +462,403 @@
     line-height: 1.8;
     max-width: 78ch;
   }
+
+  /* =====================================================================
+     Visual Design System view — ported from visual-design-spec.html
+     (2026-07-11). Scoped under .vds-scope: its own :root-style tokens live
+     on .vds-scope instead of :root, and the handful of bare-element rules
+     it needs (body/a/code/footer/.callout) are scoped the same way, so
+     nothing here can leak onto or collide with the wireframe's own theme
+     (in particular --ink/--ink-dim, which the wireframe also defines at
+     :root — CSS custom properties correctly shadow within a subtree, so
+     reusing those names here is safe). Everything else below (.card, .sw,
+     .gem, .mock*, .cell-*, …) is unique to this view and left unscoped.
+     ===================================================================== */
+  .vds-scope {
+    --night-navy:   #282845;
+    --deep-purple:  #43395B;
+    --warm-brown:   #6A5448;
+    --wood:         #8B6B58;
+
+    --gem-pink:     #FCACC9;
+    --gem-coral:    #FEB98B;
+    --gem-orange:   #FEAB67;
+    --gem-lemon:    #FEE077;
+    --gem-mint:     #A4EFDF;
+    --gem-sky:      #96DEFD;
+    --gem-lavender: #B7ADFB;
+    --gem-purple:   #957FE7;
+
+    --ui-panel:     #E6CFC5;
+    --ui-frame:     #5A463E;
+    --ui-button:    #D987A8;
+    --ui-accent:    #F8E9A1;
+
+    --light-soft:   #FFF7E6;
+    --shadow-purplegray: #4B4868;
+
+    --sem-success:  #FFD98A;
+    --sem-warning:  #FFC86E;
+    --sem-danger:   #FF7D7D;
+    --sem-info:     #8EC9FF;
+    --sem-disabled: #8A8A9B;
+
+    --ink: #F1EEFB;
+    --ink-dim: #B7B2D6;
+    --card-bg: #201F3A;
+    --card-line: rgba(255,255,255,0.08);
+    --page-bg: #16152A;
+
+    display: block;
+    background: var(--page-bg);
+    color: var(--ink);
+    font-family: -apple-system, "Segoe UI", "Hiragino Sans", "Yu Gothic", sans-serif;
+    line-height: 1.6;
+  }
+  .vds-scope code, .vds-scope .mono { font-family: ui-monospace, "SFMono-Regular", "Cascadia Mono", Consolas, monospace; }
+  .vds-scope a { color: var(--gem-sky); }
+
+  .vds-scope .wrap { max-width: 1280px; margin: 0 auto; padding: 32px 24px 80px; }
+
+  .vds-scope header.hero {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 28px;
+    background: linear-gradient(160deg, var(--deep-purple), var(--night-navy));
+    border: 1px solid var(--card-line);
+    border-radius: 20px;
+    padding: 32px;
+    margin-bottom: 28px;
+  }
+  @media (max-width: 760px) { .vds-scope header.hero { grid-template-columns: 1fr; } }
+  .vds-scope header.hero .eyebrow {
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    margin: 0 0 6px;
+  }
+  .vds-scope header.hero h1 {
+    margin: 0 0 10px;
+    font-size: 34px;
+    letter-spacing: 0.01em;
+  }
+  .vds-scope header.hero p.sub {
+    margin: 0;
+    color: var(--ink-dim);
+    font-size: 14px;
+    max-width: 46ch;
+  }
+  .vds-scope header.hero .meta {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--ink-dim);
+  }
+  .vds-scope header.hero .meta a { text-decoration: none; border-bottom: 1px dotted currentColor; }
+
+  .vds-scope .callout {
+    border-radius: 14px;
+    border: 1px solid rgba(246, 164, 95, 0.35);
+    background: rgba(246, 164, 95, 0.08);
+    padding: 16px 18px;
+    font-size: 13.5px;
+    color: var(--ink);
+    margin-bottom: 28px;
+  }
+  .vds-scope .callout b { color: var(--gem-lemon); }
+
+  .vds-scope .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+  @media (max-width: 980px) { .vds-scope .grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 640px) { .vds-scope .grid { grid-template-columns: 1fr; } }
+  .vds-scope .grid .span-2 { grid-column: span 2; }
+  .vds-scope .grid .span-3 { grid-column: span 3; }
+  @media (max-width: 980px) { .vds-scope .grid .span-3 { grid-column: span 2; } }
+  @media (max-width: 640px) { .vds-scope .grid .span-2, .vds-scope .grid .span-3 { grid-column: span 1; } }
+
+  .vds-scope .card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-line);
+    border-radius: 16px;
+    padding: 20px 22px 24px;
+  }
+  .vds-scope .card h2 {
+    margin: 0 0 4px;
+    font-size: 15px;
+    letter-spacing: 0.04em;
+  }
+  .vds-scope .card h2 .no { color: var(--gem-coral); margin-right: 8px; }
+  .vds-scope .card h3 {
+    margin: 18px 0 8px;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+  }
+  .vds-scope .card h3:first-of-type { margin-top: 14px; }
+  .vds-scope .card p.note { font-size: 12.5px; color: var(--ink-dim); margin: 10px 0 0; }
+
+  /* swatches */
+  .vds-scope .swrow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .vds-scope .swrow.cols-5 { grid-template-columns: repeat(5, 1fr); }
+  .vds-scope .swrow.cols-8 { grid-template-columns: repeat(4, 1fr); }
+  @media (max-width: 480px) { .vds-scope .swrow, .vds-scope .swrow.cols-5, .vds-scope .swrow.cols-8 { grid-template-columns: repeat(2, 1fr); } }
+  .vds-scope .sw {
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.10);
+    background: #000;
+  }
+  .vds-scope .sw .fill { height: 52px; }
+  .vds-scope .sw .label {
+    padding: 6px 8px 8px;
+    background: rgba(0,0,0,0.28);
+    font-size: 11px;
+  }
+  .vds-scope .sw .label .name { display: block; color: var(--ink); font-weight: 600; }
+  .vds-scope .sw .label .hex { display: block; color: var(--ink-dim); font-size: 10.5px; margin-top: 2px; }
+
+  /* gem chips — octagon frame with a faceted cut: an axis-aligned inset
+     square ("table") in the middle, surrounded by 4 trapezoids + 4 corner
+     triangles whose shading alone (no stroked lines) reads as a bevel/tilt.
+     Built as inline SVG per instance (see gemHTML() below); colors are
+     driven purely by --gem-base via color-mix(). */
+  .vds-scope .gemrow { display: flex; flex-wrap: wrap; gap: 14px; }
+  .vds-scope .gem {
+    --gem-base: var(--gem-pink); /* overridden per instance via inline style */
+    position: relative;
+    display: inline-block;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.35));
+  }
+  .vds-scope .gem svg { display: block; width: 100%; height: 100%; overflow: visible; }
+  .vds-scope .gem .f-light { fill: color-mix(in srgb, var(--gem-base), white 35%); }
+  .vds-scope .gem .f-mid   { fill: var(--gem-base); }
+  .vds-scope .gem .f-dark  { fill: color-mix(in srgb, var(--gem-base), black 22%); }
+  /* facet boundaries are intentionally strokeless — the shade change alone marks the cut, no visible line */
+  .vds-scope .gem .f-face  { stroke: none; }
+  /* frame outline — fixed "socket" color (Frame token, §02), not tied to gem hue, like the reference sheet's gold bezel */
+  .vds-scope .gem .f-outline { fill: none; stroke: var(--ui-frame); stroke-width: 6; stroke-linejoin: round; }
+  .vds-scope .gem .f-spark { fill: #fff; }
+  .vds-scope .gem-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 10.5px; color: var(--ink-dim); }
+
+  /* gem color swatch card (01 Gem Colors) — same chrome as .sw but shows an actual gem icon */
+  .vds-scope .sw.gem-sw .fill { display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.22); }
+
+  /* shade guide */
+  .vds-scope .shade-table { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+  .vds-scope .shade-row { display: grid; grid-template-columns: 90px repeat(4, 1fr); align-items: center; gap: 8px; }
+  .vds-scope .shade-row .tag { font-size: 11px; color: var(--ink-dim); }
+  .vds-scope .chip { height: 30px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.12); }
+  .vds-scope .shade-head { display: grid; grid-template-columns: 90px repeat(4, 1fr); gap: 8px; font-size: 10px; color: var(--ink-dim); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 2px; }
+
+  /* ratio bar */
+  .vds-scope .ratio-bar { display: flex; height: 34px; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.12); }
+  .vds-scope .ratio-bar span { display: flex; align-items: center; justify-content: center; font-size: 11px; color: #241a1a; font-weight: 700; }
+  .vds-scope .ratio-legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 10px; font-size: 11px; color: var(--ink-dim); }
+  .vds-scope .ratio-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+
+  .vds-scope ul.rules { margin: 8px 0 0; padding-left: 18px; font-size: 13px; }
+  .vds-scope ul.rules li { margin-bottom: 6px; }
+  .vds-scope ul.rules.do li::marker { color: var(--sem-success); }
+  .vds-scope ul.rules.dont li::marker { color: var(--sem-danger); }
+
+  /* buttons demo */
+  .vds-scope .btn-demo { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+  .vds-scope .btn-chip {
+    padding: 10px 18px;
+    border-radius: 12px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #3a2230;
+    background: var(--ui-button);
+    border: 1px solid rgba(255,255,255,0.25);
+    box-shadow: inset 0 2px 0 rgba(255,255,255,0.35), inset 0 -3px 0 rgba(0,0,0,0.18);
+  }
+  .vds-scope .btn-chip.hover { filter: brightness(1.12); }
+  .vds-scope .btn-chip.pressed { filter: brightness(0.88); box-shadow: inset 0 2px 4px rgba(0,0,0,0.3); }
+  .vds-scope .btn-chip.disabled { background: var(--sem-disabled); color: #4a4a55; box-shadow: none; opacity: 0.7; }
+
+  .vds-scope .panel-demo { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 8px; }
+  .vds-scope .panel-chip {
+    background: var(--ui-panel);
+    border: 2px solid var(--ui-frame);
+    border-radius: 12px;
+    color: #4a352c;
+    font-size: 11px;
+    text-align: center;
+    padding: 10px;
+  }
+  .vds-scope .panel-chip.main { width: 110px; height: 74px; display: flex; align-items: center; justify-content: center; }
+  .vds-scope .panel-chip.popup { width: 110px; height: 74px; display: flex; align-items: center; justify-content: center; }
+  .vds-scope .panel-chip.dialog { width: 130px; }
+  .vds-scope .panel-chip.dialog .yn { display: flex; gap: 6px; margin-top: 8px; justify-content: center; }
+  .vds-scope .panel-chip.dialog .yn span { padding: 4px 10px; border-radius: 8px; background: var(--ui-button); color: #3a2230; font-weight: 700; font-size: 10px; }
+
+  .vds-scope .icon-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+  .vds-scope .icon-chip {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px;
+  }
+
+  /* glow / fx */
+  .vds-scope .glow-row { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 8px; }
+  .vds-scope .glow {
+    width: 54px; height: 54px; border-radius: 50%;
+    filter: blur(0px);
+  }
+  .vds-scope .spark-row { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 8px; font-size: 22px; }
+
+  /* mockups (07) */
+  .vds-scope .mock-row { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 10px; }
+  @media (max-width: 760px) { .vds-scope .mock-row { grid-template-columns: 1fr; max-width: 360px; margin-left: auto; margin-right: auto; } }
+  .vds-scope .mock {
+    background: var(--night-navy);
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 22px;
+    padding: 16px 14px;
+    aspect-ratio: 9/17.5;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 28px rgba(0,0,0,0.4);
+  }
+  .vds-scope .mock-play { grid-column: 1 / -1; max-width: 460px; margin: 0 auto; }
+  .vds-scope .mock .mock-label { font-size: 10.5px; color: var(--ink-dim); text-align: center; text-transform: uppercase; letter-spacing: 0.12em; }
+
+  .vds-scope .mchip { clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%); }
+  .vds-scope .mchip.empty { background: rgba(0,0,0,0.4); box-shadow: inset 0 2px 3px rgba(0,0,0,0.5); }
+
+  .vds-scope .mock-title { justify-content: flex-end; background: linear-gradient(175deg, var(--deep-purple), var(--night-navy) 55%); }
+  .vds-scope .mtitle-logo { position: absolute; top: 40%; left: 0; right: 0; text-align: center; transform: translateY(-50%); }
+  .vds-scope .mtitle-main { font-size: 23px; font-weight: 800; color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,0.55); }
+  .vds-scope .mtitle-sub { font-size: 9px; letter-spacing: 0.24em; color: var(--ink-dim); margin-top: 5px; }
+  .vds-scope .mtitle-cta {
+    align-self: center; width: 80%; margin-bottom: 30px;
+    padding: 11px 0; border-radius: 12px; text-align: center;
+    background: var(--ui-button); color: #3a2230; font-weight: 700; font-size: 13px;
+    box-shadow: inset 0 2px 0 rgba(255,255,255,0.35), inset 0 -3px 0 rgba(0,0,0,0.18);
+  }
+  .vds-scope .mtitle-version { position: absolute; bottom: 8px; left: 0; right: 0; text-align: center; font-size: 8.5px; color: var(--ink-dim); }
+
+  .vds-scope .mselect-header { display: flex; }
+  .vds-scope .mselect-back {
+    width: 26px; height: 26px; border-radius: 50%; background: rgba(255,255,255,0.10);
+    display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--ink);
+  }
+  .vds-scope .mselect-tag {
+    align-self: center; background: rgba(14,12,20,0.78); border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px; padding: 5px 12px; font-size: 10.5px; font-weight: 700; color: var(--ink);
+  }
+  .vds-scope .mselect-carousel { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; position: relative; }
+  .vds-scope .mselect-nav {
+    width: 22px; height: 22px; border-radius: 50%; background: rgba(0,0,0,0.5);
+    display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--ink); flex-shrink: 0;
+  }
+  .vds-scope .mselect-card {
+    flex: 1; max-width: 74%; aspect-ratio: 8/7; background: var(--card-bg);
+    border: 2px solid var(--gem-lavender); border-radius: 14px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 8px;
+  }
+  .vds-scope .mselect-preview { display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px; width: 82%; }
+  .vds-scope .mselect-preview .mchip { aspect-ratio: 1; }
+  .vds-scope .mselect-name { font-size: 10px; font-weight: 700; color: var(--ink); }
+  .vds-scope .mselect-status { font-size: 8.5px; color: var(--sem-success); font-weight: 700; letter-spacing: 0.06em; }
+  .vds-scope .mselect-cta {
+    align-self: center; width: 80%; margin-bottom: 4px;
+    padding: 10px 0; border-radius: 12px; text-align: center;
+    background: var(--ui-button); color: #3a2230; font-weight: 700; font-size: 12.5px;
+    box-shadow: inset 0 2px 0 rgba(255,255,255,0.35), inset 0 -3px 0 rgba(0,0,0,0.18);
+  }
+
+  .vds-scope .mplay-header { display: flex; align-items: center; gap: 8px; }
+  .vds-scope .mplay-back {
+    width: 22px; height: 22px; border-radius: 50%; background: rgba(255,255,255,0.10);
+    display: flex; align-items: center; justify-content: center; font-size: 9.5px; color: var(--ink); flex-shrink: 0;
+  }
+  .vds-scope .mplay-stage { font-size: 11px; font-weight: 700; color: var(--ink); }
+  .vds-scope .mplay-timer { height: 8px; border-radius: 4px; background: rgba(0,0,0,0.35); overflow: hidden; }
+  .vds-scope .mplay-timer-fill { height: 100%; width: 64%; background: var(--sem-success); }
+
+  .vds-scope .mplay-grid {
+    flex: 1; display: grid; gap: 0; align-content: center; justify-content: center;
+    grid-template-columns: repeat(17, 1fr);
+  }
+  .vds-scope .mplay-cell {
+    width: 100%; aspect-ratio: 1; border-radius: 2px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .vds-scope .mplay-grid .mplay-cell { border-radius: 0; }
+  .vds-scope .mplay-socket {
+    clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+    background: rgba(0,0,0,0.5);
+    box-shadow: inset 0 2px 3px rgba(0,0,0,0.4);
+  }
+
+  .vds-scope .mplay-palette { display: flex; flex-direction: column; gap: 3px; background: rgba(0,0,0,0.28); border-radius: 8px; padding: 5px; }
+  .vds-scope .mplay-pal-row { display: grid; grid-template-columns: repeat(14, 1fr); gap: 2px; }
+  .vds-scope .mplay-palette .mplay-cell { background: rgba(255,255,255,0.05); border-radius: 3px; }
+  .vds-scope .mplay-pal-row-wrap { position: relative; }
+  .vds-scope .mplay-pal-row.locked { opacity: 0.35; }
+  .vds-scope .mplay-pal-lock {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    font-size: 11px; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.7); pointer-events: none;
+  }
+
+  .vds-scope .mplay-footer { display: flex; justify-content: center; gap: 8px; }
+  .vds-scope .mplay-btn {
+    flex: 1; text-align: center; padding: 7px 0; border-radius: 9px; font-size: 9.5px; font-weight: 700;
+    background: rgba(255,255,255,0.10); color: var(--ink);
+  }
+
+  /* texture swatches */
+  .vds-scope .tex-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 8px; }
+  @media (max-width: 640px) { .vds-scope .tex-row { grid-template-columns: repeat(2, 1fr); } }
+  .vds-scope .tex { height: 56px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); }
+
+  /* puzzle grid cell states (10) */
+  .vds-scope .cell-demo-row { display: flex; gap: 24px; flex-wrap: wrap; margin-top: 4px; }
+  .vds-scope .cell-demo { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 168px; }
+  .vds-scope .cell-tile {
+    width: 108px; height: 108px;
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.10);
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .vds-scope .cell-tile .socket-indent {
+    width: 92px; height: 92px;
+    clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+    background: rgba(0,0,0,0.55);
+    box-shadow: inset 0 3px 6px rgba(0,0,0,0.45);
+  }
+  .vds-scope .cell-demo .cell-tag { font-size: 12px; font-weight: 700; color: var(--ink); text-align: center; }
+  .vds-scope .cell-demo .cell-desc { font-size: 11px; color: var(--ink-dim); text-align: center; line-height: 1.5; }
+  .vds-scope .gem.flat { filter: none; }
+  .vds-scope .gem.flat .f-outline { display: none; }
+
+  .vds-scope footer {
+    margin-top: 36px;
+    padding-top: 18px;
+    border-top: 1px solid var(--card-line);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-size: 12px;
+    color: var(--ink-dim);
+  }
 </style>
 
 <div class="app">
@@ -481,6 +878,8 @@
       <li><button data-view="cleared"><span class="tag">03a</span>Cleared</button></li>
       <li><button data-view="failed"><span class="tag">03b</span>Failed / Time Up</button></li>
       <li><button data-view="unlock"><span class="tag">03c</span>Unlock Row 2</button></li>
+      <li class="group-label">Reference</li>
+      <li><button data-view="visual-design"><span class="tag">VD</span>Visual Design</button></li>
     </ul>
 
     <div class="rail-foot">
@@ -712,6 +1111,255 @@
       </div>
     </section>
 
+    <!-- ============ VD VISUAL DESIGN SYSTEM (ported from visual-design-spec.html, 2026-07-11) ============ -->
+    <section class="view" data-view="visual-design">
+      <div class="vds-scope">
+        <div class="wrap">
+
+          <header class="hero">
+            <div>
+              <p class="eyebrow">SortGems / Visual Design Spec</p>
+              <h1>Cozy Lo-Fi Pixel Palette</h1>
+              <p class="sub">カラージェム系パズルゲーム 色指定シート v1.0 を元にしたビジュアル設計書。90年代のゲームセンターやカセットテープのノスタルジーを、Lo-fiで優しいパステルカラーとドット表現で再構築した世界観。</p>
+            </div>
+            <div class="meta">
+              <div>参照元: ユーザー提供リファレンス画像「COZY LO-FI PIXEL PALETTE v1.0」（2026-07-11）</div>
+              <div>関連: <code>documents/screen-specification.md</code>（画面仕様）</div>
+              <div>本書はレイアウトではなく<b>配色・素材・トーン</b>を定義するドキュメント。</div>
+            </div>
+          </header>
+
+          <div class="callout">
+            <b>現状実装との差分メモ:</b> 現行の <code>GemColorPalette.cs</code> は Red/Blue/Green/Yellow/Purple/Orange/Cyan/Pink/White/Black/Brown/LightBlue の12色構成で、彩度の高いビビッドな配色。本シートが提案する8色パステル配色（Pink/Coral/Orange/Lemon/Mint/Sky/Lavender/Purple）とは系統が異なる。同様に <code>Common.uss</code> の <code>--color-bg: rgb(24,24,32)</code> 等のUIトークンも、本シートの Night Navy(#282845)を基準にしたウォームなパレットへは未移行。本書は「目標とするアートディレクション」を定義するものであり、実装への適用は別途スコープとして計画する。
+          </div>
+
+          <div class="grid">
+
+            <!-- 01 MAIN PALETTE -->
+            <section class="card span-2">
+              <h2><span class="no">01</span>Main Palette</h2>
+
+              <h3>Background</h3>
+              <div class="swrow">
+                <div class="sw"><div class="fill" style="background:var(--night-navy)"></div><div class="label"><span class="name">Night Navy</span><span class="hex">#282845</span></div></div>
+                <div class="sw"><div class="fill" style="background:var(--deep-purple)"></div><div class="label"><span class="name">Deep Purple</span><span class="hex">#43395B</span></div></div>
+                <div class="sw"><div class="fill" style="background:var(--warm-brown)"></div><div class="label"><span class="name">Warm Brown</span><span class="hex">#6A5448</span></div></div>
+                <div class="sw"><div class="fill" style="background:var(--wood)"></div><div class="label"><span class="name">Wood</span><span class="hex">#8B6B58</span></div></div>
+              </div>
+
+              <h3>Gem Colors（メイン8色）</h3>
+              <div class="swrow cols-8" style="grid-template-columns:repeat(4,1fr);" id="vdsGemColorSwatches"></div>
+
+              <h3>Gem Color Shades Guide</h3>
+              <div class="shade-head"><span></span><span>通常色 Base</span><span>ハイライト</span><span>影色 Shadow</span><span>グロー Glow</span></div>
+              <div class="shade-table" id="vdsShadeTable"></div>
+              <p class="note">各ジェムは「通常色・ハイライト・影色」の3色で立体感を表現し、グローは透明度30〜40%で使用する。ハイライト＝Baseを白へ28%寄せ、影色＝Baseを紫グレー(#221830)へ38%寄せ、グロー＝Base本体を35%不透明度で使用（生成ルール、上表は8色全展開）。</p>
+            </section>
+
+            <!-- 02 UI & SYSTEM COLORS -->
+            <section class="card">
+              <h2><span class="no">02</span>UI &amp; System Colors</h2>
+
+              <h3>UI &amp; Decoration</h3>
+              <div class="swrow" style="grid-template-columns:repeat(2,1fr);">
+                <div class="sw"><div class="fill" style="background:var(--ui-panel)"></div><div class="label"><span class="name">Panel</span><span class="hex">#E6CFC5</span></div></div>
+                <div class="sw"><div class="fill" style="background:var(--ui-frame)"></div><div class="label"><span class="name">Frame</span><span class="hex">#5A463E</span></div></div>
+                <div class="sw"><div class="fill" style="background:var(--ui-button)"></div><div class="label"><span class="name">Button</span><span class="hex">#D987A8</span></div></div>
+                <div class="sw"><div class="fill" style="background:var(--ui-accent)"></div><div class="label"><span class="name">Accent</span><span class="hex">#F8E9A1</span></div></div>
+              </div>
+
+              <h3>Light &amp; Shadow</h3>
+              <div class="swrow" style="grid-template-columns:repeat(2,1fr);">
+                <div class="sw"><div class="fill" style="background:var(--light-soft)"></div><div class="label"><span class="name">Highlight</span><span class="hex">Soft White #FFF7E6</span></div></div>
+                <div class="sw"><div class="fill" style="background:var(--shadow-purplegray)"></div><div class="label"><span class="name">Shadow</span><span class="hex">Purple Gray（概算値）</span></div></div>
+              </div>
+              <p class="note">ハイライトは純白ではなくクリーム色、影は真っ黒ではなく紫がかったグレーを使用する。</p>
+
+              <h3>Semantic Colors（状態色）</h3>
+              <div class="swrow cols-5" style="grid-template-columns:repeat(5,1fr);">
+                <div class="sw"><div class="fill" style="background:var(--sem-success)"></div><div class="label"><span class="name">Success</span><span class="hex">#FFD98A</span></div></div>
+                <div class="sw"><div class="fill" style="background:var(--sem-warning)"></div><div class="label"><span class="name">Warning</span><span class="hex">#FFC86E</span></div></div>
+                <div class="sw"><div class="fill" style="background:var(--sem-danger)"></div><div class="label"><span class="name">Danger</span><span class="hex">#FF7D7D</span></div></div>
+                <div class="sw"><div class="fill" style="background:var(--sem-info)"></div><div class="label"><span class="name">Info</span><span class="hex">#8EC9FF</span></div></div>
+                <div class="sw"><div class="fill" style="background:var(--sem-disabled)"></div><div class="label"><span class="name">Disabled</span><span class="hex">概算値</span></div></div>
+              </div>
+
+              <h3>Color Ratio（配色比率の目安）</h3>
+              <div class="ratio-bar">
+                <span style="width:45%; background:var(--night-navy); color:#fff;">45%</span>
+                <span style="width:20%; background:var(--ui-panel);">20%</span>
+                <span style="width:25%; background:var(--ui-button);">25%</span>
+                <span style="width:10%; background:var(--ui-accent);">10%</span>
+              </div>
+              <div class="ratio-legend">
+                <span><i style="background:var(--night-navy)"></i>Background</span>
+                <span><i style="background:var(--ui-panel)"></i>UI / Frame</span>
+                <span><i style="background:var(--ui-button)"></i>Gem Colors</span>
+                <span><i style="background:var(--ui-accent)"></i>Accent / FX</span>
+              </div>
+              <p class="note">全体のバランスを保ち、長時間見ても疲れない優しいコントラストを目指す。</p>
+            </section>
+
+            <!-- 03 ART DIRECTION -->
+            <section class="card">
+              <h2><span class="no">03</span>Art Direction</h2>
+              <ul class="rules">
+                <li><b>太めのアウトライン</b> — オブジェクトは幅感のある濃い色で輪郭を取る。</li>
+                <li><b>丸みのあるピクセル</b> — 角を切り落とし、かわいらしい印象にする。</li>
+                <li><b>発光は抑えめ</b> — 強いネオンやグローは使わず、柔らかなグローで演出。</li>
+                <li><b>温かみのある陰影</b> — 影は茶やブラウンを基調に、画面全体に統一感を出す。</li>
+                <li><b>長時間遊べる画面設計</b> — コントラストを抑え、目に優しいレイアウトにする。</li>
+              </ul>
+            </section>
+
+            <!-- 04 GEM DESIGN GUIDE -->
+            <section class="card span-2">
+              <h2><span class="no">04</span>Gem Design Guide</h2>
+
+              <h3>形状ルール</h3>
+              <ul class="rules">
+                <li>外枠は<b>八角形</b>。枠線は色に依存しない固定の「Frame」トーン（§02）を使い、宝石が枠にセットされたような見た目にする。</li>
+                <li><b>中央に一回り小さい正方形（テーブル面）を内側に配置。</b>辺は外枠と同じく水平・垂直のまま（45°回転はさせない）。正方形の4つの頂点それぞれから、隣接する八角形の頂点2つへ向けてカットが伸び、外枠との間が「辺ごとの台形4面＋角の三角形4面」に分割される（テーブル1面＋台形4面＋三角形4面＝計9面）。</li>
+                <li>面ごとの明暗だけで傾いて見えるようにする。左上（上辺・左辺の台形＋左上の三角形）を最も明るく、右下（右辺・下辺の台形＋右下の三角形）を最も暗く、テーブル面と残り2つの三角形は中間トーンにする。</li>
+                <li>左上の明るい面の内側に小さな白いスパークルを1点重ね、宝石らしい反射のキラつきを足す。</li>
+              </ul>
+
+              <h3>ジェムサイズ比率（例）</h3>
+              <div class="gemrow" style="align-items:flex-end;" id="vdsSizeRatioRow"></div>
+              <p class="note">サイズは8の倍数で設計する。八角形の角の落とし幅・ファセット構成比はサイズによらず一定。</p>
+
+              <h3>Outline &amp; Corner Style</h3>
+              <div class="gemrow" id="vdsCornerStyleRow"></div>
+
+              <h3>Gem Variation Example</h3>
+              <div class="gemrow" id="vdsGemVariation"></div>
+            </section>
+
+            <!-- 05 FX & EFFECT COLORS -->
+            <section class="card span-3">
+              <h2><span class="no">05</span>FX &amp; Effect Colors</h2>
+
+              <h3>消滅エフェクト / コンボエフェクト</h3>
+              <div class="spark-row" id="vdsSparkRow"></div>
+
+              <h3>グロー / オーラカラー（透明度30〜40%）</h3>
+              <div class="glow-row" id="vdsGlowRow"></div>
+
+              <h3>パーティクルカラー</h3>
+              <div class="spark-row" id="vdsParticleRow" style="font-size:16px;"></div>
+            </section>
+
+            <!-- 06 UI COMPONENTS -->
+            <section class="card span-2">
+              <h2><span class="no">06</span>UI Components</h2>
+
+              <h3>Buttons</h3>
+              <div class="btn-demo">
+                <div class="btn-chip">Normal</div>
+                <div class="btn-chip hover">Hover</div>
+                <div class="btn-chip pressed">Pressed</div>
+                <div class="btn-chip disabled">Disabled</div>
+              </div>
+
+              <h3>Panels</h3>
+              <div class="panel-demo">
+                <div class="panel-chip main">Main Panel</div>
+                <div class="panel-chip popup">Popup</div>
+                <div class="panel-chip dialog">
+                  Are you sure?
+                  <div class="yn"><span>YES</span><span style="background:var(--sem-disabled);color:#333">NO</span></div>
+                </div>
+              </div>
+
+              <h3>Icons (24px)</h3>
+              <div class="icon-row">
+                <div class="icon-chip">♥</div>
+                <div class="icon-chip">●</div>
+                <div class="icon-chip">★</div>
+                <div class="icon-chip">▤</div>
+                <div class="icon-chip">♪</div>
+                <div class="icon-chip">⚙</div>
+                <div class="icon-chip">🛒</div>
+                <div class="icon-chip">🎁</div>
+                <div class="icon-chip">⏱</div>
+                <div class="icon-chip">⏸</div>
+              </div>
+            </section>
+
+            <!-- 07 GAME SCREEN MOCKUP -->
+            <section class="card span-3">
+              <h2><span class="no">07</span>Game Screen Mockup</h2>
+              <p class="note" style="margin-top:0;">実際の画面構成（<code>screen-specification.md §4</code>）に合わせたモック。「ポーズ画面」は現行実装に存在しないため、実在する3画面（Title / Stage Select / Game Play）に差し替え。Game Playのメイングリッドは17×17で配置し、マス・ジェムのサイズ感とルール（§10：マスの背景は常に目標色、正解＝同色でフラット・不一致＝別色のまま影あり・空＝ソケットのみ）をそのまま反映した実物のジェムアイコン（§04）で構成。</p>
+              <div class="mock-row" id="vdsMockRow"></div>
+            </section>
+
+            <!-- 08 ENVIRONMENT & TEXTURE -->
+            <section class="card span-3">
+              <h2><span class="no">08</span>Environment &amp; Texture</h2>
+              <h3>背景素材（トーン例・現行 bg_*_lofi.png のカラーキー代替）</h3>
+              <div class="tex-row">
+                <div class="tex" style="background:linear-gradient(160deg,var(--night-navy),var(--deep-purple));"></div>
+                <div class="tex" style="background:linear-gradient(160deg,var(--deep-purple),var(--wood));"></div>
+                <div class="tex" style="background:linear-gradient(160deg,var(--warm-brown),var(--night-navy));"></div>
+                <div class="tex" style="background:linear-gradient(160deg,var(--gem-lavender),var(--deep-purple));"></div>
+                <div class="tex" style="background:linear-gradient(160deg,var(--gem-sky),var(--night-navy));"></div>
+              </div>
+              <h3>テクスチャ＆パターン</h3>
+              <div class="tex-row">
+                <div class="tex" style="background:repeating-linear-gradient(45deg, var(--wood), var(--wood) 6px, var(--warm-brown) 6px, var(--warm-brown) 12px);"></div>
+                <div class="tex" style="background-color:var(--deep-purple); background-image: radial-gradient(rgba(255,255,255,0.12) 1.5px, transparent 1.5px); background-size: 10px 10px;"></div>
+                <div class="tex" style="background-color:var(--warm-brown); background-image: linear-gradient(rgba(0,0,0,0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.15) 1px, transparent 1px); background-size: 12px 12px;"></div>
+                <div class="tex" style="background-color:var(--night-navy); background-image: linear-gradient(45deg, rgba(255,255,255,0.05) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.05) 75%); background-size: 8px 8px;"></div>
+                <div class="tex" style="background: conic-gradient(var(--ui-panel) 0 25%, var(--ui-button) 0 50%, var(--ui-panel) 0 75%, var(--ui-button) 0);"></div>
+              </div>
+              <p class="note">実素材（家具・観葉植物・レトロ家電のドット絵背景）は参照画像08節を参照。ここではトーン・パターンのみを抽出。</p>
+            </section>
+
+            <!-- 09 DO & DON'T -->
+            <section class="card span-3">
+              <h2><span class="no">09</span>Do &amp; Don't</h2>
+              <div class="grid" style="grid-template-columns:1fr 1fr; margin-top:4px;">
+                <div>
+                  <h3 style="color:var(--sem-success)">DO（推奨）</h3>
+                  <ul class="rules do">
+                    <li>やさしいパステルカラーを使う</li>
+                    <li>コントラストは強くしすぎない</li>
+                    <li>統一感のある影と光を使う</li>
+                    <li>ノスタルジックな要素を取り入れる</li>
+                    <li>見やすさを最優先にする</li>
+                  </ul>
+                </div>
+                <div>
+                  <h3 style="color:var(--sem-danger)">DON'T（避ける）</h3>
+                  <ul class="rules dont">
+                    <li>強いネオンや高彩度の原色</li>
+                    <li>真っ黒の影や輪郭</li>
+                    <li>過剰な発光・フラッシュ</li>
+                    <li>情報量の多すぎる画面</li>
+                    <li>世界観に合わないモチーフ</li>
+                  </ul>
+                </div>
+              </div>
+            </section>
+
+            <!-- 10 CELL / SOCKET STATES (not in the reference sheet — added per follow-up request) -->
+            <section class="card span-3">
+              <h2><span class="no">10</span>Cell / Socket States <span style="font-size:10px; color:var(--ink-dim); font-weight:400; text-transform:none; letter-spacing:0;">（参照画像には無い追加項目）</span></h2>
+              <p class="note" style="margin-top:0;">パズルグリッド1マス（<code>GemCellView.cs</code>実装で確認・2026-07-11）の状態別デザイン。マスの色味はジェムと同じ配色トークン（§01）を使い回す。<b>マスの背景色は正解・不一致・空のどの状態でも常に目標色のまま変化しない</b>（変えてしまうと「何色を置けばよいか」が分からなくなりパズルとして成立しない）。状態によって変わるのは、ジェムがハマる位置の<b>くぼみ（ソケット）の表示有無</b>と、<b>ジェム自体の色・影の有無</b>だけ。</p>
+              <div class="cell-demo-row" id="vdsCellStates"></div>
+            </section>
+
+          </div>
+
+          <footer>
+            <span>Cozy Lo-Fi Pixel Palette v1.0 — SortGems Visual Design Spec</span>
+            <span>この資料はカラージェム系パズルゲームのアート制作における目標イメージ（提案）を整理したものです。実装反映は別途計画。</span>
+          </footer>
+
+        </div>
+      </div>
+    </section>
+
     <footer class="notes head">
       <b>凡例の読み方：</b> 実線＝毎回同じ静的UIシェル。破線＝ステージデータ／プレイ状況によって内容や個数が変わる領域。数値はすべて現行実装のソースコードから抽出した参考値（1080×1920基準）で、最終デザインでの確定値ではありません。詳細は <code>documents/screen-specification.md</code> を参照。
     </footer>
@@ -903,5 +1551,326 @@
     else next = current === "dark" ? "light" : "dark";
     root.setAttribute("data-theme", next);
   });
+})();
+</script>
+
+<script>
+// Visual Design System view — ported from visual-design-spec.html (2026-07-11).
+// Own IIFE so its top-level names never touch the wireframe script above; all
+// element IDs it targets are prefixed "vds" to avoid clashing with the rest
+// of this page (parity-even/odd, frame-*, etc. belong to the wireframe view).
+(function () {
+  "use strict";
+
+  var GEMS = [
+    ["Pink", "#FCACC9"], ["Coral", "#FEB98B"], ["Orange", "#FEAB67"], ["Lemon", "#FEE077"],
+    ["Mint", "#A4EFDF"], ["Sky", "#96DEFD"], ["Lavender", "#B7ADFB"], ["Purple", "#957FE7"]
+  ];
+
+  function hexToRgb(hex) {
+    var v = hex.replace("#", "");
+    return [parseInt(v.substr(0,2),16), parseInt(v.substr(2,2),16), parseInt(v.substr(4,2),16)];
+  }
+  function mix(hex, targetRgb, amount) {
+    var c = hexToRgb(hex);
+    var r = Math.round(c[0] + (targetRgb[0]-c[0])*amount);
+    var g = Math.round(c[1] + (targetRgb[1]-c[1])*amount);
+    var b = Math.round(c[2] + (targetRgb[2]-c[2])*amount);
+    return "rgb(" + r + "," + g + "," + b + ")";
+  }
+
+  // Shared gem icon: octagon frame around an axis-aligned inset square "table"
+  // (its edges stay horizontal/vertical — it only *reads* as tilted because of
+  // shading, it is not actually rotated). Each of the table's 4 corners lines
+  // up with the 2 nearest octagon corners, so the gap between table and frame
+  // splits into 4 trapezoids (edges) + 4 triangles (corners) = 8 facets + the
+  // table itself = 9 facets total, plus a sparkle. `chamfer` sets how much of
+  // each octagon corner is cut (0-50).
+  function gemHTML(hex, sizePx, chamfer) {
+    var c = (chamfer === undefined) ? 30 : chamfer;
+    var V = [[c,0], [100-c,0], [100,c], [100,100-c], [100-c,100], [c,100], [0,100-c], [0,c]];
+    var A = [c,c], B = [100-c,c], C = [100-c,100-c], D = [c,100-c];
+    function poly(pts) { return pts.map(function (p) { return p[0] + ',' + p[1]; }).join(' '); }
+    return '<div class="gem" style="width:' + sizePx + 'px;height:' + sizePx + 'px;--gem-base:' + hex + ';">' +
+      '<svg viewBox="0 0 100 100">' +
+        '<polygon class="f-face f-light" points="' + poly([V[0],V[1],B,A]) + '"/>' + // top trapezoid
+        '<polygon class="f-face f-light" points="' + poly([V[6],V[7],A,D]) + '"/>' + // left trapezoid
+        '<polygon class="f-face f-light" points="' + poly([V[0],A,V[7]]) + '"/>' +   // top-left triangle (brightest corner)
+        '<polygon class="f-face f-mid"   points="' + poly([A,B,C,D]) + '"/>' +       // table (center square)
+        '<polygon class="f-face f-mid"   points="' + poly([V[1],V[2],B]) + '"/>' +   // top-right triangle
+        '<polygon class="f-face f-mid"   points="' + poly([V[5],V[6],D]) + '"/>' +   // bottom-left triangle
+        '<polygon class="f-face f-dark"  points="' + poly([V[2],V[3],C,B]) + '"/>' + // right trapezoid
+        '<polygon class="f-face f-dark"  points="' + poly([V[4],V[5],D,C]) + '"/>' + // bottom trapezoid
+        '<polygon class="f-face f-dark"  points="' + poly([V[3],V[4],C]) + '"/>' +   // bottom-right triangle (darkest corner)
+        '<polygon class="f-outline" points="' + poly(V) + '"/>' +
+        '<polygon class="f-spark" points="20,12 23,17 28,20 23,23 20,28 17,23 12,20 17,17"/>' +
+      '</svg>' +
+    '</div>';
+  }
+
+  // "Very Round" corner-style variant: a cabochon (smooth dome, no hard facets) —
+  // the correct real-world counterpart to a faceted cut, not just a rounder octagon.
+  function gemCabochonHTML(hex, sizePx) {
+    return '<div class="gem" style="width:' + sizePx + 'px;height:' + sizePx + 'px;--gem-base:' + hex + ';">' +
+      '<svg viewBox="0 0 100 100">' +
+        '<circle class="f-face f-mid" cx="50" cy="50" r="47"/>' +
+        '<ellipse class="f-light" cx="36" cy="32" rx="20" ry="14" style="opacity:.5"/>' +
+        '<circle class="f-outline" cx="50" cy="50" r="47"/>' +
+        '<polygon class="f-spark" points="26,2 30,10 38,13 30,16 26,24 22,16 14,13 22,10"/>' +
+      '</svg>' +
+    '</div>';
+  }
+
+  // Gem color swatches (01) — actual octagon gem icon + name/hex label, not a flat color rectangle
+  var gemColorSwatches = document.getElementById("vdsGemColorSwatches");
+  GEMS.forEach(function (g) {
+    var sw = document.createElement("div");
+    sw.className = "sw gem-sw";
+    sw.innerHTML =
+      '<div class="fill">' + gemHTML(g[1], 44) + '</div>' +
+      '<div class="label"><span class="name">' + g[0] + '</span><span class="hex">' + g[1] + '</span></div>';
+    gemColorSwatches.appendChild(sw);
+  });
+
+  // Gem size ratio examples (04)
+  var sizeRatioRow = document.getElementById("vdsSizeRatioRow");
+  [24, 32, 40].forEach(function (size) {
+    var wrap = document.createElement("div");
+    wrap.className = "gem-wrap";
+    wrap.innerHTML = gemHTML("var(--gem-pink)", size) + size + "px";
+    sizeRatioRow.appendChild(wrap);
+  });
+
+  // Outline & Corner Style comparison (04)
+  var cornerStyleRow = document.getElementById("vdsCornerStyleRow");
+  [
+    ["Sharp", gemHTML("var(--gem-sky)", 44, 12)],
+    ["Soft（推奨・八角形）", gemHTML("var(--gem-sky)", 44, 30)],
+    ["Very Round（カボション）", gemCabochonHTML("var(--gem-sky)", 44)]
+  ].forEach(function (entry) {
+    var wrap = document.createElement("div");
+    wrap.className = "gem-wrap";
+    wrap.innerHTML = entry[1] + entry[0];
+    cornerStyleRow.appendChild(wrap);
+  });
+
+  // Cell / socket states (10) — verified against the actual GemCellView.cs (2026-07-11):
+  // the background is ALWAYS the target color (var(--gem-sky) here) and NEVER changes,
+  // whether the cell is correct, holds a mismatched gem, or is empty — otherwise the
+  // player would lose the "what color goes here" hint. Only two things change:
+  // (1) the socket indent, shown only when empty, and (2) the gem itself — same color
+  // + no drop shadow when correct ("flat/settled"), different color + normal drop
+  // shadow when mismatched.
+  var GOAL = "var(--gem-sky)";
+  var cellStates = document.getElementById("vdsCellStates");
+  var cellDefs = [
+    {
+      tag: "① 正解（同色でハマった状態）",
+      desc: "背景は常に目標色のまま。ジェムも同色で重なり、外側のドロップシャドウを外してフラットに見せる（ソケットは隠れる）。",
+      bg: GOAL,
+      gem: GOAL,
+      flat: true
+    },
+    {
+      tag: "② 不一致（異なる色でハマった状態）",
+      desc: "背景は変えない（正解時と同じ目標色のまま）。ジェムだけ別の色で乗り、通常通り立体的な陰影を保つ（ソケットは隠れる）。",
+      bg: GOAL,
+      gem: "var(--gem-coral)",
+      flat: false
+    },
+    {
+      tag: "③ 空マス",
+      desc: "背景は同じく目標色のまま変えない。ジェムは無く、くぼんだソケットだけが見える状態。",
+      bg: GOAL,
+      gem: null,
+      flat: false
+    }
+  ];
+  cellDefs.forEach(function (d) {
+    var wrap = document.createElement("div");
+    wrap.className = "cell-demo";
+    // socket indent shows only when there's no gem — a placed gem (correct or not) covers it
+    var inner;
+    if (d.gem) {
+      var g = gemHTML(d.gem, 92);
+      if (d.flat) g = g.replace('class="gem"', 'class="gem flat"');
+      inner = g;
+    } else {
+      inner = '<div class="socket-indent"></div>';
+    }
+    wrap.innerHTML =
+      '<div class="cell-tile" style="background:' + d.bg + ';">' + inner + '</div>' +
+      '<div class="cell-tag">' + d.tag + '</div>' +
+      '<div class="cell-desc">' + d.desc + '</div>';
+    cellStates.appendChild(wrap);
+  });
+
+  // Shade guide: base / highlight (toward white) / shadow (toward purple-gray) / glow (base @ ~35% on dark)
+  var shadeTable = document.getElementById("vdsShadeTable");
+  GEMS.forEach(function (g) {
+    var name = g[0], hex = g[1];
+    var row = document.createElement("div");
+    row.className = "shade-row";
+    var highlight = mix(hex, [255,255,255], 0.28);
+    var shadow = mix(hex, [34,24,48], 0.38);
+    row.innerHTML =
+      '<span class="tag">' + name + '</span>' +
+      '<div class="chip" style="background:' + hex + '"></div>' +
+      '<div class="chip" style="background:' + highlight + '"></div>' +
+      '<div class="chip" style="background:' + shadow + '"></div>' +
+      '<div class="chip" style="background:' + hex + '; opacity:0.35;"></div>';
+    shadeTable.appendChild(row);
+  });
+
+  // Gem variation chips
+  var gemVariation = document.getElementById("vdsGemVariation");
+  GEMS.forEach(function (g) {
+    var wrap = document.createElement("div");
+    wrap.className = "gem-wrap";
+    wrap.innerHTML = gemHTML(g[1], 56) + g[0];
+    gemVariation.appendChild(wrap);
+  });
+
+  // FX sparkle row (star glyphs colored per gem)
+  var sparkRow = document.getElementById("vdsSparkRow");
+  GEMS.slice(0,6).forEach(function (g) {
+    var s = document.createElement("span");
+    s.textContent = "✦";
+    s.style.color = g[1];
+    s.style.textShadow = "0 0 10px " + g[1];
+    sparkRow.appendChild(s);
+  });
+
+  // Glow blobs
+  var glowRow = document.getElementById("vdsGlowRow");
+  GEMS.slice(0,6).forEach(function (g) {
+    var d = document.createElement("div");
+    d.className = "glow";
+    d.style.background = "radial-gradient(circle, " + g[1] + " 0%, transparent 70%)";
+    d.style.opacity = "0.9";
+    glowRow.appendChild(d);
+  });
+
+  // Particle dots
+  var particleRow = document.getElementById("vdsParticleRow");
+  GEMS.forEach(function (g) {
+    var s = document.createElement("span");
+    s.textContent = "✦";
+    s.style.color = g[1];
+    s.style.fontSize = (10 + Math.random()*6) + "px";
+    particleRow.appendChild(s);
+  });
+
+  // Flat single-color octagon chip — used at mockup scale instead of the full
+  // faceted gemHTML() (too much detail to read at 10-20px). "empty" ignores hex.
+  function mchip(hex) {
+    return hex ? '<div class="mchip" style="background:' + hex + ';"></div>'
+               : '<div class="mchip empty"></div>';
+  }
+
+  var mockRow = document.getElementById("vdsMockRow");
+
+  // ---- Title (screen-specification.md §4.1) ----
+  var mockTitle = document.createElement("div");
+  mockTitle.className = "mock mock-title";
+  mockTitle.innerHTML =
+    '<div class="mock-label">Title</div>' +
+    '<div class="mtitle-logo">' +
+      '<div class="mtitle-main">Lo-Fi Chill</div>' +
+      '<div class="mtitle-sub">GEMS SORT GAME</div>' +
+    '</div>' +
+    '<div class="mtitle-cta">Game Start</div>' +
+    '<div class="mtitle-version">v1.0</div>';
+  mockRow.appendChild(mockTitle);
+
+  // ---- Stage Select (§4.2) — active-stage-label above the card, real carousel proportions ----
+  var mockSelect = document.createElement("div");
+  mockSelect.className = "mock mock-select";
+  var previewChips = "";
+  for (var i = 0; i < 64; i++) {
+    previewChips += mchip(Math.random() < 0.62 ? GEMS[Math.floor(Math.random() * GEMS.length)][1] : null);
+  }
+  mockSelect.innerHTML =
+    '<div class="mock-label">Stage Select</div>' +
+    '<div class="mselect-header"><span class="mselect-back">&#x25C0;</span></div>' +
+    '<div class="mselect-tag">Stage 6: Raindrop</div>' +
+    '<div class="mselect-carousel">' +
+      '<span class="mselect-nav">&#x25C0;</span>' +
+      '<div class="mselect-card">' +
+        '<div class="mselect-preview">' + previewChips + '</div>' +
+        '<div class="mselect-name">Stage 6: Raindrop</div>' +
+        '<div class="mselect-status">CLEARED</div>' +
+      '</div>' +
+      '<span class="mselect-nav">&#x25B6;</span>' +
+    '</div>' +
+    '<div class="mselect-cta">Start</div>';
+  mockRow.appendChild(mockSelect);
+
+  // ---- Game Play (§4.3) — no header/footer background band (2026-07-11).
+  // Each grid cell is TWO layers, per §10: a container whose background is
+  // ALWAYS the goal color (never gray/faded, whatever sits on it), with a
+  // gem (flat, same color = "correct") or an empty socket layered on top.
+  // Palette cells are the opposite: neutral tray background (no goal color),
+  // gem keeps its normal shadow since it's never "correct" there.
+  function socketHTML(px) {
+    return '<div class="mplay-socket" style="width:' + px + 'px;height:' + px + 'px;"></div>';
+  }
+  var MAIN_GEM_PX = 19;
+  var PAL_GEM_PX = 22;
+
+  function mainCellHTML(goalColor, state, wrongColor) {
+    var content;
+    if (state === "empty") {
+      content = socketHTML(MAIN_GEM_PX);
+    } else if (state === "mismatch") {
+      content = gemHTML(wrongColor, MAIN_GEM_PX);
+    } else {
+      content = gemHTML(goalColor, MAIN_GEM_PX).replace('class="gem"', 'class="gem flat"');
+    }
+    return '<div class="mplay-cell" style="background:' + goalColor + ';">' + content + '</div>';
+  }
+  function paletteCellHTML(color) {
+    var content = color ? gemHTML(color, PAL_GEM_PX) : socketHTML(PAL_GEM_PX);
+    return '<div class="mplay-cell">' + content + '</div>';
+  }
+
+  var mockPlay = document.createElement("div");
+  mockPlay.className = "mock mock-play";
+  var gridChips = "";
+  var GRID_N = 17, GRID_MID = 8, GRID_RADIUS = 8;
+  for (var r = 0; r < GRID_N; r++) {
+    for (var c2 = 0; c2 < GRID_N; c2++) {
+      var inShape = Math.abs(r - GRID_MID) + Math.abs(c2 - GRID_MID) <= GRID_RADIUS; // diamond-ish silhouette, like the real pixel-art stages
+      if (!inShape) { gridChips += '<div></div>'; continue; }
+      var goalColor = GEMS[(r * GRID_N + c2) % GEMS.length][1];
+      var roll = Math.random();
+      var state = roll < 0.55 ? "correct" : (roll < 0.8 ? "mismatch" : "empty");
+      var wrongColor = GEMS[(r + c2 + 3) % GEMS.length][1];
+      if (state === "mismatch" && wrongColor === goalColor) wrongColor = GEMS[(r + c2 + 4) % GEMS.length][1];
+      gridChips += mainCellHTML(goalColor, state, wrongColor);
+    }
+  }
+  // Palette: 14 cols × 2 rows (Stage_001's real data). Row 1 is usable now; row 2
+  // starts locked (SetLocked → alpha 0.4) with a lock affordance over it.
+  var palRow1 = "";
+  var palRow2 = "";
+  for (var p = 0; p < 14; p++) {
+    palRow1 += paletteCellHTML(p < 6 ? GEMS[p % GEMS.length][1] : null);
+    palRow2 += paletteCellHTML(p < 3 ? GEMS[(p + 4) % GEMS.length][1] : null);
+  }
+  var paletteChips =
+    '<div class="mplay-pal-row">' + palRow1 + '</div>' +
+    '<div class="mplay-pal-row-wrap">' +
+      '<div class="mplay-pal-row locked">' + palRow2 + '</div>' +
+      '<div class="mplay-pal-lock">&#x1F512;</div>' +
+    '</div>';
+  mockPlay.innerHTML =
+    '<div class="mock-label">Game Play</div>' +
+    '<div class="mplay-header"><span class="mplay-back">&#x25C0;</span><span class="mplay-stage">Stage 6</span></div>' +
+    '<div class="mplay-timer"><div class="mplay-timer-fill"></div></div>' +
+    '<div class="mplay-grid">' + gridChips + '</div>' +
+    '<div class="mplay-palette">' + paletteChips + '</div>' +
+    '<div class="mplay-footer"><span class="mplay-btn">Undo</span><span class="mplay-btn">Hint</span><span class="mplay-btn">Reset</span></div>';
+  mockRow.appendChild(mockPlay);
 })();
 </script>
